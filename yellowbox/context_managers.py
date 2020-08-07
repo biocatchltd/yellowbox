@@ -1,9 +1,6 @@
-import json
-import sys
 from contextlib import contextmanager
 from typing import Generator, TypeVar
 
-from docker import DockerClient
 from docker.models.containers import Container as DockerContainer
 from docker.models.networks import Network as DockerNetwork
 
@@ -17,6 +14,22 @@ _DEFAULT_TIMEOUT = 10
 
 @contextmanager
 def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT) -> _Gen[_CT]:
+    """A context manager that kills a docker container upon completion.
+
+    Example:
+        container = DockerContainer(...)
+        with killing(container):
+            ...
+        # Container is now killed with SIGKILL
+
+    Args:
+        container: Container to kill upon completion
+        timeout: Time to wait for container to be killed after sending a signal.
+        Defaults to 10 seconds.
+
+    Returns:
+        A context manager to be used in a 'with' statement.
+    """
     try:
         yield container
     finally:
@@ -27,6 +40,22 @@ def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT) -> _Gen[_CT]:
 
 @contextmanager
 def terminating(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT) -> _Gen[_CT]:
+    """A context manager that terminates a docker container upon completion.
+
+    Example:
+        container = DockerContainer(...)
+        with terminating(container):
+            ...
+        # Container is now killed with SIGTERM (equal to ctrl+c in most places).
+
+    Args:
+        container: Container to terminate upon completion
+        timeout: Time to wait for container to be terminated after sending a
+        signal. Defaults to 10 seconds.
+
+    Returns:
+        A context manager to be used in a 'with' statement.
+    """
     try:
         yield container
     finally:
@@ -37,6 +66,21 @@ def terminating(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT) -> _Gen[_C
 
 @contextmanager
 def disconnecting(network: _NT) -> _Gen[_NT]:
+    """A context manager that disconnects a docker network upon completion.
+
+    Example:
+        network = DockerNetwork(...)
+        with disconnecting(network):
+            ...
+        # Network is now disconnected from all containers and is removed
+        # from docker.
+
+    Args:
+        network: Network to disconnect upon completion.
+
+    Returns:
+        A context manager to be used in a 'with' statement.
+    """
     try:
         yield network
     finally:
