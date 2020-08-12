@@ -102,7 +102,6 @@ class LoggingIterableAdapter(Iterable[Dict[str, Any]]):
 
 
 def get_container_ports(container: Container) -> Dict[int, int]:
-    # todo this probably won't work for multi-network containers
     """Get the exposed (published) ports of a given container
 
     Useful for when the ports are assigned dynamically.
@@ -124,6 +123,7 @@ def get_container_ports(container: Container) -> Dict[int, int]:
     Returns:
         Port mapping {internal_container_port: external_host_port}.
     """
+    # todo this probably won't work for multi-network containers
     ports = {}
     portmap = container.attrs["NetworkSettings"]["Ports"]
     for port, external_address in portmap.items():

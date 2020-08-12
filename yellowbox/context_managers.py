@@ -1,8 +1,9 @@
-from contextlib import contextmanager, nullcontext
-from typing import Generator, TypeVar
+from contextlib import contextmanager, nullcontext, AbstractContextManager
+from typing import Generator, TypeVar, Callable
 
 from docker.models.containers import Container as DockerContainer
 from docker.models.networks import Network as DockerNetwork
+from yaspin import yaspin
 
 _T = TypeVar("_T")
 _CT = TypeVar("_CT", bound=DockerContainer)
@@ -89,17 +90,18 @@ def disconnecting(network: _NT) -> _Gen[_NT]:
         network.remove()
 
 
-try:
-    from yaspin import yaspin
-except ImportError:
-    spinner = nullcontext
-else:
-    @contextmanager
-    def spinner(text):
-        with yaspin(text=text) as spinner:
-            try:
-                yield
-            except Exception:
-                spinner.fail("💥 ")
-                raise
-            spinner.ok("✅ ")
+@contextmanager
+def spinner(text):
+    with yaspin(text=text) as spinner:
+        try:
+            yield
+        except Exception:
+            spinner.fail("💥 ")
+            raise
+        spinner.ok("✅ ")
+
+
+def get_spinner(s) -> Callable[[str], AbstractContextManager]:
+    if s:
+        return spinner
+    return nullcontext

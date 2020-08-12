@@ -7,9 +7,9 @@ setup(
     version='0.0.1',
     packages=['yellowbox', 'yellowbox.fixtures', 'yellowbox.specialized'],
     python_requires='>=3.7',
-    requires=['docker'],
+    requires=['docker', 'yaspin'],
     extras_require={
-        'pytest': ['pytest', 'yaspin'],
+        'testing': ['pytest'],
         'redis': ['redis']
     },
     license='MIT License',
