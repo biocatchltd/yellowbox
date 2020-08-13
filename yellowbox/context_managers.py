@@ -14,7 +14,7 @@ _DEFAULT_TIMEOUT = 10
 
 
 @contextmanager
-def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT) -> _Gen[_CT]:
+def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT, signal: str = 'SIGKILL') -> _Gen[_CT]:
     """A context manager that kills a docker container upon completion.
 
     Example:
@@ -27,6 +27,7 @@ def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT) -> _Gen[_CT]:
         container: Container to kill upon completion
         timeout: Time to wait for container to be killed after sending a signal.
         Defaults to 10 seconds.
+        signal: The signal to send to the container
 
     Returns:
         A context manager to be used in a 'with' statement.
@@ -35,33 +36,7 @@ def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT) -> _Gen[_CT]:
         yield container
     finally:
         if container.status.lower() not in ('exited', 'stopped'):
-            container.kill('SIGKILL')
-            container.wait(timeout=timeout)
-
-
-@contextmanager
-def terminating(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT) -> _Gen[_CT]:
-    """A context manager that terminates a docker container upon completion.
-
-    Example:
-        container = DockerContainer(...)
-        with terminating(container):
-            ...
-        # Container is now killed with SIGTERM (equal to ctrl+c in most places).
-
-    Args:
-        container: Container to terminate upon completion
-        timeout: Time to wait for container to be terminated after sending a
-        signal. Defaults to 10 seconds.
-
-    Returns:
-        A context manager to be used in a 'with' statement.
-    """
-    try:
-        yield container
-    finally:
-        if container.status.lower() not in ('exited', 'stopped'):
-            container.kill('SIGTERM')
+            container.kill(signal)
             container.wait(timeout=timeout)
 
 

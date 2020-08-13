@@ -3,9 +3,10 @@ from collections import deque
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import suppress
 from time import sleep
-from typing import Callable, TypeVar, Union, Iterable, Dict, Any, Deque, Iterator
+from typing import Callable, TypeVar, Union, Iterable, Dict, Any, Deque, Iterator, Collection
 
 from docker.models.containers import Container
+from docker.models.networks import Network
 
 _T = TypeVar('_T')
 _ExcType = TypeVar('_ExcType', bound=Exception)
@@ -139,3 +140,9 @@ def get_container_ports(container: Container) -> Dict[int, int]:
         ports[int(port)] = int(external_port)
 
     return ports
+
+
+def get_container_aliases(container: Container, network: Union[str, Network]) -> Collection[str]:
+    if not isinstance(network, str):
+        network = network.name
+    return container.attrs["NetworkSettings"]["Networks"][network]["Aliases"]
