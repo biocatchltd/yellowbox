@@ -1,13 +1,11 @@
+from pytest import mark
+
 from yellowbox.extras import YellowRedis
 
 
-def test_make_redis(docker_client):
-    with YellowRedis.run(docker_client):
-        pass
-
-
-def test_make_redis_no_spinner(docker_client):
-    with YellowRedis.run(docker_client, spinner=False):
+@mark.parametrize('spinner', [True, False])
+def test_make_redis(docker_client, spinner):
+    with YellowRedis.run(docker_client, spinner=spinner):
         pass
 
 

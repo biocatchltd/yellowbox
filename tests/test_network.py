@@ -32,5 +32,5 @@ def test_connect_shared_network(docker_client: DockerClient):
             container: Container = docker_client.containers.create('bash:latest', command)
             with network.connect(container):
                 container.start()
-            return_status = container.wait()
+                return_status = container.wait()
             assert return_status["StatusCode"] == 0

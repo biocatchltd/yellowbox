@@ -10,7 +10,8 @@ setup(
     requires=['docker', 'yaspin'],
     extras_require={
         'testing': ['pytest'],
-        'redis': ['redis']
+        'redis': ['redis'],
+        'rabbit': ['pika'],
     },
     license='MIT License',
     long_description=open('README.md').read(),
