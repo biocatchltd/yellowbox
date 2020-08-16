@@ -6,8 +6,6 @@ from yellowbox.containers import is_alive, _DEFAULT_TIMEOUT
 
 
 class YellowService(metaclass=ABCMeta):
-    """"""
-
     @abstractmethod
     def start(self):
         return self
