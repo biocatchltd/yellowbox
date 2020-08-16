@@ -25,15 +25,21 @@ class RedisService(SingleContainerService):
         port = self.client_port()
         return client_cls(host='localhost', port=port)
 
+    def start(self):
+        super().start()
+        with self.client() as client:
+            retry(client.ping, RedisConnectionError)
+        return self
+
     def stop(self):
         super().stop()
         if self._auto_remove:
             self.container.remove()
 
     @classmethod
-    def from_docker(cls, docker_client: DockerClient, tag='redis:latest'):
+    def from_docker(cls, docker_client: DockerClient, image='redis:latest'):
         container = docker_client.containers.create(
-            tag, publish_all_ports=True, detach=True)
+            image, publish_all_ports=True, detach=True)
         return cls(container, _auto_remove=True)
 
     @classmethod
@@ -44,7 +50,5 @@ class RedisService(SingleContainerService):
         with spinner("Fetching Redis..."):
             service = cls.from_docker(docker_client, tag=tag)
 
-        with spinner("Waiting for Redis to start..."), service.start(), \
-             service.client() as client:
-            retry(client.ping, RedisConnectionError)
+        with spinner("Waiting for Redis to start..."), service.start():
             yield service

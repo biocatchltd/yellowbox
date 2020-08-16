@@ -33,11 +33,17 @@ class RabbitMQService(SingleContainerService):
             credentials=credentials, virtual_host=self.virtual_host)
         return BlockingConnection(connection_params)
 
+    def start(self):
+        super().start()
+        conn = retry(self.connection, AMQPConnectionError)
+        conn.close()
+        return self
+
     @classmethod
-    def from_docker(cls, docker_client: DockerClient, tag='rabbitmq:latest', *,
+    def from_docker(cls, docker_client: DockerClient, image='rabbitmq:latest', *,
                     user="guest", password="guest", virtual_host="/"):
         container = docker_client.containers.create(
-            tag, publish_all_ports=True, detach=True, environment={
+            image, publish_all_ports=True, detach=True, environment={
                 'RABBITMQ_DEFAULT_USER': user,
                 'RABBITMQ_DEFAULT_PASS': password,
                 'RABBITMQ_DEFAULT_VHOST': virtual_host
@@ -54,6 +60,4 @@ class RabbitMQService(SingleContainerService):
                                       password=password, virtual_host=virtual_host)
 
         with spinner("Waiting for rabbitmq to start..."), service.start():
-            conn = retry(service.connection, AMQPConnectionError)
-            conn.close()
             yield service
