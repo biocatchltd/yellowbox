@@ -1,15 +1,19 @@
-from abc import ABC, abstractmethod
-from typing import Dict, Union
+from abc import ABCMeta, abstractmethod
 
 from docker.models.containers import Container
 from docker.models.networks import Network
+from yellowbox.containers import is_alive, _DEFAULT_TIMEOUT
 
-from yellowbox.utils import LoggingIterableAdapter, get_container_ports, get_container_aliases
 
+class YellowService(metaclass=ABCMeta):
+    """"""
 
-class YellowService(ABC):
     @abstractmethod
-    def reload(self):
+    def start(self):
+        return self
+
+    @abstractmethod
+    def stop(self):
         pass
 
     @abstractmethod
@@ -17,44 +21,42 @@ class YellowService(ABC):
         pass
 
     @abstractmethod
-    def kill(self):
+    def connect(self, network: Network):
         pass
 
     @abstractmethod
-    def connect(self, network: Network, **kwargs):
+    def disconnect(self, network: Network):
         pass
 
-    @abstractmethod
-    def disconnect(self, network: Network, **kwargs):
-        pass
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+        return False
 
 
-class YellowContainer(YellowService):
-    def __init__(self, container: Container):
-        self.container = container
-        self.stdout = LoggingIterableAdapter(self.container.logs(stream=True, stdout=True, stderr=False))
-        self.stderr = LoggingIterableAdapter(self.container.logs(stream=True, stdout=False, stderr=True))
-        self.logs = self.container.logs(stream=True)
+class SingleContainerService(YellowService):
+    container: Container
 
-    def reload(self):
+    def connect(self, network: Network):
+        network.connect(self.container)
+        self.container.reload()
+
+    def disconnect(self, network: Network):
+        network.disconnect(self.container)
         self.container.reload()
 
     def is_alive(self):
-        self.reload()
-        return self.container.status.lower() not in ('exited', 'stopped')
+        return is_alive(self.container)
 
-    def kill(self, signal='SIGKILL'):
-        self.container.kill(signal)
+    def start(self):
+        self.container.start()
+        self.container.reload()
+        return self  # For fluent interface, i.e. "with service.start():"
 
-    def get_exposed_ports(self) -> Dict[int, int]:
-        self.reload()
-        return get_container_ports(self.container)
-
-    def connect(self, network: Network, **kwargs):
-        network.connect(self.container, **kwargs)
-        self.reload()
-        return get_container_aliases(self.container, network)
-
-
-    def disconnect(self, network: Network, **kwargs):
-        return network.disconnect(self.container, **kwargs)
+    def stop(self):
+        if self.is_alive():
+            self.container.kill()
+            self.container.wait(timeout=_DEFAULT_TIMEOUT)
+            self.container.reload()

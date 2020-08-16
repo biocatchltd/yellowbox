@@ -1,15 +1,13 @@
-import json
-from collections import deque
-from concurrent.futures.thread import ThreadPoolExecutor
-from contextlib import suppress
+from contextlib import AbstractContextManager, contextmanager, nullcontext, suppress
 from time import sleep
-from typing import Callable, TypeVar, Union, Iterable, Dict, Any, Deque, Iterator, Collection
+from typing import Callable, Iterable, TypeVar, Union
 
-from docker.models.containers import Container
-from docker.models.networks import Network
+from yaspin import yaspin
 
 _T = TypeVar('_T')
 _ExcType = TypeVar('_ExcType', bound=Exception)
+_SPINNER_FAILMSG = "💥 "
+_SPINNER_SUCCESSMSG = "✅ "
 
 
 def retry(func: Callable[[], _T],
@@ -42,9 +40,7 @@ def retry(func: Callable[[], _T],
         exceptions = (exceptions,)
 
     # Last attempt is outside loop
-    attempts -= 1
-
-    while attempts:
+    for _ in range(attempts - 1):
         with suppress(*exceptions):
             return func()
         sleep(interval)
@@ -52,97 +48,18 @@ def retry(func: Callable[[], _T],
     return func()
 
 
-class LoggingIterableAdapter(Iterable[Dict[str, Any]]):
-    """An adapter to convert blocking docker logs to non-blocking message streams, not thread-safe
-    """
-
-    # if the iterator takes more than this amount of time, we're gonna say there's no log messages to read
-    nonblocking_timeout = 0.1
-
-    def __init__(self, source: Iterator[bytes]):
-        self.source = source
-        self.pending: Deque[Dict[str, Any]] = deque()
-        self.executor = ThreadPoolExecutor(1)
-        self.done = False
-
-    def _load(self):
-        if self.done:
-            raise StopIteration
+@contextmanager
+def _spinner(text):
+    with yaspin(text=text) as spinner:
         try:
-            message_bundle = next(self.source)
-        except StopIteration:
-            self.done = True
+            yield
+        except Exception:
+            spinner.fail(_SPINNER_FAILMSG)
             raise
-        else:
-            messages = str(message_bundle, 'utf-8').splitlines()
-            self.pending.extend(
-                json.loads(msg) for msg in messages
-            )
-
-    def read(self):
-        if not self.pending:
-            self._load()
-        return self.pending.popleft()
-
-    def read_nonblocking(self):
-        if self.pending:
-            return self.pending.popleft()
-        self.executor.submit(self._load)
-        sleep(self.nonblocking_timeout)
-        if self.done:
-            raise StopIteration
-        if not self.pending:
-            return None
-        return self.pending.popleft()
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        return self.read()
+        spinner.ok(_SPINNER_SUCCESSMSG)
 
 
-def get_container_ports(container: Container) -> Dict[int, int]:
-    """Get the exposed (published) ports of a given container
-
-    Useful for when the ports are assigned dynamically.
-
-    Example:
-        >>> c = Container("redis:latest", publish_all_ports=True)
-        >>> c.run()
-        >>> c.reload()  # Must reload to get updated config.
-        >>> ports = get_container_ports(c)
-        >>> ports[6379]  # Random port assigned to 6379 inside the container
-        1234
-
-    Note: Container must be up and running. To make sure data is up-to-date,
-    make sure you .reload() the container before attempting to fetch the ports.
-
-    Args:
-        container: Docker container.
-
-    Returns:
-        Port mapping {internal_container_port: external_host_port}.
-    """
-    # todo this probably won't work for multi-network containers
-    ports = {}
-    portmap = container.attrs["NetworkSettings"]["Ports"]
-    for port, external_address in portmap.items():
-        # Filter out unpublished ports.
-        if external_address is None:
-            continue
-
-        assert len(external_address) > 0
-
-        external_port = int(external_address[0]["HostPort"])
-
-        port, *_ = port.partition("/")  # Strip out type (tcp, udp, ...)
-        ports[int(port)] = int(external_port)
-
-    return ports
-
-
-def get_container_aliases(container: Container, network: Union[str, Network]) -> Collection[str]:
-    if not isinstance(network, str):
-        network = network.name
-    return container.attrs["NetworkSettings"]["Networks"][network]["Aliases"]
+def _get_spinner(fake=False) -> Callable[[str], AbstractContextManager]:
+    if fake:
+        return lambda text: nullcontext()
+    return _spinner

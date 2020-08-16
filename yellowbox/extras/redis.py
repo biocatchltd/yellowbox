@@ -1,35 +1,50 @@
 from contextlib import contextmanager
+from typing import Type, TypeVar
 
 from docker import DockerClient
-from redis import Redis, ConnectionError as RedisConnectionError
+from docker.models.containers import Container
+from redis import ConnectionError as RedisConnectionError, Redis
 
-from yellowbox.context_managers import get_spinner, killing
-from yellowbox.utils import retry
-from yellowbox.service import YellowContainer
+from yellowbox.containers import get_ports
+from yellowbox.service import SingleContainerService
+from yellowbox.utils import _get_spinner, retry
 
 REDIS_DEFAULT_PORT = 6379
+_T = TypeVar("_T")
 
 
-class YellowRedis(YellowContainer):
+class RedisService(SingleContainerService):
+    def __init__(self, container: Container, *, _auto_remove=False):
+        self.container = container
+        self._auto_remove = _auto_remove
+
     def client_port(self):
-        return self.get_exposed_ports()[REDIS_DEFAULT_PORT]
+        return get_ports(self.container)[REDIS_DEFAULT_PORT]
 
-    def client(self, connection_cls=Redis):
+    def client(self, *, client_cls=Redis):
         port = self.client_port()
-        return connection_cls(host='localhost', port=port)
+        return client_cls(host='localhost', port=port)
+
+    def stop(self):
+        super().stop()
+        if self._auto_remove:
+            self.container.remove()
+
+    @classmethod
+    def from_docker(cls, docker_client: DockerClient, tag='redis:latest'):
+        container = docker_client.containers.create(
+            tag, publish_all_ports=True, detach=True)
+        return cls(container, _auto_remove=True)
 
     @classmethod
     @contextmanager
-    def run(cls, docker_client: DockerClient, tag='latest', spinner=True) -> 'YellowRedis':
-        spinner = get_spinner(spinner)
+    def run(cls: Type[_T], docker_client: DockerClient,
+            tag: str = 'redis:latest', spinner: bool = True) -> _T:
+        spinner = _get_spinner(spinner)
         with spinner("Fetching Redis..."):
-            container = docker_client.containers.run(f"redis:{tag}", detach=True, publish_all_ports=True)
+            service = cls.from_docker(docker_client, tag=tag)
 
-        with killing(container, signal='SIGTERM'):
-            self = cls(container)
-            with self.client() as client:
-                # Attempt pinging redis until it's up and running
-                with spinner("Waiting for Redis to start..."):
-                    retry(client.ping, RedisConnectionError)
-
-            yield self
+        with spinner("Waiting for Redis to start..."), service.start(), \
+             service.client() as client:
+            retry(client.ping, RedisConnectionError)
+            yield service

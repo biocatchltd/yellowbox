@@ -2,8 +2,6 @@ from contextlib import contextmanager
 
 from docker import DockerClient
 
-from yellowbox.context_managers import get_spinner, killing
-from yellowbox.service import YellowContainer
 
 LOGSTASH_DEFAULT_PORT = 5959
 
