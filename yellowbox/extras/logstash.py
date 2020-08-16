@@ -1,21 +1,41 @@
 from contextlib import contextmanager
 
 from docker import DockerClient
+from docker.models.containers import Container
 
+from yellowbox.containers import get_ports
+from yellowbox.service import SingleContainerService
+from yellowbox.utils import _get_spinner
 
 LOGSTASH_DEFAULT_PORT = 5959
 
 
-class YellowLogstash(YellowContainer):
+class YellowLogstash(SingleContainerService):
+    def __init__(self, container: Container, *, _auto_remove=False):
+        super().__init__(container)
+        self._auto_remove = _auto_remove
+
     def client_port(self):
-        return self.get_exposed_ports()[LOGSTASH_DEFAULT_PORT]
+        return get_ports(self.container)[LOGSTASH_DEFAULT_PORT]
+
+    @classmethod
+    def from_docker(cls, docker_client: DockerClient, image='logstash:latest'):
+        container = docker_client.containers.create(
+            image, publish_all_ports=True, detach=True)
+        return cls(container, _auto_remove=True)
+
+    def stop(self):
+        super().stop()
+        if self._auto_remove:
+            self.container.remove()
 
     @classmethod
     @contextmanager
-    def run(cls, docker_client: DockerClient, tag, spinner=True) -> 'YellowLogstash':
-        spinner = get_spinner(spinner)
+    def run(cls, docker_client: DockerClient, image='logstash:latest',
+            spinner=True) -> 'YellowLogstash':
+        spinner = _get_spinner(spinner)
         with spinner("Fetching logstash..."):
-            container = docker_client.containers.run(f"logstash:{tag}", detach=True, publish_all_ports=True)
+            service = cls.from_docker(docker_client, image)
 
-        with killing(container, signal='SIGTERM'):
-            yield cls(container)
+        with service.start():
+            yield service

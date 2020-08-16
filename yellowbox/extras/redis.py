@@ -15,7 +15,7 @@ _T = TypeVar("_T")
 
 class RedisService(SingleContainerService):
     def __init__(self, container: Container, *, _auto_remove=False):
-        self.container = container
+        super().__init__(container)
         self._auto_remove = _auto_remove
 
     def client_port(self):
@@ -50,5 +50,8 @@ class RedisService(SingleContainerService):
         with spinner("Fetching Redis..."):
             service = cls.from_docker(docker_client, tag=tag)
 
-        with spinner("Waiting for Redis to start..."), service.start():
+        with spinner("Waiting for Redis to start..."):
+            service.start()
+
+        with service:
             yield service

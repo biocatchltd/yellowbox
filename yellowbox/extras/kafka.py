@@ -1,6 +1,7 @@
 from docker.models.networks import Network
 
 from yellowbox.containers import get_ports
+from yellowbox.networks import temp_network
 
 
 @@ -0,0 +1,88 @@
@@ -20,7 +21,7 @@ KAFKA_DEFAULT_PORT = 9092
 
 class YellowKafka(YellowService):
     def __init__(self, zk_container: Container, broker_container: Container,
-                 network: Network ,*, _auto_remove: bool = False) -> None:
+                 *, _auto_remove: bool = False) -> None:
         super().__init__()
         self.zookeeper = zk_container
         self.broker = broker_container
@@ -55,8 +56,14 @@ class YellowKafka(YellowService):
                and self.broker.status.lower() not in ('exited', 'stopped')
 
     def start(self):
+        self.broker.start()
         self.zookeeper.start()
-        self.container.reload()
+        self.broker.reload()
+        self.zookeeper.reload()
+        consumer = retry(self.consumer,
+                         (KafkaError, ConnectionError, ValueError, KeyError),
+                         attempts=15)
+        consumer.close()
         return self
 
     def stop(self):
@@ -74,39 +81,18 @@ class YellowKafka(YellowService):
         network.disconnect(self.broker)
 
     @classmethod
-    def from_docker(cls, docker_client: DockerClient, tag='latest'):
-        zk_container = docker_client.containers.create(
-            f"confluentinc/cp-zookeeper:{tag}", publish_all_ports=True, detach=True,                 environment={
-                    'ZOOKEEPER_CLIENT_PORT': '2181',
-                    'ZOOKEEPER_TICK_TIME': '2000'
-                })
-
-        b_container = docker_client.containers.create(
-            f"confluentinc/cp-kafka:{tag}",
-            ports={'9092': ('0.0.0.0', 9092)},
-            publish_all_ports=True,
-            detach=True,
-            environment={
-                "KAFKA_ADVERTISED_HOST_NAME": "localhost",
-                'KAFKA_ADVERTISED_LISTENERS': 'PLAINTEXT://localhost:9092',
-                "KAFKA_ZOOKEEPER_CONNECT": "zk/2181",
-                "KAFKA_OPTS": "-Djava.net.preferIPv4Stack=True"
-            })
-        return cls(zk_container, b_container, _auto_remove=True)
-
-    @classmethod
     @contextmanager
     def run(cls, docker_client: DockerClient, tag='latest', spinner=True) -> ContextManager['YellowKafka']:
         spinner = _get_spinner(spinner)
         with spinner("Fetching kafka..."):
-            zk_container = docker_client.containers.run(
+            zk_container = docker_client.containers.create(
                 f"confluentinc/cp-zookeeper:{tag}", detach=True,
                 publish_all_ports=True,
                 environment={
                     'ZOOKEEPER_CLIENT_PORT': '2181',
                     'ZOOKEEPER_TICK_TIME': '2000'
                 })
-            b_container = docker_client.containers.run(
+            b_container = docker_client.containers.create(
                 f"confluentinc/cp-kafka:{tag}",
                 ports={'9092': ('0.0.0.0', 9092)},
                 publish_all_ports=True,
@@ -117,14 +103,16 @@ class YellowKafka(YellowService):
                     "KAFKA_ZOOKEEPER_CONNECT": "zk/2181",
                     "KAFKA_OPTS": "-Djava.net.preferIPv4Stack=True"
                 })
-        with YellowNetwork.create(docker_client) as network, \
-                network.connect(zk_container, aliases=["zk"]), network.connect(b_container), \
-                killing(zk_container), killing(b_container):
-            self = cls(zk_container, b_container, network)
+
+        with temp_network(docker_client) as network:
+            network.connect(zk_container, aliases=["zk"])
+            network.connect(b_container)
+            service = cls(zk_container, b_container, _auto_remove=True)
+
             # Attempt pinging redis until it's up and running
             with spinner("Waiting for kafka to start..."):
-                with retry(self.consumer, (KafkaError, ConnectionError, ValueError, KeyError), attempts=15):
-                    pass
+                service.start()
 
-            yield self
+            with service:
+                yield service
 

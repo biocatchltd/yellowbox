@@ -35,7 +35,8 @@ class YellowService(metaclass=ABCMeta):
 
 
 class SingleContainerService(YellowService):
-    container: Container
+    def __init__(self, container: Container):
+        self.container = container
 
     def connect(self, network: Network):
         network.connect(self.container)
