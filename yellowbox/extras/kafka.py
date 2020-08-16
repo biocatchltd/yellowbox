@@ -4,7 +4,6 @@ from yellowbox.containers import get_ports
 from yellowbox.networks import temp_network
 
 
-@@ -0,0 +1,88 @@
 from typing import ContextManager, cast
 from contextlib import contextmanager, closing
 

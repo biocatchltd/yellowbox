@@ -45,10 +45,10 @@ class RedisService(SingleContainerService):
     @classmethod
     @contextmanager
     def run(cls: Type[_T], docker_client: DockerClient,
-            tag: str = 'redis:latest', spinner: bool = True) -> _T:
+            image: str = 'redis:latest', spinner: bool = True) -> _T:
         spinner = _get_spinner(spinner)
         with spinner("Fetching Redis..."):
-            service = cls.from_docker(docker_client, tag=tag)
+            service = cls.from_docker(docker_client, image=image)
 
         with spinner("Waiting for Redis to start..."):
             service.start()

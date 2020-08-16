@@ -10,6 +10,7 @@ from yellowbox.service import SingleContainerService
 from yellowbox.utils import _get_spinner, retry
 
 RABBIT_DEFAULT_PORT = 5672
+RABBIT_HTTP_API_PORT = 15672
 
 _T = TypeVar("_T")
 
@@ -58,14 +59,14 @@ class RabbitMQService(SingleContainerService):
 
     @classmethod
     @contextmanager
-    def run(cls: Type[_T], docker_client: DockerClient, tag='rabbitmq:latest', *, spinner=True,
+    def run(cls: Type[_T], docker_client: DockerClient, image='rabbitmq:latest', *, spinner=True,
             user="guest", password="guest", virtual_host="/") -> _T:
         spinner = _get_spinner(spinner)
         with spinner("Fetching rabbitmq..."):
-            service = cls.from_docker(docker_client, tag=tag, user=user,
+            service = cls.from_docker(docker_client, image=image, user=user,
                                       password=password, virtual_host=virtual_host)
 
-        with spinner("Waiting for rabbitmq to start...")
+        with spinner("Waiting for rabbitmq to start..."):
             service.start()
 
         with service:

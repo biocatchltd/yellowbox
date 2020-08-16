@@ -5,6 +5,9 @@ from pytest import mark
 
 
 from yellowbox.extras.rabbit_mq import RabbitMQService, RABBIT_HTTP_API_PORT
+from yellowbox.networks import temp_network
+
+
 @mark.parametrize('spinner', [True, False])
 def test_make_rabbit(docker_client, spinner):
     with RabbitMQService.run(docker_client, spinner=spinner):
@@ -25,8 +28,8 @@ def test_connection_works(docker_client, tag):
 
 
 def test_connection_works_sibling_network(docker_client):
-    with YellowNetwork.create(docker_client) as network:
-        with YellowRabbitMq.run(docker_client, tag="management-alpine") as rabbit, \
+    with temp_network(docker_client) as network:
+        with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine") as rabbit, \
                 network.connect(rabbit) as aliases:
             url = f"http://{aliases[0]}:{RABBIT_HTTP_API_PORT}/api/vhosts"
             container = docker_client.containers.create(
@@ -40,7 +43,7 @@ def test_connection_works_sibling_network(docker_client):
 
 
 def test_connection_works_sibling(docker_client):
-    with YellowRabbitMq.run(docker_client, tag="management-alpine") as rabbit:
+    with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine") as rabbit:
         api_port = rabbit.get_exposed_ports()[RABBIT_HTTP_API_PORT]
         url = f"http://host.docker.internal:{api_port}/api/vhosts"
         container = docker_client.containers.create(

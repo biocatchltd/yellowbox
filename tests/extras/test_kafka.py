@@ -1,8 +1,8 @@
 from kafka import TopicPartition
 from pytest import mark
 
-from yellowbox import YellowNetwork
 from yellowbox.extras.kafka import YellowKafka
+from yellowbox.networks import temp_network
 
 
 @mark.parametrize('spinner', [True, False])
@@ -30,7 +30,7 @@ def test_kafka_works(docker_client):
 
 
 def test_kafka_sibling_network(docker_client):
-    with YellowNetwork.create(docker_client) as network, \
+    with temp_network(docker_client) as network, \
             YellowKafka.run(docker_client, spinner=False) as service, \
             network.connect(service.broker) as alias:
         container = docker_client.containers.create("confluentinc/cp-kafkacat",
