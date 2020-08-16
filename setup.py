@@ -7,10 +7,11 @@ setup(
     version='0.0.1',
     packages=['yellowbox', 'yellowbox.fixtures', 'yellowbox.specialized'],
     python_requires='>=3.7',
-    requires=['docker'],
+    requires=['docker', 'yaspin'],
     extras_require={
-        'pytest': ['pytest', 'yaspin'],
-        'redis': ['redis']
+        'testing': ['pytest'],
+        'redis': ['redis'],
+        'rabbit': ['pika'],
     },
     license='MIT License',
     long_description=open('README.md').read(),
