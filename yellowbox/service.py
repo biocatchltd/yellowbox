@@ -20,14 +20,6 @@ class YellowService(ABC):
     def kill(self):
         pass
 
-    @abstractmethod
-    def connect(self, network: Network, **kwargs):
-        pass
-
-    @abstractmethod
-    def disconnect(self, network: Network, **kwargs):
-        pass
-
 
 class YellowContainer(YellowService):
     def __init__(self, container: Container):

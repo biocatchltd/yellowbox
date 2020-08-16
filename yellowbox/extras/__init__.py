@@ -12,3 +12,8 @@ try:
     from yellowbox.extras.rabbit_mq import YellowRabbitMq
 except ImportError:
     pass
+
+try:
+    from yellowbox.extras.kafka import YellowKafka
+except ImportError:
+    pass

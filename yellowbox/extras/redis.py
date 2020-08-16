@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from typing import ContextManager
 
 from docker import DockerClient
 from redis import Redis, ConnectionError as RedisConnectionError
@@ -20,16 +21,16 @@ class YellowRedis(YellowContainer):
 
     @classmethod
     @contextmanager
-    def run(cls, docker_client: DockerClient, tag='latest', spinner=True) -> 'YellowRedis':
+    def run(cls, docker_client: DockerClient, tag='latest', spinner=True) -> ContextManager['YellowRedis']:
         spinner = get_spinner(spinner)
-        with spinner("Fetching Redis..."):
+        with spinner("Fetching redis..."):
             container = docker_client.containers.run(f"redis:{tag}", detach=True, publish_all_ports=True)
 
         with killing(container, signal='SIGTERM'):
             self = cls(container)
             with self.client() as client:
                 # Attempt pinging redis until it's up and running
-                with spinner("Waiting for Redis to start..."):
+                with spinner("Waiting for redis to start..."):
                     retry(client.ping, RedisConnectionError)
 
             yield self

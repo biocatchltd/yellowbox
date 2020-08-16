@@ -48,6 +48,7 @@ def retry(func: Callable[[], _T],
         with suppress(*exceptions):
             return func()
         sleep(interval)
+        attempts -= 1
 
     return func()
 

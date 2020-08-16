@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from typing import ContextManager
 
 from docker import DockerClient
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
@@ -10,6 +11,7 @@ from yellowbox.service import YellowContainer
 
 RABBIT_DEFAULT_PORT = 5672
 RABBIT_HTTP_API_PORT = 15672
+
 
 class YellowRabbitMq(YellowContainer):
     def __init__(self, container, user, password, vhost):
@@ -30,7 +32,7 @@ class YellowRabbitMq(YellowContainer):
     @classmethod
     @contextmanager
     def run(cls, docker_client: DockerClient, tag='latest', spinner=True,
-            user="guest", password="guest", vhost_name="vhost") -> 'YellowRabbitMq':
+            user="guest", password="guest", vhost_name="vhost") -> ContextManager['YellowRabbitMq']:
         spinner = get_spinner(spinner)
         with spinner("Fetching rabbitmq..."):
             container = docker_client.containers.run(f"rabbitmq:{tag}", detach=True, publish_all_ports=True,

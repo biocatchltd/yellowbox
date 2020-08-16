@@ -1,4 +1,4 @@
-from typing import Union, Optional, Mapping, Any
+from typing import Union, Optional, Mapping, Any, ContextManager, List
 from contextlib import contextmanager
 from uuid import uuid4
 
@@ -7,7 +7,8 @@ from docker.models.containers import Container
 from docker.models.networks import Network
 
 from yellowbox.context_managers import disconnecting
-from yellowbox.service import YellowService
+from yellowbox.service import YellowContainer
+from yellowbox.utils import get_container_aliases
 
 
 class YellowNetwork:
@@ -15,13 +16,13 @@ class YellowNetwork:
         self.network = network
 
     @contextmanager
-    def connect(self, container: Union[str, Container, YellowService], *,
-                disconnect_kwargs: Optional[Mapping[str, Any]] = None, **connect_kwargs):
+    def connect(self, container: Union[str, Container, YellowContainer], *,
+                disconnect_kwargs: Optional[Mapping[str, Any]] = None, **connect_kwargs) -> ContextManager[List[str]]:
         # todo yield something?
         if disconnect_kwargs is None:
             disconnect_kwargs = {}
 
-        if isinstance(container, YellowService):
+        if isinstance(container, YellowContainer):
             try:
                 yield container.connect(self.network, **connect_kwargs)
             finally:
@@ -29,7 +30,8 @@ class YellowNetwork:
         else:
             self.network.connect(container, **connect_kwargs)
             try:
-                yield
+                container.reload()
+                yield get_container_aliases(container, self.network)
             finally:
                 self.network.disconnect(container, **disconnect_kwargs)
 
@@ -41,7 +43,7 @@ class YellowNetwork:
 
     @classmethod
     @contextmanager
-    def create(cls, docker_client: DockerClient, name=None, *args, **kwargs) -> 'YellowNetwork':
+    def create(cls, docker_client: DockerClient, name=None, *args, **kwargs) -> ContextManager['YellowNetwork']:
         if name is None:
             name = f"anonymous-network-{uuid4()}"
         network = docker_client.networks.create(name, *args, **kwargs)
