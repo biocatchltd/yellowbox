@@ -12,6 +12,7 @@ setup(
         'testing': ['pytest'],
         'redis': ['redis'],
         'rabbit': ['pika'],
+        'kafka': ['kafka-python']
     },
     license='MIT License',
     long_description=open('README.md').read(),
