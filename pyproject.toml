@@ -3,6 +3,9 @@ name = "yellowbox"
 version = "0.0.2a"
 description = ""
 authors = ["biocatch ltd"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/biocatchltd/yellowbox"
 
 [tool.poetry.dependencies]
 python = "^3.7"
