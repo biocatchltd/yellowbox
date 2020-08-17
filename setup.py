@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='yellowbox',
@@ -6,7 +6,7 @@ setup(
     url="https://github.com/biocatchltd/yellowbox",
     version='0.0.1',
     packages=['yellowbox', 'yellowbox.extras'],
-    python_requires='>=3.7',
+    python_require='>=3.7',
     requires=['docker', 'yaspin'],
     extras_require={
         'testing': ['pytest'],
