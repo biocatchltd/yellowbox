@@ -1,8 +1,9 @@
 from abc import ABCMeta, abstractmethod
+from typing import Sequence
 
 from docker.models.containers import Container
 from docker.models.networks import Network
-from yellowbox.containers import is_alive, _DEFAULT_TIMEOUT
+from yellowbox.containers import is_alive, _DEFAULT_TIMEOUT, get_aliases
 
 
 class YellowService(metaclass=ABCMeta):
@@ -19,7 +20,7 @@ class YellowService(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def connect(self, network: Network):
+    def connect(self, network: Network)->Sequence[str]:
         pass
 
     @abstractmethod
@@ -41,6 +42,7 @@ class SingleContainerService(YellowService):
     def connect(self, network: Network):
         network.connect(self.container)
         self.container.reload()
+        return get_aliases(self.container, network)
 
     def disconnect(self, network: Network):
         network.disconnect(self.container)

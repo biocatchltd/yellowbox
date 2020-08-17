@@ -6,8 +6,8 @@ from docker import DockerClient
 from docker.models.networks import Network
 from docker.models.containers import Container
 
+from yellowbox.containers import get_aliases
 from yellowbox.service import YellowService
-
 
 _T = TypeVar("_T")
 _NT = TypeVar("_NT", bound=Network)
@@ -54,11 +54,13 @@ def connect(network: Network, obj: Union[Container, YellowService]):
         Context manager for handling the connection.
     """
     if isinstance(obj, YellowService):
-        obj.connect(network)
+        ret = obj.connect(network)
     else:
         network.connect(obj)
+        obj.reload()
+        ret = get_aliases(obj, network)
     try:
-        yield
+        yield ret
     finally:
         if isinstance(obj, YellowService):
             obj.disconnect(network)

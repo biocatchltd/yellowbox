@@ -1,8 +1,7 @@
 from docker.models.networks import Network
 
-from yellowbox.containers import get_ports
+from yellowbox.containers import get_ports, get_aliases
 from yellowbox.networks import temp_network
-
 
 from typing import ContextManager, cast
 from contextlib import contextmanager, closing
@@ -59,10 +58,10 @@ class YellowKafka(YellowService):
         self.zookeeper.start()
         self.broker.reload()
         self.zookeeper.reload()
-        consumer = retry(self.consumer,
-                         (KafkaError, ConnectionError, ValueError, KeyError),
-                         attempts=15)
-        consumer.close()
+        with retry(self.consumer,
+                   (KafkaError, ConnectionError, ValueError, KeyError),
+                   attempts=15):
+            pass
         return self
 
     def stop(self):
@@ -75,9 +74,12 @@ class YellowKafka(YellowService):
 
     def connect(self, network: Network):
         network.connect(self.broker)
+        self.broker.reload()
+        return get_aliases(self.broker, network)
 
     def disconnect(self, network: Network):
         network.disconnect(self.broker)
+        self.broker.reload()
 
     @classmethod
     @contextmanager
@@ -114,4 +116,3 @@ class YellowKafka(YellowService):
 
             with service:
                 yield service
-

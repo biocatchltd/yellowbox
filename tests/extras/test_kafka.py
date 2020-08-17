@@ -1,8 +1,9 @@
 from kafka import TopicPartition
 from pytest import mark
 
+from yellowbox.containers import get_aliases
 from yellowbox.extras.kafka import YellowKafka
-from yellowbox.networks import temp_network
+from yellowbox.networks import temp_network, connect
 
 
 @mark.parametrize('spinner', [True, False])
@@ -32,10 +33,10 @@ def test_kafka_works(docker_client):
 def test_kafka_sibling_network(docker_client):
     with temp_network(docker_client) as network, \
             YellowKafka.run(docker_client, spinner=False) as service, \
-            network.connect(service.broker) as alias:
+            connect(network, service) as alias:
         container = docker_client.containers.create("confluentinc/cp-kafkacat",
                                                     f"kafkacat -b {alias[0]}:9092 -L")
-        with network.connect(container):
+        with connect(network, container):
             container.start()
             return_status = container.wait()
             assert return_status["StatusCode"] == 0
