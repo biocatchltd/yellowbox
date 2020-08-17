@@ -31,8 +31,6 @@ jobs:
     - name: Install dependencies & Tests
       run: |
         pip install poetry
-        echo a
-        ls ..
-        echo b
-        poetry update
+        poetry update --lock
+        poetry install --extras testing redis rabbit kafka
         poetry run python -m pytest
