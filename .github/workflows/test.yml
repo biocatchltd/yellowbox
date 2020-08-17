@@ -33,8 +33,7 @@ jobs:
         pip install poetry
         poetry update --lock
         poetry install -E redis -E rabbit -E kafka
-        sudo apt-get update
-        sudo apt-get install docker-ce
+        sudo sh get-docker.sh
     - name: Tests
       run: |
         poetry run python -m pytest
