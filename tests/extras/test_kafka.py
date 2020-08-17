@@ -2,18 +2,18 @@ from kafka import TopicPartition
 from pytest import mark
 
 from yellowbox.containers import get_aliases
-from yellowbox.extras.kafka import YellowKafka
+from yellowbox.extras.kafka import KafkaService
 from yellowbox.networks import temp_network, connect
 
 
 @mark.parametrize('spinner', [True, False])
 def test_make_kafka(docker_client, spinner):
-    with YellowKafka.run(docker_client, spinner=spinner):
+    with KafkaService.run(docker_client, spinner=spinner):
         pass
 
 
 def test_kafka_works(docker_client):
-    with YellowKafka.run(docker_client, spinner=False) as service:
+    with KafkaService.run(docker_client, spinner=False) as service:
         with service.consumer() as consumer, \
                 service.producer() as producer:
 
@@ -32,7 +32,7 @@ def test_kafka_works(docker_client):
 
 def test_kafka_sibling_network(docker_client):
     with temp_network(docker_client) as network, \
-            YellowKafka.run(docker_client, spinner=False) as service, \
+            KafkaService.run(docker_client, spinner=False) as service, \
             connect(network, service) as alias:
         container = docker_client.containers.create("confluentinc/cp-kafkacat",
                                                     f"kafkacat -b {alias[0]}:9092 -L")
@@ -43,7 +43,7 @@ def test_kafka_sibling_network(docker_client):
 
 
 def test_kafka_sibling(docker_client):
-    with YellowKafka.run(docker_client, spinner=False):
+    with KafkaService.run(docker_client, spinner=False):
         container = docker_client.containers.create("confluentinc/cp-kafkacat",
                                                     "kafkacat -b host.docker.internal:9092 -L")
         container.start()

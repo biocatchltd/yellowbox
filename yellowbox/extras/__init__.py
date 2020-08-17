@@ -9,10 +9,10 @@ except ImportError:
     pass
 
 try:
-    from yellowbox.extras.logstash import YellowLogstash
+    from yellowbox.extras.logstash import LogstashService
 except ImportError:
     pass
 try:
-    from yellowbox.extras.kafka import YellowKafka
+    from yellowbox.extras.kafka import KafkaService
 except ImportError:
     pass

@@ -10,7 +10,7 @@ from yellowbox.utils import _get_spinner
 LOGSTASH_DEFAULT_PORT = 5959
 
 
-class YellowLogstash(SingleContainerService):
+class LogstashService(SingleContainerService):
     def __init__(self, container: Container, *, _auto_remove=False):
         super().__init__(container)
         self._auto_remove = _auto_remove
@@ -32,7 +32,7 @@ class YellowLogstash(SingleContainerService):
     @classmethod
     @contextmanager
     def run(cls, docker_client: DockerClient, image='logstash:latest',
-            spinner=True) -> 'YellowLogstash':
+            spinner=True) -> 'LogstashService':
         spinner = _get_spinner(spinner)
         with spinner("Fetching logstash..."):
             service = cls.from_docker(docker_client, image)

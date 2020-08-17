@@ -3,7 +3,7 @@ from time import sleep
 from pika import BlockingConnection
 from pytest import mark
 
-from yellowbox.containers import get_aliases, get_ports
+from yellowbox.containers import get_ports
 from yellowbox.extras.rabbit_mq import RabbitMQService, RABBIT_HTTP_API_PORT
 from yellowbox.networks import temp_network, connect
 
@@ -12,6 +12,7 @@ from yellowbox.networks import temp_network, connect
 def test_make_rabbit(docker_client, spinner):
     with RabbitMQService.run(docker_client, spinner=spinner):
         pass
+
 
 @mark.parametrize('tag', ['management-alpine', 'latest'])
 def test_connection_works(docker_client, tag):
@@ -30,7 +31,7 @@ def test_connection_works(docker_client, tag):
 def test_connection_works_sibling_network(docker_client):
     with temp_network(docker_client) as network:
         with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine") as rabbit, \
-               connect(network, rabbit) as aliases:
+                connect(network, rabbit) as aliases:
             url = f"http://{aliases[0]}:{RABBIT_HTTP_API_PORT}/api/vhosts"
             container = docker_client.containers.create(
                 "byrnedo/alpine-curl", f'-u guest:guest -vvv -I "{url}" --http0.9',

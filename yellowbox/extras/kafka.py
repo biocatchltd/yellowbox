@@ -17,7 +17,7 @@ from yellowbox.service import YellowService
 KAFKA_DEFAULT_PORT = 9092
 
 
-class YellowKafka(YellowService):
+class KafkaService(YellowService):
     def __init__(self, zk_container: Container, broker_container: Container,
                  *, _auto_remove: bool = False) -> None:
         super().__init__()
@@ -83,7 +83,7 @@ class YellowKafka(YellowService):
 
     @classmethod
     @contextmanager
-    def run(cls, docker_client: DockerClient, tag='latest', spinner=True) -> ContextManager['YellowKafka']:
+    def run(cls, docker_client: DockerClient, tag='latest', spinner=True) -> ContextManager['KafkaService']:
         spinner = _get_spinner(spinner)
         with spinner("Fetching kafka..."):
             zk_container = docker_client.containers.create(
