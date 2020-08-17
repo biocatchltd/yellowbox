@@ -4,7 +4,7 @@ setup(
     name='yellowbox',
     author="biocatch ltd",
     url="https://github.com/biocatchltd/yellowbox",
-    version='0.0.1',
+    version='0.0.2a',
     packages=['yellowbox', 'yellowbox.extras'],
     python_require='>=3.7',
     requires=['docker', 'yaspin'],
@@ -14,6 +14,5 @@ setup(
         'rabbit': ['pika'],
         'kafka': ['kafka-python']
     },
-    license='MIT License',
-    long_description=open('README.md').read(),
+    license='MIT public License',
 )

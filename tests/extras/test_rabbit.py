@@ -14,9 +14,9 @@ def test_make_rabbit(docker_client, spinner):
         pass
 
 
-@mark.parametrize('tag', ['management-alpine', 'latest'])
+@mark.parametrize('tag', ['rabbitmq:management-alpine', 'rabbitmq:latest'])
 def test_connection_works(docker_client, tag):
-    with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine") as rabbit:
+    with RabbitMQService.run(docker_client, image=tag) as rabbit:
         connection: BlockingConnection
         with rabbit.connection() as connection:
             channel = connection.channel()
