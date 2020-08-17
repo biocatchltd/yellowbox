@@ -28,5 +28,5 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.ART_PASS }}
         TWINE_REPOSITORY_URL : ${{ secrets.ART_URL }}
       run: |
-        python setup.py sdist bdist_wheel
+        python setup.py sdist bdist
         twine upload dist/*
