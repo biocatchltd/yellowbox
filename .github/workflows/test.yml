@@ -30,6 +30,3 @@ jobs:
     - name: Install dependencies & Tests
       run: |
         pip install poetry
-        ls
-        poetry update
-        poetry run python -m pytest
