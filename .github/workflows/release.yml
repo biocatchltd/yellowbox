@@ -32,4 +32,6 @@ jobs:
         PYPI_PASSWORD: ${{ secrets.pypi_password }}
       run: |
         pip install poetry
+        poetry update --lock
+        poetry install -E redis -E rabbit -E kafka
         poetry publish --username=$(PYPI_USERNAME) --password=$(PYPI_PASSWORD) --build
