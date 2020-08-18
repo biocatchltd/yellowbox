@@ -1,4 +1,7 @@
 # Yellowbox
+![Test YellowBox](https://github.com/biocatchltd/yellowbox/workflows/Test%20YellowBox/badge.svg?branch=master)
+
+
 Yellowbox makes it easy to run docker containers as part of black box tests.
 ## Examples
 Say you want to run a blackbox test on a service that depends on a redis server.
