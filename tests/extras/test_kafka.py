@@ -35,7 +35,7 @@ def test_kafka_sibling_network(docker_client):
             KafkaService.run(docker_client, spinner=False) as service, \
             connect(network, service) as alias:
         container = create_and_pull(docker_client,
-                                    "confluentinc/cp-kafkacat",
+                                    "confluentinc/cp-kafkacat:latest",
                                     f"kafkacat -b {alias[0]}:9092 -L")
         with connect(network, container):
             container.start()
