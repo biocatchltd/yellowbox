@@ -18,7 +18,6 @@ kafka-python = {version="*", optional=true}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.4.3"
-pytest-cov = "^2.10"
 
 [tool.poetry.extras]
 redis = ["redis"]
