@@ -5,7 +5,7 @@ from docker import DockerClient
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.exceptions import AMQPConnectionError
 
-from yellowbox.containers import get_ports
+from yellowbox.containers import get_ports, create_and_pull
 from yellowbox.service import SingleContainerService
 from yellowbox.utils import _get_spinner, retry
 
@@ -49,8 +49,8 @@ class RabbitMQService(SingleContainerService):
     @classmethod
     def from_docker(cls, docker_client: DockerClient, image='rabbitmq:latest', *,
                     user="guest", password="guest", virtual_host="/"):
-        container = docker_client.containers.create(
-            image, publish_all_ports=True, detach=True, environment={
+        container = create_and_pull(
+            docker_client, image, publish_all_ports=True, detach=True, environment={
                 'RABBITMQ_DEFAULT_USER': user,
                 'RABBITMQ_DEFAULT_PASS': password,
                 'RABBITMQ_DEFAULT_VHOST': virtual_host

@@ -3,7 +3,7 @@ from time import sleep
 from pika import BlockingConnection
 from pytest import mark
 
-from yellowbox.containers import get_ports
+from yellowbox.containers import get_ports, create_and_pull
 from yellowbox.extras.rabbit_mq import RabbitMQService, RABBIT_HTTP_API_PORT
 from yellowbox.networks import temp_network, connect
 
@@ -33,7 +33,8 @@ def test_connection_works_sibling_network(docker_client):
         with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine") as rabbit, \
                 connect(network, rabbit) as aliases:
             url = f"http://{aliases[0]}:{RABBIT_HTTP_API_PORT}/api/vhosts"
-            container = docker_client.containers.create(
+            container = create_and_pull(
+                docker_client,
                 "byrnedo/alpine-curl", f'-u guest:guest -vvv -I "{url}" --http0.9',
                 detach=True
             )
@@ -43,11 +44,12 @@ def test_connection_works_sibling_network(docker_client):
                 assert return_status["StatusCode"] == 0
 
 
-def test_connection_works_sibling(docker_client):
+def test_connection_works_sibling(docker_client, host_ip):
     with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine") as rabbit:
         api_port = get_ports(rabbit.container)[RABBIT_HTTP_API_PORT]
-        url = f"http://host.docker.internal:{api_port}/api/vhosts"
-        container = docker_client.containers.create(
+        url = f"http://{host_ip}:{api_port}/api/vhosts"
+        container = create_and_pull(
+            docker_client,
             "byrnedo/alpine-curl", f'-u guest:guest -vvv -I "{url}" --http0.9',
             detach=True
         )

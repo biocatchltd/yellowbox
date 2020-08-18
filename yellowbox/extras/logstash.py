@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from docker import DockerClient
 from docker.models.containers import Container
 
-from yellowbox.containers import get_ports
+from yellowbox.containers import get_ports, create_and_pull
 from yellowbox.service import SingleContainerService
 from yellowbox.utils import _get_spinner
 
@@ -20,8 +20,9 @@ class LogstashService(SingleContainerService):
 
     @classmethod
     def from_docker(cls, docker_client: DockerClient, image='logstash:latest'):
-        container = docker_client.containers.create(
-            image, publish_all_ports=True, detach=True)
+        container = create_and_pull(
+            docker_client, image, publish_all_ports=True, detach=True
+        )
         return cls(container, _auto_remove=True)
 
     def stop(self):

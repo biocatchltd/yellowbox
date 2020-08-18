@@ -1,9 +1,10 @@
 from docker.models.networks import Network
 
-from yellowbox.containers import get_ports, get_aliases
+from yellowbox import connect
+from yellowbox.containers import get_ports, get_aliases, create_and_pull
 from yellowbox.networks import temp_network
 
-from typing import ContextManager, cast
+from typing import ContextManager, cast, Union, Tuple
 from contextlib import contextmanager, closing
 
 from docker import DockerClient
@@ -58,19 +59,19 @@ class KafkaService(YellowService):
         self.zookeeper.start()
         self.broker.reload()
         self.zookeeper.reload()
-        with retry(self.consumer,
-                   (KafkaError, ConnectionError, ValueError, KeyError),
+        with retry(self.consumer, (KafkaError, ConnectionError, ValueError),
                    attempts=15):
             pass
         return self
 
     def stop(self):
-        self.zookeeper.kill("SIGKILL")
-        self.broker.kill("SIGKILL")
-        self._reload()
-        if self._auto_remove:
-            self.zookeeper.remove()
-            self.broker.remove()
+        if self.is_alive():
+            self.zookeeper.kill("SIGKILL")
+            self.broker.kill("SIGKILL")
+            self._reload()
+            if self._auto_remove:
+                self.zookeeper.remove()
+                self.broker.remove()
 
     def connect(self, network: Network):
         network.connect(self.broker)
@@ -83,18 +84,27 @@ class KafkaService(YellowService):
 
     @classmethod
     @contextmanager
-    def run(cls, docker_client: DockerClient, tag='latest', spinner=True) -> ContextManager['KafkaService']:
+    def run(cls, docker_client: DockerClient, image: Union[str, Tuple[str, str]] = 'latest',
+            spinner=True, auto_remove=True) -> ContextManager['KafkaService']:
+        if isinstance(image, str):
+            zookeeper_image = f"confluentinc/cp-zookeeper:{image}"
+            broker_image = f"confluentinc/cp-kafka:{image}"
+        else:
+            zookeeper_image, broker_image = image
+
         spinner = _get_spinner(spinner)
         with spinner("Fetching kafka..."):
-            zk_container = docker_client.containers.create(
-                f"confluentinc/cp-zookeeper:{tag}", detach=True,
+            zk_container = create_and_pull(
+                docker_client,
+                zookeeper_image, detach=True,
                 publish_all_ports=True,
                 environment={
                     'ZOOKEEPER_CLIENT_PORT': '2181',
                     'ZOOKEEPER_TICK_TIME': '2000'
                 })
-            b_container = docker_client.containers.create(
-                f"confluentinc/cp-kafka:{tag}",
+            b_container = create_and_pull(
+                docker_client,
+                broker_image,
                 ports={'9092': ('0.0.0.0', 9092)},
                 publish_all_ports=True,
                 detach=True,
@@ -105,14 +115,11 @@ class KafkaService(YellowService):
                     "KAFKA_OPTS": "-Djava.net.preferIPv4Stack=True"
                 })
 
-        with temp_network(docker_client) as network:
-            network.connect(zk_container, aliases=["zk"])
-            network.connect(b_container)
-            service = cls(zk_container, b_container, _auto_remove=True)
-
-            # Attempt pinging redis until it's up and running
-            with spinner("Waiting for kafka to start..."):
-                service.start()
-
-            with service:
+        with temp_network(docker_client) as network, \
+                connect(network, zk_container, aliases=["zk"]), \
+                connect(network, b_container):
+            with cls(zk_container, b_container, _auto_remove=auto_remove) as service:
+                # Attempt pinging redis until it's up and running
+                with spinner("Waiting for kafka to start..."):
+                    service.start()
                 yield service

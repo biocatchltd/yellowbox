@@ -1,8 +1,11 @@
 from contextlib import contextmanager
 from typing import Collection, Dict, Generator, TypeVar, Union, Sequence
 
+from docker import DockerClient
+from docker.errors import ImageNotFound
 from docker.models.containers import Container
 from docker.models.networks import Network
+from requests import HTTPError
 
 _DEFAULT_TIMEOUT = 10
 
@@ -88,3 +91,19 @@ def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT,
         if is_alive(container):
             container.kill(signal)
             container.wait(timeout=timeout)
+
+
+def create_and_pull(docker_client: DockerClient, image, command=None, **kwargs) -> Container:
+    try:
+        return docker_client.containers.create(image=image, command=command, **kwargs)
+    except ImageNotFound:
+        docker_client.images.pull(image, platform=None)
+        return docker_client.containers.create(image=image, command=command, **kwargs)
+
+
+def is_removed(container: Container):
+    try:
+        container.reload()
+    except HTTPError:
+        return True
+    return False
