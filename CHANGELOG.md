@@ -11,6 +11,7 @@
 * Project now uses poetry instead of setup.py
 * `YellowKafka` has been renamed to `KafkaService`
 * `YellowLogstash` has been renamed to `LogstashService`
+* extra dependencies are now starred to increase compatibility.
 ### Fixed
 * Bug where tests failed on linux because linux doesn't have `host.docker.internal`. Linux now uses IP `172.17.0.1` to target host.
 * Bug where services would fail if trying to run a non-pulled image.
