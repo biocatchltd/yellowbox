@@ -32,7 +32,8 @@ class RabbitMQService(SingleContainerService):
         credentials = PlainCredentials(self.user, self.password)
         connection_params = ConnectionParameters(
             'localhost', self.connection_port(),
-            credentials=credentials, virtual_host=self.virtual_host)
+            credentials=credentials, virtual_host=self.virtual_host
+        )
         return BlockingConnection(connection_params)
 
     def start(self):
@@ -55,7 +56,7 @@ class RabbitMQService(SingleContainerService):
                 'RABBITMQ_DEFAULT_PASS': password,
                 'RABBITMQ_DEFAULT_VHOST': virtual_host
             })
-        return cls(container, _auto_remove=True)
+        return cls(container, user=user, password=password, virtual_host=virtual_host, _auto_remove=True)
 
     @classmethod
     @contextmanager
@@ -66,8 +67,8 @@ class RabbitMQService(SingleContainerService):
             service = cls.from_docker(docker_client, image=image, user=user,
                                       password=password, virtual_host=virtual_host)
 
-        with spinner("Waiting for rabbitmq to start..."):
-            service.start()
-
         with service:
+            with spinner("Waiting for rabbitmq to start..."):
+                service.start()
+
             yield service

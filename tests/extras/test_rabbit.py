@@ -15,8 +15,9 @@ def test_make_rabbit(docker_client, spinner):
 
 
 @mark.parametrize('tag', ['rabbitmq:management-alpine', 'rabbitmq:latest'])
-def test_connection_works(docker_client, tag):
-    with RabbitMQService.run(docker_client, image=tag) as rabbit:
+@mark.parametrize('vhost', ["/", "guest-vhost"])
+def test_connection_works(docker_client, tag, vhost):
+    with RabbitMQService.run(docker_client, image=tag, virtual_host=vhost) as rabbit:
         connection: BlockingConnection
         with rabbit.connection() as connection:
             channel = connection.channel()
@@ -28,9 +29,10 @@ def test_connection_works(docker_client, tag):
             assert body == b'hi there'
 
 
-def test_connection_works_sibling_network(docker_client):
+@mark.parametrize('vhost', ["/", "guest-vhost"])
+def test_connection_works_sibling_network(docker_client, vhost):
     with temp_network(docker_client) as network:
-        with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine") as rabbit, \
+        with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine", virtual_host=vhost) as rabbit, \
                 connect(network, rabbit) as aliases:
             url = f"http://{aliases[0]}:{RABBIT_HTTP_API_PORT}/api/vhosts"
             container = create_and_pull(
@@ -44,8 +46,9 @@ def test_connection_works_sibling_network(docker_client):
                 assert return_status["StatusCode"] == 0
 
 
-def test_connection_works_sibling(docker_client, host_ip):
-    with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine") as rabbit:
+@mark.parametrize('vhost', ["/", "guest-vhost"])
+def test_connection_works_sibling(docker_client, host_ip, vhost):
+    with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine", virtual_host=vhost) as rabbit:
         api_port = get_ports(rabbit.container)[RABBIT_HTTP_API_PORT]
         url = f"http://{host_ip}:{api_port}/api/vhosts"
         container = create_and_pull(
