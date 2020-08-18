@@ -35,9 +35,6 @@ jobs:
         poetry install -E redis -E rabbit -E kafka
     - name: setup-docker
       uses: docker-practice/actions-setup-docker@0.0.1
-    - name: test-pull
-      run: |
-        docker pull redis:latest
     - name: Tests
       run: |
         poetry run python -m pytest

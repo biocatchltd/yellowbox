@@ -6,7 +6,7 @@ from docker import DockerClient
 from docker.models.networks import Network
 from docker.models.containers import Container
 
-from yellowbox.containers import get_aliases
+from yellowbox.containers import get_aliases, is_removed
 from yellowbox.service import YellowService
 
 _T = TypeVar("_T")
@@ -43,7 +43,7 @@ def temp_network(client: DockerClient, name=None, *args, **kwargs):
 
 
 @contextmanager
-def connect(network: Network, obj: Union[Container, YellowService]):
+def connect(network: Network, obj: Union[Container, YellowService], **kwargs):
     """Temporarily connect a container or yellow service into a network.
 
     Args:
@@ -54,9 +54,9 @@ def connect(network: Network, obj: Union[Container, YellowService]):
         Context manager for handling the connection.
     """
     if isinstance(obj, YellowService):
-        ret = obj.connect(network)
+        ret = obj.connect(network, **kwargs)
     else:
-        network.connect(obj)
+        network.connect(obj, **kwargs)
         obj.reload()
         ret = get_aliases(obj, network)
     try:
@@ -64,7 +64,7 @@ def connect(network: Network, obj: Union[Container, YellowService]):
     finally:
         if isinstance(obj, YellowService):
             obj.disconnect(network)
-        else:
+        elif not is_removed(obj):
             network.disconnect(obj)
 
 
