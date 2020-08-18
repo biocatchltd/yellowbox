@@ -1,4 +1,5 @@
 from contextlib import closing
+import platform
 
 from docker import DockerClient
 from pytest import fixture
@@ -10,3 +11,11 @@ def docker_client() -> DockerClient:
     client.ping()  # Make sure we're actually connected.
     with closing(client):
         yield client
+
+
+@fixture
+def host_ip():
+    if platform.system() == "Linux":
+        return '172.17.0.1'
+    else:
+        return 'host.docker.internal'

@@ -43,11 +43,11 @@ def test_kafka_sibling_network(docker_client):
             assert return_status["StatusCode"] == 0
 
 
-def test_kafka_sibling(docker_client):
+def test_kafka_sibling(docker_client, host_ip):
     with KafkaService.run(docker_client, spinner=False):
         container = create_and_pull(docker_client,
                                     "confluentinc/cp-kafkacat",
-                                    "kafkacat -b host.docker.internal:9092 -L")
+                                    f"kafkacat -b {host_ip}:9092 -L")
         container.start()
         return_status = container.wait()
         assert return_status["StatusCode"] == 0

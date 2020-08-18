@@ -65,12 +65,13 @@ class KafkaService(YellowService):
         return self
 
     def stop(self):
-        self.zookeeper.kill("SIGKILL")
-        self.broker.kill("SIGKILL")
-        self._reload()
-        if self._auto_remove:
-            self.zookeeper.remove()
-            self.broker.remove()
+        if self.is_alive():
+            self.zookeeper.kill("SIGKILL")
+            self.broker.kill("SIGKILL")
+            self._reload()
+            if self._auto_remove:
+                self.zookeeper.remove()
+                self.broker.remove()
 
     def connect(self, network: Network):
         network.connect(self.broker)
@@ -83,9 +84,8 @@ class KafkaService(YellowService):
 
     @classmethod
     @contextmanager
-    def run(cls, docker_client: DockerClient, image: Union[str, Tuple[str, str]] = 'latest', spinner=True,
-            auto_remove=True) \
-            -> ContextManager['KafkaService']:
+    def run(cls, docker_client: DockerClient, image: Union[str, Tuple[str, str]] = 'latest',
+            spinner=True, auto_remove=True) -> ContextManager['KafkaService']:
         if isinstance(image, str):
             zookeeper_image = f"confluentinc/cp-zookeeper:{image}"
             broker_image = f"confluentinc/cp-kafka:{image}"
