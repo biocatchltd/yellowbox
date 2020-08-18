@@ -82,3 +82,6 @@ since docker container may take some time to set up, it's advisable to set their
 Users can create their own Yellow Service classes by implementing the `YellowService` abstract class.
 If the service encapsulates only a single container, the `SingleContainerService` class already implements
 the necessary methods.
+
+## License
+Yellowbox is registered under the MIT public license
