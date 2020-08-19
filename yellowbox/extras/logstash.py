@@ -19,7 +19,7 @@ class LogstashService(SingleContainerService):
         return get_ports(self.container)[LOGSTASH_DEFAULT_PORT]
 
     @classmethod
-    def from_docker(cls, docker_client: DockerClient, image='logstash:latest'):
+    def from_docker(cls, docker_client: DockerClient, image='logstash:7.8.1'):
         container = create_and_pull(
             docker_client, image, publish_all_ports=True, detach=True
         )
@@ -32,7 +32,7 @@ class LogstashService(SingleContainerService):
 
     @classmethod
     @contextmanager
-    def run(cls, docker_client: DockerClient, image='logstash:latest',
+    def run(cls, docker_client: DockerClient, image='logstash:7.8.1',
             spinner=True) -> 'LogstashService':
         spinner = _get_spinner(spinner)
         with spinner("Fetching logstash..."):
