@@ -21,7 +21,8 @@ class LogstashService(SingleContainerService):
     @classmethod
     def from_docker(cls, docker_client: DockerClient, image='logstash:7.8.1'):
         container = create_and_pull(
-            docker_client, image, publish_all_ports=True, detach=True
+            docker_client, image, publish_all_ports=True, detach=True,
+            ports={LOGSTASH_DEFAULT_PORT: None}
         )
         return cls(container, _auto_remove=True)
 

@@ -65,8 +65,8 @@ def _spinner(text):
         spinner.ok(_SPINNER_SUCCESSMSG)
 
 
-def _get_spinner(fake=False) -> Callable[[str], AbstractContextManager]:
-    if fake:
+def _get_spinner(real=True) -> Callable[[str], AbstractContextManager]:
+    if not real:
         return lambda text: nullcontext()
     return _spinner
 
