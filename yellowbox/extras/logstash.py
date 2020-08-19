@@ -32,7 +32,8 @@ class LogstashService(SingleContainerService):
 
     @classmethod
     @contextmanager
-    def run(cls, docker_client: DockerClient, image, spinner=True) -> 'LogstashService':
+    def run(cls, docker_client: DockerClient, image='logstash:latest',
+            spinner=True) -> 'LogstashService':
         spinner = _get_spinner(spinner)
         with spinner("Fetching logstash..."):
             service = cls.from_docker(docker_client, image)
