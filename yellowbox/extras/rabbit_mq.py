@@ -47,6 +47,21 @@ class RabbitMQService(SingleContainerService):
         if self._auto_remove:
             self.container.remove()
 
+    def management_address(self):
+        try:
+            return f"http://localhost:{get_ports(self.container)[RABBIT_HTTP_API_PORT]}"
+        except KeyError as exc:
+            raise RuntimeError("Management is not enabled.") from exc
+
+    def enable_management(self):
+        if not self.is_alive():
+            raise RuntimeError("Must be used on an already-running container.")
+
+        if RABBIT_HTTP_API_PORT not in get_ports(self.container):
+            raise RuntimeError("Container must have the management port exposed.")
+
+        self.container.exec_run("rabbitmq-plugins enable rabbitmq_management")
+
     @classmethod
     def from_docker(cls, docker_client: DockerClient, image='rabbitmq:latest', *,
                     user="guest", password="guest", virtual_host="/"):
@@ -54,8 +69,10 @@ class RabbitMQService(SingleContainerService):
             docker_client, image, publish_all_ports=True, detach=True, environment={
                 'RABBITMQ_DEFAULT_USER': user,
                 'RABBITMQ_DEFAULT_PASS': password,
-                'RABBITMQ_DEFAULT_VHOST': virtual_host
-            })
+                'RABBITMQ_DEFAULT_VHOST': virtual_host,
+            },
+            ports={RABBIT_HTTP_API_PORT: None},  # Forward management port by default.
+        )
         return cls(container, user=user, password=password, virtual_host=virtual_host, _auto_remove=True)
 
     @classmethod
