@@ -47,9 +47,9 @@ class RabbitMQService(SingleContainerService):
         if self._auto_remove:
             self.container.remove()
 
-    def management_address(self):
+    def management_url(self):
         try:
-            return f"http://localhost:{get_ports(self.container)[RABBIT_HTTP_API_PORT]}"
+            return f"http://localhost:{get_ports(self.container)[RABBIT_HTTP_API_PORT]}/"
         except KeyError as exc:
             raise RuntimeError("Management is not enabled.") from exc
 
