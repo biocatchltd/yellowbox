@@ -1,6 +1,8 @@
 from time import sleep
 
+import pytest
 from pika import BlockingConnection
+import requests
 from pytest import mark
 
 from yellowbox.containers import get_ports, create_and_pull
@@ -59,3 +61,12 @@ def test_connection_works_sibling(docker_client, host_ip, vhost):
         container.start()
         return_status = container.wait()
         assert return_status["StatusCode"] == 0
+
+
+def test_management_enabling(docker_client):
+    with RabbitMQService.run(docker_client) as rabbit:
+        with pytest.raises(requests.exceptions.ConnectionError):
+            requests.get(rabbit.management_url())
+        rabbit.enable_management()
+        requests.get(rabbit.management_url())
+
