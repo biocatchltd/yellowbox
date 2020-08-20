@@ -61,7 +61,8 @@ def get_aliases(container: Container, network: Union[str, Network]) -> Sequence[
 
 
 def is_alive(container: Container) -> bool:
-    container.reload()
+    if is_removed(container):
+        return False
     return container.status.lower() not in ('exited', 'stopped')
 
 
