@@ -117,9 +117,9 @@ def is_removed(container: Container):
     return False
 
 
-def download_file(container: Container, path: PathLike[str]) -> IO[bytes]:
+def download_file(container: Container, path: PathLike) -> IO[bytes]:
     """Read a file from the given container"""
-    iterator = container.get_archive(os.fspath(path), chunk_size=None)  # noqa
+    iterator, _ = container.get_archive(os.fspath(path), chunk_size=None)  # noqa
 
     # Finalizer ensures temporary file will close and be removed.
     temp_file = TemporaryFile("w+b")
@@ -133,7 +133,7 @@ def download_file(container: Container, path: PathLike[str]) -> IO[bytes]:
     return tar_file.extractfile(member)
 
 
-def upload_file(container: Container, path: PathLike[str], data: bytes = None,
+def upload_file(container: Container, path: PathLike, data: bytes = None,
                 fileobj: IO[bytes] = None) -> None:
     if data is fileobj is None:
         raise TypeError("data or fileobj must be set.")
