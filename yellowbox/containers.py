@@ -1,11 +1,19 @@
+import io
 from contextlib import contextmanager
-from typing import Collection, Dict, Generator, TypeVar, Union, Sequence
+from functools import partial
+from os import PathLike
+import os
+from typing import Collection, Dict, Generator, IO, TypeVar, Union, Sequence
 
 from docker import DockerClient
 from docker.errors import ImageNotFound
 from docker.models.containers import Container
 from docker.models.networks import Network
+from tempfile import TemporaryFile, NamedTemporaryFile
+import shutil
+import weakref
 from requests import HTTPError
+import tarfile
 
 _DEFAULT_TIMEOUT = 10
 
@@ -107,3 +115,56 @@ def is_removed(container: Container):
     except HTTPError:
         return True
     return False
+
+
+def download_file(container: Container, path: PathLike[str]) -> IO[bytes]:
+    """Read a file from the given container"""
+    iterator = container.get_archive(os.fspath(path), chunk_size=None)  # noqa
+
+    # Finalizer ensures temporary file will close and be removed.
+    temp_file = TemporaryFile("w+b")
+
+    for chunk in iterator:
+        temp_file.write(chunk)
+    temp_file.seek(0)
+
+    tar_file = tarfile.open(fileobj=temp_file)
+    member = tar_file.next()
+    return tar_file.extractfile(member)
+
+
+def upload_file(container: Container, path: PathLike[str], data: bytes = None,
+                fileobj: IO[bytes] = None) -> None:
+    if data is fileobj is None:
+        raise TypeError("data or fileobj must be set.")
+
+    if data is not None is not fileobj:
+        raise TypeError("Can't set both data and fileobj.")
+
+    filename = os.path.basename(path)
+
+    tar_data = _create_tar(filename, data, fileobj)
+
+    container.put_archive(os.path.dirname(path), tar_data)
+
+
+def _create_tar(filename, data=None, fileobj=None) -> bytes:
+    output = io.BytesIO()
+    with tarfile.open(fileobj=output, mode="w") as tar:
+        if data is not None:
+            tarinfo = tarfile.TarInfo(name=filename)
+            tarinfo.size = len(data)
+            tar.addfile(tarinfo, io.BytesIO(data))
+        else:
+            try:
+                tarinfo = tar.gettarinfo(arcname=filename, fileobj=fileobj)
+                tar.addfile(tarinfo, fileobj)
+            except (OSError, AttributeError):
+                with TemporaryFile("w+b") as temp_file:
+                    shutil.copyfileobj(fileobj, temp_file)
+                    temp_file.seek(0)
+                    temp_file.flush()
+                    tarinfo = tar.gettarinfo(arcname=filename, fileobj=temp_file)  # noqa
+                    tar.addfile(tarinfo, temp_file)
+    return output.getvalue()
+
