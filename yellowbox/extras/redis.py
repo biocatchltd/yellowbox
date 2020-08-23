@@ -34,5 +34,5 @@ class RedisService(ContainerService):
     def _make_containers(cls, docker_client: DockerClient, image='redis:latest') -> Iterable[Container]:
         yield create_and_pull(docker_client, image, publish_all_ports=True, detach=True)
 
-    def _end_facing_containers(self) -> Iterable[Container]:
+    def _endpoint_containers(self) -> Iterable[Container]:
         return self.containers

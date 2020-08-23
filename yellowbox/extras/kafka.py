@@ -56,7 +56,7 @@ class KafkaService(ContainerService):
         # difference in default signal
         super().stop(signal)
 
-    def _end_facing_containers(self):
+    def _endpoint_containers(self):
         yield self.broker
 
     @classmethod
@@ -92,7 +92,7 @@ class KafkaService(ContainerService):
 
     @classmethod
     def from_docker(cls, docker_client: DockerClient, remove=True, **kwargs):
-        self: KafkaService = super().from_docker(docker_client, remove, **kwargs)
+        self: KafkaService = super().from_docker(docker_client, remove=remove, **kwargs)
 
         network = self.exit_stack.enter_context(temp_network(docker_client))
         self.exit_stack.enter_context(connect(network, self.zookeeper, aliases=["zk"]))

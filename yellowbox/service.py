@@ -54,7 +54,7 @@ class ContainerService(YellowService):
         pass
 
     @classmethod
-    def from_docker(cls, docker_client: DockerClient, remove=True, **kwargs):
+    def from_docker(cls, docker_client: DockerClient, *, remove=True, **kwargs):
         maker = cls._make_containers(docker_client, **kwargs)
         containers = []
         try:
@@ -76,7 +76,7 @@ class ContainerService(YellowService):
     def stop(self, signal='SIGTERM'):
         self.exit_stack.close()
 
-        for c in self.containers:
+        for c in reversed(self.containers):
             if not is_alive(c):
                 continue
             c.kill(signal)
@@ -90,21 +90,22 @@ class ContainerService(YellowService):
         return all(is_alive(c) for c in self.containers)
 
     @abstractmethod
-    def _end_facing_containers(self) -> Iterable[Container]:
+    def _endpoint_containers(self) -> Iterable[Container]:
         pass
 
     def connect(self, network: Network, **kwargs) -> Sequence[str]:
         ret = None
-        for efc in self._end_facing_containers():
-            network.connect(efc, **kwargs)
-            efc.reload()
-            ret = ret or get_aliases(efc, network)
+        for ec in self._endpoint_containers():
+            network.connect(ec, **kwargs)
+            ec.reload()
+            ret = ret or get_aliases(ec, network)
         return ret
 
     def disconnect(self, network: Network, **kwargs):
-        for efc in self._end_facing_containers():
-            network.disconnect(efc, **kwargs)
-            efc.reload()
+        endpoints = tuple(self._endpoint_containers())
+        for ec in reversed(endpoints):
+            network.disconnect(ec, **kwargs)
+            ec.reload()
 
     @classmethod
     def service_name(cls):
@@ -112,7 +113,7 @@ class ContainerService(YellowService):
 
     @classmethod
     @contextmanager
-    def run(cls: Type[_T], docker_client: DockerClient, spinner: bool = True, **kwargs) -> _T:
+    def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True, **kwargs) -> _T:
         spinner = _get_spinner(spinner)
         with spinner(f"Fetching {cls.service_name()} ..."):
             service = cls.from_docker(docker_client, **kwargs)

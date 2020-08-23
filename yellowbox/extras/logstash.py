@@ -21,5 +21,5 @@ class LogstashService(ContainerService):
             ports={LOGSTASH_DEFAULT_PORT: None}
         )
 
-    def _end_facing_containers(self):
+    def _endpoint_containers(self):
         return self.containers

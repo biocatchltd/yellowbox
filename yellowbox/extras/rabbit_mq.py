@@ -53,5 +53,5 @@ class RabbitMQService(ContainerService):
                 'RABBITMQ_DEFAULT_VHOST': virtual_host
             })
 
-    def _end_facing_containers(self):
+    def _endpoint_containers(self):
         return self.containers
