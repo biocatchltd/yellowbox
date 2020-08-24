@@ -12,7 +12,12 @@ _T = TypeVar("_T")
 
 
 class RedisService(SingleContainerService, RunnableWithContext):
-    def __init__(self, docker_client: DockerClient, image='redis:latest', **kwargs):
+    def __init__(self, docker_client: DockerClient, image='redis:latest',
+                 redis_file: bytes = None, **kwargs):
+        if redis_file is not None:
+            command = "redis service"
+        container = create_and_pull(docker_client, image, command=command,
+                                    publish_all_ports=True, detach=True)
         super().__init__(
             create_and_pull(docker_client, image, publish_all_ports=True, detach=True),
             **kwargs
