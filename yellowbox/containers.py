@@ -73,7 +73,8 @@ def get_aliases(container: Container, network: Union[str, Network]) -> Sequence[
 
 
 def is_alive(container: Container) -> bool:
-    container.reload()
+    if is_removed(container):
+        return False
     return container.status.lower() not in ('exited', 'stopped')
 
 
@@ -107,10 +108,11 @@ def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT,
 
 def create_and_pull(docker_client: DockerClient, image, command=None, **kwargs) -> Container:
     try:
-        return docker_client.containers.create(image=image, command=command, **kwargs)
+        ret = docker_client.containers.create(image=image, command=command, **kwargs)
     except ImageNotFound:
         docker_client.images.pull(image, platform=None)
-        return docker_client.containers.create(image=image, command=command, **kwargs)
+        ret = docker_client.containers.create(image=image, command=command, **kwargs)
+    return ret
 
 
 def is_removed(container: Container):
@@ -213,3 +215,18 @@ def _create_tar(filename, data=None, fileobj=None) -> bytes:
                     tar.addfile(tarinfo, temp_file)
     return output.getvalue()
 
+
+class SafeContainerCreator:
+    def __init__(self, client: DockerClient):
+        self.client = client
+        self.created = []
+
+    def create_and_pull(self, image, command=None, **kwargs):
+        try:
+            container = create_and_pull(self.client, image, command, **kwargs)
+        except Exception:
+            for container in reversed(self.created):
+                container.remove()
+            raise
+        self.created.append(container)
+        return container
