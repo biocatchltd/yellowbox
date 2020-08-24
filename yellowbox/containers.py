@@ -108,10 +108,14 @@ def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT,
 
 def create_and_pull(docker_client: DockerClient, image, command=None, **kwargs) -> Container:
     try:
-        return docker_client.containers.create(image=image, command=command, **kwargs)
+        ret = docker_client.containers.create(image=image, command=command, **kwargs)
     except ImageNotFound:
         docker_client.images.pull(image, platform=None)
-        return docker_client.containers.create(image=image, command=command, **kwargs)
+        ret = docker_client.containers.create(image=image, command=command, **kwargs)
+
+    if isinstance(ret, Container):
+        ret.reload()
+    return ret
 
 
 def is_removed(container: Container):

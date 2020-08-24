@@ -1,5 +1,3 @@
-from typing import TypeVar
-
 from docker import DockerClient
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.exceptions import AMQPConnectionError
@@ -23,7 +21,8 @@ class RabbitMQService(SingleContainerService, RunnableWithContext):
                 'RABBITMQ_DEFAULT_USER': user,
                 'RABBITMQ_DEFAULT_PASS': password,
                 'RABBITMQ_DEFAULT_VHOST': virtual_host
-            }
+            },
+            ports={RABBIT_HTTP_API_PORT: None},  # Forward management port by default.
         ))
 
     def connection_port(self):
