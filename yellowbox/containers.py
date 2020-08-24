@@ -200,9 +200,11 @@ def _create_tar(filename, data=None, fileobj=None) -> bytes:
             tar.addfile(tarinfo, io.BytesIO(data))
         else:
             try:
+                # Attempt to extract info (such as size) from file object
                 tarinfo = tar.gettarinfo(arcname=filename, fileobj=fileobj)
                 tar.addfile(tarinfo, fileobj)
             except (OSError, AttributeError):
+                # Failed to extract info, writing and reading from temp file.
                 with TemporaryFile("w+b") as temp_file:
                     shutil.copyfileobj(fileobj, temp_file)
                     temp_file.seek(0)
