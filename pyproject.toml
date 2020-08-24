@@ -15,6 +15,8 @@ yaspin = "^1.0.0"
 redis = {version="*", optional=true}
 pika = {version="*", optional=true}
 kafka-python = {version="*", optional=true}
+azure-storage-blob = { version = "^12.3.1", optional = true }
+cffi = {version = "^1.14.0", optional = true}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.4.3"
@@ -25,6 +27,7 @@ requests = "^2"
 redis = ["redis"]
 rabbit = ["pika"]
 kafka = ["kafka-python"]
+azure = ["azure-storage-blob", "cffi"]
 
 [build-system]
 requires = ["poetry>=1.0.0"]
