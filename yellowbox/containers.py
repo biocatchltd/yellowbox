@@ -112,9 +112,6 @@ def create_and_pull(docker_client: DockerClient, image, command=None, **kwargs) 
     except ImageNotFound:
         docker_client.images.pull(image, platform=None)
         ret = docker_client.containers.create(image=image, command=command, **kwargs)
-
-    if isinstance(ret, Container):
-        ret.reload()
     return ret
 
 
