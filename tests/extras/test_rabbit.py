@@ -1,12 +1,11 @@
 from time import sleep
 
 from pika import BlockingConnection
-from pytest import mark
+from pytest import mark, skip
 
 from yellowbox.containers import get_ports, create_and_pull
 from yellowbox.extras.rabbit_mq import RabbitMQService, RABBIT_HTTP_API_PORT
 from yellowbox.networks import temp_network, connect
-
 
 @mark.parametrize('spinner', [True, False])
 def test_make_rabbit(docker_client, spinner):

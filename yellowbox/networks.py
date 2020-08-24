@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Generator, TypeVar, Union
+from typing import Generator, TypeVar, Union, ContextManager
 from uuid import uuid1
 
 from docker import DockerClient
@@ -14,8 +14,13 @@ _NT = TypeVar("_NT", bound=Network)
 _Gen = Generator[_T, None, None]
 
 
+def anonymous_network(client: DockerClient, *args, **kwargs) -> Network:
+    name = f"yellowbox-{uuid1()}"
+    return client.networks.create(name, *args, **kwargs)
+
+
 @contextmanager
-def temp_network(client: DockerClient, name=None, *args, **kwargs):
+def temp_network(client: DockerClient, name=None, *args, **kwargs) -> ContextManager[Network]:
     """Context manager for creating a temporary Docker network
 
     Network will be automatically removed upon context manager completion.
@@ -36,9 +41,11 @@ def temp_network(client: DockerClient, name=None, *args, **kwargs):
     Returns:
         Context manager for the newly created network
     """
-    name = name or f"yellowbox-{uuid1()}"
-    with disconnecting(client.networks.create(name, *args, **kwargs),
-                       remove=True) as network:
+    if name:
+        network = client.networks.create(name, *args, **kwargs)
+    else:
+        network = anonymous_network(client, *args, **kwargs)
+    with disconnecting(network, remove=True) as network:
         yield network
 
 

@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Collection, Dict, Generator, TypeVar, Union, Sequence
+from typing import Dict, Generator, TypeVar, Union, Sequence
 
 from docker import DockerClient
 from docker.errors import ImageNotFound
@@ -108,3 +108,20 @@ def is_removed(container: Container):
     except HTTPError:
         return True
     return False
+
+
+class SafeContainerCreator:
+    def __init__(self, client: DockerClient):
+        self.client = client
+        self.created = []
+
+    def create_and_pull(self, image, command=None, **kwargs):
+        try:
+            container = create_and_pull(self.client, image, command, **kwargs)
+        except Exception:
+            for container in reversed(self.created):
+                container.remove()
+            raise
+        self.created.append(container)
+        return container
+
