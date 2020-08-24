@@ -14,7 +14,7 @@ KAFKA_DEFAULT_PORT = 9092
 
 
 class KafkaService(SingleEndpointService, RunnableWithContext):
-    def __init__(self, docker_client: DockerClient, tag_or_images: Union[str, Tuple[str, str]] = 'latest'):
+    def __init__(self, docker_client: DockerClient, tag_or_images: Union[str, Tuple[str, str]] = 'latest', **kwargs):
         if isinstance(tag_or_images, str):
             zookeeper_image = f"confluentinc/cp-zookeeper:{tag_or_images}"
             broker_image = f"confluentinc/cp-kafka:{tag_or_images}"
@@ -46,7 +46,7 @@ class KafkaService(SingleEndpointService, RunnableWithContext):
         self.network = anonymous_network(docker_client)
         self.network.connect(self.zookeeper, aliases=["zk"])
         self.network.connect(self.broker)
-        super().__init__((self.zookeeper, self.broker))
+        super().__init__((self.zookeeper, self.broker), **kwargs)
 
     def connection_port(self):
         self.broker.reload()

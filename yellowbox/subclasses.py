@@ -77,8 +77,8 @@ class SingleEndpointService(ContainerService):
 
 
 class SingleContainerService(SingleEndpointService):
-    def __init__(self, container: Container):
-        super().__init__((container,))
+    def __init__(self, container: Container, **kwargs):
+        super().__init__((container,), **kwargs)
 
     @property
     def container(self):

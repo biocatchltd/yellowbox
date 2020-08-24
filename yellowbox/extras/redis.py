@@ -12,6 +12,12 @@ _T = TypeVar("_T")
 
 
 class RedisService(SingleContainerService, RunnableWithContext):
+    def __init__(self, docker_client: DockerClient, image='redis:latest', **kwargs):
+        super().__init__(
+            create_and_pull(docker_client, image, publish_all_ports=True, detach=True),
+            **kwargs
+        )
+
     def client_port(self):
         return get_ports(self.container)[REDIS_DEFAULT_PORT]
 
@@ -24,8 +30,3 @@ class RedisService(SingleContainerService, RunnableWithContext):
         with self.client() as client:
             retry(client.ping, RedisConnectionError)
         return self
-
-    def __init__(self, docker_client: DockerClient, image='redis:latest'):
-        super().__init__(
-            create_and_pull(docker_client, image, publish_all_ports=True, detach=True)
-        )
