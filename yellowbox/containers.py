@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import io
 from contextlib import contextmanager
+import stat
 from functools import partial
 from os import PathLike
 import os
 from typing import Collection, Dict, Generator, IO, TypeVar, Union, Sequence
 
+import docker
 from docker import DockerClient
 from docker.errors import ImageNotFound
 from docker.models.containers import Container
@@ -117,9 +121,30 @@ def is_removed(container: Container):
     return False
 
 
-def download_file(container: Container, path: PathLike) -> IO[bytes]:
-    """Read a file from the given container"""
-    iterator, _ = container.get_archive(os.fspath(path), chunk_size=None)  # noqa
+def download_file(container: Container, path: Union[str, PathLike[str]]
+                  ) -> IO[bytes]:
+    """Download a file from the given container
+
+    Args:
+        container: Docker container at any state.
+        path: File path.
+
+    Raises:
+        FileNotFoundError: Path was not found.
+        IsADirectoryError: Path is not a regular file.
+    """
+    realpath = os.fspath(path)
+    try:
+        iterator, stats = container.get_archive(realpath, chunk_size=None)  # noqa
+    except docker.errors.NotFound:
+        exc = FileNotFoundError(realpath)
+        exc.filename = realpath
+        raise exc
+
+    if stat.S_ISDIR(stats["mode"]):
+        exc = IsADirectoryError(path)
+        exc.filename = realpath
+        raise exc
 
     # Finalizer ensures temporary file will close and be removed.
     temp_file = TemporaryFile("w+b")
@@ -133,8 +158,16 @@ def download_file(container: Container, path: PathLike) -> IO[bytes]:
     return tar_file.extractfile(member)
 
 
-def upload_file(container: Container, path: PathLike, data: bytes = None,
-                fileobj: IO[bytes] = None) -> None:
+def upload_file(container: Container, path: Union[str, PathLike[str]],
+                data: bytes = None, fileobj: IO[bytes] = None) -> None:
+    """Upload a file to the given container
+
+    Args:
+        container: Docker container.
+        path: Path to upload the file to.
+        data: Bytes of data to upload. Cannot be set with fileobj.
+        fileobj: File object to uplaod. Cannot be set with data.
+    """
     if data is fileobj is None:
         raise TypeError("data or fileobj must be set.")
 
@@ -149,6 +182,16 @@ def upload_file(container: Container, path: PathLike, data: bytes = None,
 
 
 def _create_tar(filename, data=None, fileobj=None) -> bytes:
+    """Create a tarfile made of the given data
+
+    Args:
+        filename: Name of the file to create inside the tar
+        data: Data of the file. Cannot exist with fileobj.
+        fileobj: File object. Cannot exist with data.
+
+    Returns:
+        Bytes of a tarfile, containing the given file.
+    """
     output = io.BytesIO()
     with tarfile.open(fileobj=output, mode="w") as tar:
         if data is not None:
