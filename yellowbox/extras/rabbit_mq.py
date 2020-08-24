@@ -43,3 +43,17 @@ class RabbitMQService(SingleContainerService, RunnableWithContext):
         conn.close()
         return self
 
+    def management_url(self):
+        try:
+            return f"http://localhost:{get_ports(self.container)[RABBIT_HTTP_API_PORT]}/"
+        except KeyError as exc:
+            raise RuntimeError("Management is not enabled.") from exc
+
+    def enable_management(self):
+        if not self.is_alive():
+            raise RuntimeError("Must be used on an already-running container.")
+
+        if RABBIT_HTTP_API_PORT not in get_ports(self.container):
+            raise RuntimeError("Container must have the management port exposed.")
+
+        self.container.exec_run("rabbitmq-plugins enable rabbitmq_management")
