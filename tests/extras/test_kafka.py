@@ -1,7 +1,7 @@
 from kafka import TopicPartition
 from pytest import mark
 
-from yellowbox.containers import get_aliases, create_and_pull
+from yellowbox.containers import create_and_pull
 from yellowbox.extras.kafka import KafkaService
 from yellowbox.networks import temp_network, connect
 
