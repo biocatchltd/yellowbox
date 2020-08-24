@@ -12,13 +12,13 @@ from yellowbox.utils import _get_spinner
 
 
 class ContainerService(YellowService):
-    def __init__(self, containers: Sequence[Container]):
+    def __init__(self, containers: Sequence[Container], remove=True):
         """
         Notes:
              The containers should be ordered so that it is safe to start them in order, and to re
         """
         self.containers = containers
-        self._remove = False
+        self.remove = remove
 
     def start(self):
         for c in self.containers:
@@ -35,7 +35,7 @@ class ContainerService(YellowService):
             c.kill(signal)
             c.wait(timeout=_DEFAULT_TIMEOUT)
             c.reload()
-            if self._remove:
+            if self.remove:
                 c.remove()
 
     def is_alive(self):
@@ -102,9 +102,7 @@ class RunnableWithContext:
     def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True, remove=True, **kwargs) -> _T:
         spinner = _get_spinner(spinner)
         with spinner(f"Fetching {cls.service_name()} ..."):
-            service = cls(docker_client, **kwargs)
-
-        service._remove = remove
+            service = cls(docker_client, remove=remove, **kwargs)
 
         with spinner(f"Waiting for {cls.service_name()} to start..."):
             service.start()

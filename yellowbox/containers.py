@@ -216,7 +216,6 @@ def _create_tar(filename, data=None, fileobj=None) -> bytes:
     return output.getvalue()
 
 
-
 class SafeContainerCreator:
     def __init__(self, client: DockerClient):
         self.client = client
@@ -231,4 +230,3 @@ class SafeContainerCreator:
             raise
         self.created.append(container)
         return container
-
