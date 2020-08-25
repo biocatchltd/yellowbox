@@ -25,17 +25,21 @@ class BlobStorageService(SingleContainerService, RunnableWithContext):
     Provides helper functions for preparing the instance for testing.
     TODO: Make account name and key configurable.
     """
+
     def __init__(self, docker_client,
                  image="mcr.microsoft.com/azure-storage/azurite:latest",
                  *, remove=True):
-        container = create_and_pull(docker_client, image, "azurite-blob --blobHost 0.0.0.0", publish_all_ports=True)
+        container = create_and_pull(
+            docker_client, image, "azurite-blob --blobHost 0.0.0.0", publish_all_ports=True)
         super().__init__(container, remove=remove)
         self._storage_service = None
 
     def start(self):
         super().start()
-        storage_url = STORAGE_URL_FORMAT.format(port=get_ports(self.container)[BLOB_STORAGE_DEFAULT_PORT], account=DEFAULT_ACCOUNT_NAME)
-        self._storage_service = BlobServiceClient(storage_url, STORAGE_PASSWORD)
+        storage_url = STORAGE_URL_FORMAT.format(port=get_ports(
+            self.container)[BLOB_STORAGE_DEFAULT_PORT], account=DEFAULT_ACCOUNT_NAME)
+        self._storage_service = BlobServiceClient(
+            storage_url, STORAGE_PASSWORD)
 
     def stop(self, signal: str = 'SIGKILL'):
         super().stop(signal)
@@ -79,5 +83,3 @@ class BlobStorageService(SingleContainerService, RunnableWithContext):
         with client:
             downloader = client.download_blob(file_path)
             return downloader.readall()
-
-
