@@ -1,12 +1,10 @@
 from __future__ import annotations
 
+import io
 import tempfile
-import typing
 from typing import IO
 
-import docker
 import pytest
-import io
 
 from yellowbox.containers import create_and_pull, download_file, upload_file
 

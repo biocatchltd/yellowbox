@@ -36,7 +36,7 @@ class ContainerService(YellowService):
             c.wait(timeout=_DEFAULT_TIMEOUT)
             c.reload()
             if self.remove:
-                c.remove()
+                c.remove(v=True)
 
     def is_alive(self):
         return all(is_alive(c) for c in self.containers)
@@ -92,7 +92,7 @@ class SingleContainerService(SingleEndpointService):
 _T = TypeVar("_T")
 
 
-class RunnableWithContext:
+class RunMixin:
     @classmethod
     def service_name(cls):
         return cls.__name__

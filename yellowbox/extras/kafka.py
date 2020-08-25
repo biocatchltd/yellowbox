@@ -7,13 +7,13 @@ from kafka.errors import KafkaError
 
 from yellowbox.containers import get_ports, SafeContainerCreator
 from yellowbox.networks import anonymous_network
-from yellowbox.subclasses import SingleEndpointService, RunnableWithContext
+from yellowbox.subclasses import SingleEndpointService, RunMixin
 from yellowbox.utils import retry
 
 KAFKA_DEFAULT_PORT = 9092
 
 
-class KafkaService(SingleEndpointService, RunnableWithContext):
+class KafkaService(SingleEndpointService, RunMixin):
     def __init__(self, docker_client: DockerClient, tag_or_images: Union[str, Tuple[str, str]] = 'latest', **kwargs):
         if isinstance(tag_or_images, str):
             zookeeper_image = f"confluentinc/cp-zookeeper:{tag_or_images}"
