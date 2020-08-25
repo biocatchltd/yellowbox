@@ -33,7 +33,9 @@ class RedisService(SingleContainerService, RunMixin):
         container = create_and_pull(docker_client, image, publish_all_ports=True, detach=True)
         self.started = False
         super().__init__(container, **kwargs)
-        self.set_rdb(redis_file)
+
+        if redis_file:
+            self.set_rdb(redis_file)
 
     def set_rdb(self, redis_file: IO[bytes]):
         if self.started:
