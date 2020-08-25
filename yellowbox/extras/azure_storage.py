@@ -15,7 +15,6 @@ BLOB_STORAGE_DEFAULT_PORT = 10000
 DEFAULT_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 DEFAULT_ACCOUNT_NAME = "devstoreaccount1"
 STORAGE_URL_FORMAT = "http://127.0.0.1:{port}/{account}"
-STORAGE_PASSWORD = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 
 
 class BlobStorageService(SingleContainerService, RunnableWithContext):
@@ -38,7 +37,7 @@ class BlobStorageService(SingleContainerService, RunnableWithContext):
         storage_url = STORAGE_URL_FORMAT.format(port=get_ports(
             self.container)[BLOB_STORAGE_DEFAULT_PORT], account=DEFAULT_ACCOUNT_NAME)
         self._storage_service = BlobServiceClient(
-            storage_url, STORAGE_PASSWORD)
+            storage_url, DEFAULT_ACCOUNT_KEY)
 
     def stop(self, signal: str = 'SIGKILL'):
         super().stop(signal)
