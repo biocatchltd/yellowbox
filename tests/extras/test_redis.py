@@ -1,4 +1,5 @@
 from pytest import mark, raises
+from redis import Redis
 
 from yellowbox.extras import RedisService
 
@@ -32,3 +33,18 @@ def test_clean_slate_fail(docker_client):
         with raises(AssertionError, match='.*not empty.*'):
             with redis.clean_slate():
                 pass
+
+
+def test_set_state(docker_client):
+    with RedisService.run(docker_client) as redis, \
+            redis.clean_slate():
+        redis.set_state({
+            'a': 12,
+            'b': {'i': 0, 'am': 2, 'hungry': 3},
+            'c': [2, 3, 5, 7, 11]
+        })
+        client: Redis
+        with redis.client() as client:
+            assert client.get('a') == b'12'
+            assert client.hgetall('b') == {b'i': b'0', b'am': b'2', b'hungry': b'3'}
+            assert client.lrange('c', 0, -1) == [b'2', b'3', b'5', b'7', b'11']
