@@ -2,6 +2,8 @@
 Tests for Azure Storage module
 """
 from pytest import mark
+
+from yellowbox.containers import create_and_pull
 from yellowbox.extras.azure_storage import BlobStorageService, BLOB_STORAGE_DEFAULT_PORT
 from yellowbox.networks import temp_network, connect
 
