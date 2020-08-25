@@ -39,3 +39,16 @@ def test_connection_works_sibling_network(docker_client):
                 container.start()
                 return_status = container.wait()
                 assert return_status["StatusCode"] == 0
+
+def test_connection_works_sibling(docker_client, host_ip):
+    with BlobStorageService.run(docker_client) as blob:
+        port = blob.client_port()
+        url = f"http://{host_ip}:{port}"
+        container = create_and_pull(
+            docker_client,
+            "byrnedo/alpine-curl", f'-vvv -I "{url}" --http0.9',
+            detach=True
+        )
+        container.start()
+        return_status = container.wait()
+        assert return_status["StatusCode"] == 0
