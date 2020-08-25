@@ -226,7 +226,7 @@ class SafeContainerCreator:
             container = create_and_pull(self.client, image, command, **kwargs)
         except Exception:
             for container in reversed(self.created):
-                container.remove()
+                container.remove(v=True)
             raise
         self.created.append(container)
         return container
