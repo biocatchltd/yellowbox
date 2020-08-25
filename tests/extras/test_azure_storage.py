@@ -5,8 +5,8 @@ from pytest import mark
 
 from azure.storage.blob import BlobServiceClient
 from yellowbox.containers import create_and_pull, get_ports
-from yellowbox.extras.azure_storage import BlobStorageService, BLOB_STORAGE_DEFAULT_PORT, DEFAULT_ACCOUNT_KEY, \
-                                            DEFAULT_ACCOUNT_NAME
+from yellowbox.extras import BlobStorageService
+from yellowbox.extras.azure_storage import BLOB_STORAGE_DEFAULT_PORT, DEFAULT_ACCOUNT_KEY, DEFAULT_ACCOUNT_NAME
 from yellowbox.networks import temp_network, connect
 
 
