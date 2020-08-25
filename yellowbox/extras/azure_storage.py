@@ -4,15 +4,12 @@ Azure Blob Storage module, for creating container, uploading files to it and dow
 from __future__ import annotations
 
 from typing import Union
-from functools import partial
 
 from docker import DockerClient
-from docker.models.containers import Container
 
 from yellowbox.containers import create_and_pull, get_ports
-from yellowbox.subclasses import SingleContainerService, RunnableWithContext
+from yellowbox.subclasses import SingleContainerService, RunMixin
 from yellowbox.utils import retry
-
 
 BLOB_STORAGE_DEFAULT_PORT = 10000
 DEFAULT_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
@@ -24,7 +21,7 @@ class _ResourceNotReady(Exception):
     pass
 
 
-class BlobStorageService(SingleContainerService, RunnableWithContext):
+class BlobStorageService(SingleContainerService, RunMixin):
     """
     Starts Azurite, Azure's storage emulator.
     Provides helper functions for preparing the instance for testing.
