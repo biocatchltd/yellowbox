@@ -1,4 +1,4 @@
-from typing import IO, TypeVar, Callable
+from typing import IO, Optional, TypeVar, Callable
 
 from docker import DockerClient
 from redis import ConnectionError as RedisConnectionError, Redis
@@ -15,7 +15,7 @@ _T = TypeVar("_T")
 
 class RedisService(SingleContainerService, RunnableWithContext):
     def __init__(self, docker_client: DockerClient, image='redis:latest',
-                 redis_file: IO[bytes] = None, **kwargs):
+                 redis_file: Optional[IO[bytes]] = None, **kwargs):
         container = create_and_pull(docker_client, image, publish_all_ports=True, detach=True)
         self.started = False
         super().__init__(container, **kwargs)
