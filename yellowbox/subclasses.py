@@ -92,7 +92,7 @@ class SingleContainerService(SingleEndpointService):
 _T = TypeVar("_T")
 
 
-class RunnableWithContext:
+class RunMixin:
     @classmethod
     def service_name(cls):
         return cls.__name__
