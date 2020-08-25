@@ -30,7 +30,7 @@ def test_clean_slate_fail(docker_client):
         with redis.client() as client:
             client.set('a', 12)
 
-        with raises(AssertionError, match='.*not empty.*'):
+        with raises(RuntimeError, match='.*not empty.*'):
             with redis.clean_slate():
                 pass
 
