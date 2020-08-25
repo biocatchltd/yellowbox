@@ -1,8 +1,7 @@
+"""
+Azure Blob Storage module, for creating container, uploading files to it and downloading files.
+"""
 from __future__ import annotations
-
-import time
-
-from dataclasses import dataclass
 
 from azure.storage.blob import BlobServiceClient
 from azure.core.exceptions import ResourceExistsError
