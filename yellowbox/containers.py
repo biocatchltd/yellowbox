@@ -106,12 +106,23 @@ def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT,
             container.wait(timeout=timeout)
 
 
-def create_and_pull(docker_client: DockerClient, image, command=None, **kwargs) -> Container:
+def create_and_pull(docker_client: DockerClient, image, *args, **kwargs) -> Container:
+    """
+    Create a docker container, pulling the image if necessary.
+    Args:
+        docker_client: the docker client to use.
+        image: the image name to create
+        *args: additional arguments forwarded to ``docker_client.containers.create``
+        **kwargs: additional arguments forwarded to ``docker_client.containers.create``
+
+    Returns:
+        A non-started container.
+    """
     try:
-        ret = docker_client.containers.create(image=image, command=command, **kwargs)
+        ret = docker_client.containers.create(image, *args, **kwargs)
     except ImageNotFound:
         docker_client.images.pull(image, platform=None)
-        ret = docker_client.containers.create(image=image, command=command, **kwargs)
+        ret = docker_client.containers.create(image, *args, **kwargs)
     return ret
 
 
