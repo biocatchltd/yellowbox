@@ -56,5 +56,5 @@ class BlobStorageService(SingleContainerService, RunnableWithContext):
     def start(self):
         super().start()
         ready_check = partial(storage_is_ready, self.container)
-        retry(ready_check, (ResourceNotReady))
+        retry(ready_check, ResourceNotReady)
         return self
