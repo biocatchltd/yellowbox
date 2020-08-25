@@ -20,16 +20,8 @@ DEFAULT_ACCOUNT_NAME = "devstoreaccount1"
 STORAGE_URL_FORMAT = "http://127.0.0.1:{port}/{account}"
 
 
-class ResourceNotReady(Exception):
+class _ResourceNotReady(Exception):
     pass
-
-
-def storage_is_ready(container: Container) -> None:
-    """
-    Checks if storage is ready, raises exception if not
-    """
-    if b"Azurite Blob service successfully listens on" not in container.logs():
-        raise ResourceNotReady
 
 
 class BlobStorageService(SingleContainerService, RunnableWithContext):
@@ -55,6 +47,8 @@ class BlobStorageService(SingleContainerService, RunnableWithContext):
 
     def start(self):
         super().start()
-        ready_check = partial(storage_is_ready, self.container)
-        retry(ready_check, ResourceNotReady)
+        def check_ready():
+            if b"Azurite Blob service successfully listens on" not in self.container.logs():
+                raise _ResourceNotReady
+        retry(check_ready, _ResourceNotReady)
         return self
