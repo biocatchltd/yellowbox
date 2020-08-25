@@ -3,8 +3,10 @@ Tests for Azure Storage module
 """
 from pytest import mark
 
-from yellowbox.containers import create_and_pull
-from yellowbox.extras.azure_storage import BlobStorageService, BLOB_STORAGE_DEFAULT_PORT
+from azure.storage.blob import BlobServiceClient
+from yellowbox.containers import create_and_pull, get_ports
+from yellowbox.extras.azure_storage import BlobStorageService, BLOB_STORAGE_DEFAULT_PORT, DEFAULT_ACCOUNT_KEY, \
+                                            DEFAULT_ACCOUNT_NAME
 from yellowbox.networks import temp_network, connect
 
 
@@ -13,12 +15,14 @@ def test_make_azure_storage(docker_client, spinner):
     with BlobStorageService.run(docker_client, spinner=spinner):
         pass
 
-
-def test_upload_download_files(docker_client):
+def test_sanity(docker_client):
     with BlobStorageService.run(docker_client) as service:
-        service.upload_files("test", {"file_1": b"data", "file_2": b"data2"})
-        assert service.download_file("test", "file_1") == b"data"
-        assert service.download_file("test", "file_2") == b"data2"
+        port = service.client_port()
+        with BlobServiceClient(f"http://127.0.0.1:{port}/{DEFAULT_ACCOUNT_NAME}", DEFAULT_ACCOUNT_KEY) as client:
+            with client.create_container("test") as container:
+                container.upload_blob("file_1", b"data")
+                downloader = container.download_blob("file_1")
+                assert downloader.readall() == b"data"
 
 
 def test_connection_works_sibling_network(docker_client):
