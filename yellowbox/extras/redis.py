@@ -50,7 +50,7 @@ class RedisService(SingleContainerService, RunMixin):
         with self.client() as client:
             keys = client.keys()
             if keys:
-                raise AssertionError(f'Redis db is not empty (found keys {keys})')
+                raise RuntimeError(f'Redis db is not empty (found keys {keys})')
             yield
             client.flushall()
 
