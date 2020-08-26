@@ -12,7 +12,13 @@ try:
     from yellowbox.extras.logstash import LogstashService
 except ImportError:
     pass
+
 try:
     from yellowbox.extras.kafka import KafkaService
+except ImportError:
+    pass
+
+try:
+    from yellowbox.extras.azure_storage import BlobStorageService
 except ImportError:
     pass
