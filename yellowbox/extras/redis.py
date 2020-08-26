@@ -46,9 +46,9 @@ class RedisService(SingleContainerService, RunMixin):
     def client_port(self):
         return get_ports(self.container)[REDIS_DEFAULT_PORT]
 
-    def client(self, *, client_cls: Callable[..., _T] = Redis) -> _T:
+    def client(self, *, client_cls: Callable[..., _T] = Redis, **kwargs) -> _T:
         port = self.client_port()
-        return client_cls(host='localhost', port=port)
+        return client_cls(host='localhost', port=port, **kwargs)
 
     def start(self):
         super().start()
