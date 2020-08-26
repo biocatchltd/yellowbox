@@ -32,7 +32,7 @@ jobs:
       run: |
         pip install poetry
         poetry update --lock
-        poetry install -E redis -E rabbit -E kafka
+        poetry install -E redis -E rabbit -E kafka -E azure
     - name: setup-docker
       uses: docker-practice/actions-setup-docker@0.0.1
     - name: Tests
