@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 from typing import TypeVar, Callable, Mapping, Union, Sequence, IO, Optional
 
-
 from docker import DockerClient
 from redis import ConnectionError as RedisConnectionError, Redis
 
@@ -41,7 +40,6 @@ class RedisService(SingleContainerService, RunMixin):
         if self.started:
             raise RuntimeError("Server already started. Cannot set RDB.")
         upload_file(self.container, DEFAULT_RDB_PATH, fileobj=redis_file)
-
 
     def client_port(self):
         return get_ports(self.container)[REDIS_DEFAULT_PORT]

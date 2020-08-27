@@ -28,7 +28,8 @@ class BlobStorageService(SingleContainerService, RunMixin):
     TODO: Make account name and key configurable.
     """
 
-    def __init__(self, docker_client: DockerClient, image: str = "mcr.microsoft.com/azure-storage/azurite:latest", **kwargs):
+    def __init__(self, docker_client: DockerClient, image: str = "mcr.microsoft.com/azure-storage/azurite:latest",
+                 **kwargs):
         container = create_and_pull(
             docker_client, image, "azurite-blob --blobHost 0.0.0.0", publish_all_ports=True)
         super().__init__(container, **kwargs)
@@ -44,8 +45,10 @@ class BlobStorageService(SingleContainerService, RunMixin):
 
     def start(self):
         super().start()
+
         def check_ready():
             if b"Azurite Blob service successfully listens on" not in self.container.logs():
                 raise _ResourceNotReady
+
         retry(check_ready, _ResourceNotReady)
         return self

@@ -4,9 +4,9 @@ Tests for Azure Storage module
 from pytest import mark
 
 from azure.storage.blob import BlobServiceClient
-from yellowbox.containers import create_and_pull, get_ports
-from yellowbox.extras import BlobStorageService
-from yellowbox.extras.azure_storage import BLOB_STORAGE_DEFAULT_PORT, DEFAULT_ACCOUNT_KEY, DEFAULT_ACCOUNT_NAME
+from yellowbox.containers import create_and_pull
+from yellowbox.extras.azure_storage import BLOB_STORAGE_DEFAULT_PORT, DEFAULT_ACCOUNT_KEY, DEFAULT_ACCOUNT_NAME, \
+    BlobStorageService
 from yellowbox.networks import temp_network, connect
 
 
@@ -14,6 +14,7 @@ from yellowbox.networks import temp_network, connect
 def test_make_azure_storage(docker_client, spinner):
     with BlobStorageService.run(docker_client, spinner=spinner):
         pass
+
 
 def test_sanity(docker_client):
     with BlobStorageService.run(docker_client) as service:
@@ -39,6 +40,7 @@ def test_connection_works_sibling_network(docker_client):
                 container.start()
                 return_status = container.wait()
                 assert return_status["StatusCode"] == 0
+
 
 def test_connection_works_sibling(docker_client, host_ip):
     with BlobStorageService.run(docker_client) as blob:

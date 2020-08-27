@@ -20,7 +20,7 @@ def anonymous_network(client: DockerClient, *args, **kwargs) -> Network:
 
 
 @contextmanager
-def temp_network(client: DockerClient, name=None, *args, **kwargs) -> ContextManager[Network]:
+def temp_network(client: DockerClient, name=None, *args, **kwargs):
     """Context manager for creating a temporary Docker network
 
     Network will be automatically removed upon context manager completion.

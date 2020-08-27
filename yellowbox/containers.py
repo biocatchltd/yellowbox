@@ -1,23 +1,21 @@
 from __future__ import annotations
 
 import io
-from contextlib import contextmanager
-import stat
-from functools import partial
-from os import PathLike
 import os
-from typing import Collection, Dict, Generator, IO, TypeVar, Union, Sequence
+import shutil
+import stat
+import tarfile
+from contextlib import contextmanager
+from os import PathLike
+from tempfile import TemporaryFile
+from typing import Dict, Generator, IO, TypeVar, Union, Sequence
 
 import docker
 from docker import DockerClient
 from docker.errors import ImageNotFound
 from docker.models.containers import Container
 from docker.models.networks import Network
-from tempfile import TemporaryFile, NamedTemporaryFile
-import shutil
-import weakref
 from requests import HTTPError
-import tarfile
 
 _DEFAULT_TIMEOUT = 10
 

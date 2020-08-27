@@ -10,13 +10,12 @@ from typing import Any, Callable, Deque, Dict, Iterable, Iterator, Optional, Typ
 from yaspin import yaspin
 
 _T = TypeVar('_T')
-_ExcType = TypeVar('_ExcType', bound=Exception)
 _SPINNER_FAILMSG = "💥 "
 _SPINNER_SUCCESSMSG = "✅ "
 
 
 def retry(func: Callable[[], _T],
-          exceptions: Union[_ExcType, Iterable[_ExcType]] = (Exception,), *,
+          exceptions: Union[Type[Exception], Iterable[Type[Exception]]] = (Exception,), *,
           interval: float = 2, attempts: int = 10) -> _T:
     """Retry running func until it no longer raises the given exceptions
 
@@ -69,89 +68,3 @@ def _get_spinner(real=True) -> Callable[[str], AbstractContextManager]:
     if not real:
         return lambda text: nullcontext()
     return _spinner
-
-
-class LoggingIterableAdapter(Iterable[Dict[str, Any]]):
-    """An adapter to convert blocking docker logs to non-blocking message streams, not thread-safe
-    """
-
-    # if the iterator takes more than this amount of time, we're gonna say there's no log messages to read
-    nonblocking_timeout = 0.1
-
-    def __init__(self, source: Iterator[bytes]):
-        self.source = source
-        self.pending: Deque[Dict[str, Any]] = deque()
-        self.executor = ThreadPoolExecutor(1)
-        self.done = False
-
-    def _load(self):
-        if self.done:
-            raise StopIteration
-        try:
-            message_bundle = next(self.source)
-        except StopIteration:
-            self.done = True
-            raise
-        else:
-            messages = str(message_bundle, 'utf-8').splitlines()
-            self.pending.extend(
-                json.loads(msg) for msg in messages
-            )
-
-    def read(self):
-        if not self.pending:
-            self._load()
-        return self.pending.popleft()
-
-    def read_nonblocking(self):
-        if self.pending:
-            return self.pending.popleft()
-        self.executor.submit(self._load)
-        sleep(self.nonblocking_timeout)
-        if self.done:
-            raise StopIteration
-        if not self.pending:
-            return None
-        return self.pending.popleft()
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        return self.read()
-
-
-# TODO: complete
-class _IterableIO(io.TextIOBase):
-    def __init__(self, iterable: Iterable[str],
-                 buffer_size=io.DEFAULT_BUFFER_SIZE) -> None:
-        self.iterator = iter(iterable)
-        self._buffer = deque()
-        self.buffer_size = buffer_size
-        self._current_buffer_size = 0
-        self._waiter = threading.Event()
-        self._done = False
-        self.blocking = True
-        self._read_thread = threading.Thread(target=self._read_loop)
-
-    def _read_loop(self):
-        while not self.closed:
-            pass
-
-    def setblocking(self, mode: bool) -> None:
-        self.blocking = False
-
-    def readable(self) -> bool:
-        return True
-
-    def read(self, size: Optional[int] = None) -> str:
-        if size == 0:
-            return ""
-
-        if not self.blocking and not self._buffer:
-            exc = BlockingIOError()
-            exc.characters_written = 0
-            raise exc
-
-        if size is None or size < 0:
-            pass
