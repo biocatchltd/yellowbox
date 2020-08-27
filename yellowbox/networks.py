@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Generator, TypeVar, Union, ContextManager
+from typing import Generator, TypeVar, Union
 from uuid import uuid1
 
 from docker import DockerClient
