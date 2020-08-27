@@ -23,6 +23,7 @@ pytest = "^5.4.3"
 pytest-cov = "^2.10"
 requests = "^2"
 flake8 = "*"
+pytype = "*"
 
 [tool.poetry.extras]
 redis = ["redis"]

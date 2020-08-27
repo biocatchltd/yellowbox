@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from contextlib import contextmanager
-from typing import Sequence, TypeVar, Type
+from typing import Sequence, TypeVar, Type, Generator
 
 from docker import DockerClient
 from docker.models.containers import Container
@@ -99,7 +99,8 @@ class RunMixin:
 
     @classmethod
     @contextmanager
-    def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True, remove=True, **kwargs) -> _T:
+    def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True, remove=True, **kwargs) \
+            -> Generator[_T, None, None]:
         spinner = _get_spinner(spinner)
         with spinner(f"Fetching {cls.service_name()} ..."):
             service = cls(docker_client, remove=remove, **kwargs)

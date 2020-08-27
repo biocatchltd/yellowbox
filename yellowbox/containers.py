@@ -8,7 +8,7 @@ import tarfile
 from contextlib import contextmanager
 from os import PathLike
 from tempfile import TemporaryFile
-from typing import Dict, Generator, IO, TypeVar, Union, Sequence
+from typing import Dict, Generator, IO, TypeVar, Union, Sequence, cast
 
 import docker
 from docker import DockerClient
@@ -21,7 +21,6 @@ _DEFAULT_TIMEOUT = 10
 
 _T = TypeVar("_T")
 _CT = TypeVar("_CT", bound=Container)
-_Gen = Generator[_T, None, None]
 
 
 def get_ports(container: Container) -> Dict[int, int]:
@@ -78,7 +77,7 @@ def is_alive(container: Container) -> bool:
 
 @contextmanager
 def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT,
-            signal: str = 'SIGKILL') -> _Gen[_CT]:
+            signal: str = 'SIGKILL') -> Generator[_CT, None, None]:
     """A context manager that kills a docker container upon completion.
 
     Example:
@@ -166,7 +165,7 @@ def download_file(container: Container, path: Union[str, PathLike[str]]
 
     tar_file = tarfile.open(fileobj=temp_file)
     member = tar_file.next()
-    return tar_file.extractfile(member)
+    return cast('IO[bytes]', tar_file.extractfile(member))
 
 
 def upload_file(container: Container, path: Union[str, PathLike[str]],

@@ -1,11 +1,6 @@
-import io
-import json
-import threading
-from collections import deque
-from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import AbstractContextManager, contextmanager, nullcontext, suppress
 from time import sleep
-from typing import Any, Callable, Deque, Dict, Iterable, Iterator, Optional, TypeVar, Union
+from typing import Callable, Iterable, TypeVar, Union, Type
 
 from yaspin import yaspin
 

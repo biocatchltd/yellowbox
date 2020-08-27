@@ -21,7 +21,7 @@ def append_state(client: Redis, db_state: RedisState):
         if isinstance(v, Sequence):
             client.rpush(k, *v)
         elif isinstance(v, Mapping):
-            client.hset(k, mapping=v)
+            client.hset(k, mapping=v)  # type: ignore
         else:
             client.set(k, v)
 
