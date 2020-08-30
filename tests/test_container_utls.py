@@ -46,4 +46,3 @@ def test_download_file(docker_client):
     upload_file(container, "/tmp/test", b"abcd")
     with download_file(container, "/tmp/test") as file:
         assert file.read() == b"abcd"
-

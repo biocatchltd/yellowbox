@@ -1,7 +1,7 @@
 from pytest import mark, raises
 from redis import Redis
 
-from yellowbox.extras import RedisService
+from yellowbox.extras.redis import RedisService
 
 
 @mark.parametrize('spinner', [True, False])

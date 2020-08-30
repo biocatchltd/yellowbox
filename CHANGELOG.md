@@ -1,5 +1,5 @@
 # Yellowbox Changelog
-## 0.0.2: unreleased
+## 0.1.0: unreleased
 ### Removed
 * Since logstash has no "latest" image tag, the default image name has been removed.
 ### Changed
@@ -17,6 +17,11 @@
 * `connect` now accepts keyword arguments, forwarded to the inner connect call.
 * `RabbitMQService` tests now include vhost cases.
 * Utility functions `download_file` and `upload_file`
+* `RabbitMQService` now has multiple management-related methods (useful for debugging)
+* `BlobStorageService`: a new extra service that holds azurite blob storage.
+* The `clean_slate` context for `RedisService` that ensures the service is in an empty state before and after the context.
+* `RedisService`'s new `set_state` method to easily set the state of the internal redis DB.
+* automatic linting on every PR
 ### Fixed
 * Bug where tests failed on linux because linux doesn't have `host.docker.internal`. Linux now uses IP `172.17.0.1` to target host.
 * Bug where services would fail if trying to run a non-pulled image.

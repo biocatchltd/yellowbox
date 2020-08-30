@@ -30,14 +30,15 @@ jobs:
           ${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
-        pip install poetry
-        poetry update --lock
-        poetry install -E redis -E rabbit -E kafka -E azure
+        sh scripts/install.sh
+    - name: Lint
+      run: |
+        sh scripts/lint.sh
     - name: setup-docker
       uses: docker-practice/actions-setup-docker@0.0.1
     - name: Tests
       run: |
-        poetry run python -m pytest --cov-branch --cov=./yellowbox --cov-report=xml tests/
+        sh scripts/unittest.sh
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
       with:
