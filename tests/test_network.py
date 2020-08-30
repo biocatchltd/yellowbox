@@ -3,8 +3,7 @@ from docker.models.containers import Container
 
 from yellowbox import temp_network, connect
 from yellowbox.containers import create_and_pull
-from yellowbox.extras import RedisService
-from yellowbox.extras.redis import REDIS_DEFAULT_PORT
+from yellowbox.extras.redis import RedisService, REDIS_DEFAULT_PORT
 
 
 def test_no_connect(docker_client: DockerClient):
