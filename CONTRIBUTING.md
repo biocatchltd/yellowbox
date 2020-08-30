@@ -4,14 +4,17 @@ Want to contribute? Great! First, read this page.
 Check if what you want to add/fix is documented in an issue. If not open one. Then, you can clone the repository and start hacking!
 
 # Check the solution works
-Before submitting your PR. You need to make sure it would pass some basic automation. For now that includes running the unit tests.
+Before submitting your PR. You need to make sure it would pass some basic automation.
 ```shell script
 #!/bin/bash
 # install poetry
-python -m pip install poetry # or your preferred method of installing poetry
-python -m poetry update --lock
-python -m poetry install -E redis -E rabbit -E kafka -E azure  # also include whatever new extras you added
-python -m poetry run python -m pytest --cov-branch tests/
+sh scripts/install.sh
+# IMPORTANT: If you added additional extras to the project, you must also add them to
+# `scripts/install.sh`. 
+# run linting, linting will only be properly performed for python 3.7 but should also pass for python 3.8
+sh scripts/lint.sh
+# run testing
+sh scripts/unittest.sh 
 ```
 The tests should run and pass for python 3.7 and 3.8, across Windows, macOS and Linux. You should also add new tests for whatever issue or feature you fixed/added, and add it to `CHANGELOG.md`.
 
