@@ -13,7 +13,7 @@ def test_make_kafka(docker_client, spinner):
 
 
 def test_kafka_works(docker_client):
-    with KafkaService.run(docker_client, spinner=False, remove=False) as service:
+    with KafkaService.run(docker_client, spinner=False) as service:
         with service.consumer() as consumer, \
                 service.producer() as producer:
 
@@ -32,7 +32,7 @@ def test_kafka_works(docker_client):
 
 def test_kafka_sibling_network(docker_client):
     with temp_network(docker_client) as network, \
-            KafkaService.run(docker_client, spinner=False, remove=False) as service, \
+            KafkaService.run(docker_client, spinner=False) as service, \
             connect(network, service) as alias:
         container = create_and_pull(docker_client,
                                     "confluentinc/cp-kafkacat:latest",
