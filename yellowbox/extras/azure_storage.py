@@ -10,6 +10,7 @@ from docker import DockerClient
 from yellowbox.containers import create_and_pull, get_ports
 from yellowbox.subclasses import SingleContainerService, RunMixin
 from yellowbox.utils import retry
+import textwrap
 
 BLOB_STORAGE_DEFAULT_PORT = 10000
 DEFAULT_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
@@ -33,6 +34,8 @@ class BlobStorageService(SingleContainerService, RunMixin):
         container = create_and_pull(
             docker_client, image, "azurite-blob --blobHost 0.0.0.0", publish_all_ports=True)
         super().__init__(container, **kwargs)
+        self.account_name = DEFAULT_ACCOUNT_NAME
+        self.account_key = DEFAULT_ACCOUNT_KEY
 
     def stop(self, signal: Union[str, int] = 'SIGKILL'):
         """
@@ -42,6 +45,15 @@ class BlobStorageService(SingleContainerService, RunMixin):
 
     def client_port(self):
         return get_ports(self.container)[BLOB_STORAGE_DEFAULT_PORT]
+
+    @property
+    def connection_string(self):
+        return textwrap.dedent(f"""
+        DefaultEndpointsProtocol = http;
+        AccountName = {self.account_name};
+        AccountKey = {self.account_key};
+        BlobEndpoint = http://localhost:{self.client_port()}/{self.account_name};
+        """).replace("\n", "")
 
     def start(self):
         super().start()
