@@ -49,10 +49,10 @@ class BlobStorageService(SingleContainerService, RunMixin):
     @property
     def connection_string(self):
         return (
-            f"DefaultEndpointsProtocol = http;"
-            f"AccountName = {self.account_name};"
-            f"AccountKey = {self.account_key};"
-            f"BlobEndpoint = http://localhost:{self.client_port()}/{self.account_name};")
+            f"DefaultEndpointsProtocol=http;"
+            f"AccountName={self.account_name};"
+            f"AccountKey={self.account_key};"
+            f"BlobEndpoint=http://localhost:{self.client_port()}/{self.account_name};")
 
     def start(self):
         super().start()
