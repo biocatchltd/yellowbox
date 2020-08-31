@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "yellowbox"
-version = "0.0.2a2"
+version = "0.1.0a"
 description = ""
 authors = ["biocatch ltd"]
 license = "MIT"
