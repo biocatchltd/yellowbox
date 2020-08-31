@@ -8,9 +8,8 @@ from typing import Union
 from docker import DockerClient
 
 from yellowbox.containers import create_and_pull, get_ports
-from yellowbox.subclasses import SingleContainerService, RunMixin
+from yellowbox.subclasses import RunMixin, SingleContainerService
 from yellowbox.utils import retry
-import textwrap
 
 BLOB_STORAGE_DEFAULT_PORT = 10000
 DEFAULT_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
@@ -29,7 +28,8 @@ class BlobStorageService(SingleContainerService, RunMixin):
     TODO: Make account name and key configurable.
     """
 
-    def __init__(self, docker_client: DockerClient, image: str = "mcr.microsoft.com/azure-storage/azurite:latest",
+    def __init__(self, docker_client: DockerClient,
+                 image: str = "mcr.microsoft.com/azure-storage/azurite:latest",
                  **kwargs):
         container = create_and_pull(
             docker_client, image, "azurite-blob --blobHost 0.0.0.0", publish_all_ports=True)
@@ -48,12 +48,11 @@ class BlobStorageService(SingleContainerService, RunMixin):
 
     @property
     def connection_string(self):
-        return textwrap.dedent(f"""
-        DefaultEndpointsProtocol = http;
-        AccountName = {self.account_name};
-        AccountKey = {self.account_key};
-        BlobEndpoint = http://localhost:{self.client_port()}/{self.account_name};
-        """).replace("\n", "")
+        return (
+            f"DefaultEndpointsProtocol = http;"
+            f"AccountName = {self.account_name};"
+            f"AccountKey = {self.account_key};"
+            f"BlobEndpoint = http://localhost:{self.client_port()}/{self.account_name};")
 
     def start(self):
         super().start()
