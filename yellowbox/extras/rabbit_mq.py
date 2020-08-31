@@ -62,7 +62,11 @@ class RabbitMQService(SingleContainerService, RunMixin):
         self.container.exec_run("rabbitmq-plugins enable rabbitmq_management")
 
     @contextmanager
-    def clean_slate(self, force=False):
+    def clean_slate(self, force_queue_deletion=False):
+        """
+        Notes:
+            This feature is experimental.
+        """
         try:
             management_url = self.management_url()
         except RuntimeError as e:
@@ -79,7 +83,7 @@ class RabbitMQService(SingleContainerService, RunMixin):
         replies.raise_for_status()
         extant_queues = replies.json()
         delete_params = {}
-        if not force:
+        if not force_queue_deletion:
             delete_params['if-unused'] = 'true'
         for queue in extant_queues:
             name = quote(queue['name'], safe='')
@@ -88,3 +92,12 @@ class RabbitMQService(SingleContainerService, RunMixin):
                 management_url + f'api/queues/{vhost}/{name}',
                 auth=(self.user, self.password), params=delete_params
             ).raise_for_status()
+
+    @classmethod
+    @contextmanager
+    def run(cls, docker_client: DockerClient, *, enable_management=False, **kwargs):
+        cmg: RabbitMQService = super().run(docker_client, **kwargs)
+        with cmg as ret:
+            if enable_management:
+                ret.enable_management()
+            yield ret

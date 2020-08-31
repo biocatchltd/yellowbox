@@ -57,6 +57,10 @@ class RedisService(SingleContainerService, RunMixin):
 
     @contextmanager
     def clean_slate(self):
+        """
+        Notes:
+            This feature is experimental.
+        """
         client: Redis
         with self.client() as client:
             keys = client.keys()
