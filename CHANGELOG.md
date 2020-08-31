@@ -8,6 +8,7 @@
 * `YellowLogstash` has been renamed to `LogstashService`
 * extra dependencies are now starred to increase compatibility.
 * Major overhaul to class hierarchy. All "extras" services can now only be initialized using docker client.
+* `KafkaService` Now accepts teo ports to bind to, one for external communication via docker host, and another for internal communication via networks.
 ### Added
 * Short examples in the readme
 * This changelog
