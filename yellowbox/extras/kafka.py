@@ -66,18 +66,18 @@ class KafkaService(SingleEndpointService, RunMixin):
         ports = get_ports(self.broker)
         return ports[self.outer_port]
 
-    def consumer(self) -> ContextManager[KafkaConsumer]:
+    def consumer(self, **kwargs) -> ContextManager[KafkaConsumer]:
         port = self.connection_port()
         return cast(
             'ContextManager[KafkaConsumer]',
-            closing(KafkaConsumer(bootstrap_servers=[f'localhost:{port}'], security_protocol="PLAINTEXT"))
+            closing(KafkaConsumer(bootstrap_servers=[f'localhost:{port}'], security_protocol="PLAINTEXT", **kwargs))
         )
 
-    def producer(self) -> ContextManager[KafkaProducer]:
+    def producer(self, **kwargs) -> ContextManager[KafkaProducer]:
         port = self.connection_port()
         return cast(
             'ContextManager[KafkaProducer]',
-            closing(KafkaProducer(bootstrap_servers=[f'localhost:{port}'], security_protocol="PLAINTEXT"))
+            closing(KafkaProducer(bootstrap_servers=[f'localhost:{port}'], security_protocol="PLAINTEXT", **kwargs))
         )
 
     def start(self):
