@@ -27,6 +27,8 @@ class BlobStorageService(SingleContainerService, RunMixin):
     Provides helper functions for preparing the instance for testing.
     TODO: Make account name and key configurable.
     """
+    account_name = DEFAULT_ACCOUNT_NAME
+    account_key = DEFAULT_ACCOUNT_KEY
 
     def __init__(self, docker_client: DockerClient,
                  image: str = "mcr.microsoft.com/azure-storage/azurite:latest",
@@ -34,8 +36,6 @@ class BlobStorageService(SingleContainerService, RunMixin):
         container = create_and_pull(
             docker_client, image, "azurite-blob --blobHost 0.0.0.0", publish_all_ports=True)
         super().__init__(container, **kwargs)
-        self.account_name = DEFAULT_ACCOUNT_NAME
-        self.account_key = DEFAULT_ACCOUNT_KEY
 
     def stop(self, signal: Union[str, int] = 'SIGKILL'):
         """
