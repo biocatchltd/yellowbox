@@ -28,11 +28,12 @@ class RabbitMQService(SingleContainerService, RunMixin):
     def connection_port(self):
         return get_ports(self.container)[RABBIT_DEFAULT_PORT]
 
-    def connection(self):
+    def connection(self, **kwargs):
         credentials = PlainCredentials(self.user, self.password)
         connection_params = ConnectionParameters(
             'localhost', self.connection_port(),
-            credentials=credentials, virtual_host=self.virtual_host
+            credentials=credentials, virtual_host=self.virtual_host,
+            **kwargs
         )
         return BlockingConnection(connection_params)
 
