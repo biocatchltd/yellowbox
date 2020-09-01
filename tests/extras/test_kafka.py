@@ -19,8 +19,8 @@ def test_kafka_works(docker_client):
 
             producer.send('test', b'hello world')
 
-            partition = TopicPartition('test', 0)
-            consumer.assign([partition])
+            consumer.subscribe('test')
+            consumer.topics()
             consumer.seek_to_beginning()
 
             for msg in consumer:
