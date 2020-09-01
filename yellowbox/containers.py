@@ -69,6 +69,21 @@ def get_aliases(container: Container, network: Union[str, Network]) -> Sequence[
     return container.attrs["NetworkSettings"]["Networks"][network]["Aliases"]
 
 
+def short_id(container: Container) -> str:
+    """Get the short 12-character id of a container
+
+    By default, the short 12-character id is used as a network alias in all
+    of the networks connected to the container.
+
+    Args:
+        container: Docker container to retrieve ID from.
+
+    Returns:
+        12 character string.
+    """
+    return container.id[:12]
+
+
 def is_alive(container: Container) -> bool:
     if is_removed(container):
         return False

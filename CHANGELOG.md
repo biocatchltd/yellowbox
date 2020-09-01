@@ -25,6 +25,8 @@
 * automatic linting on every PR
 * all extra client methods also accept `**kwargs` forwarded to client constructor
 * `BlobStorageService.connection_string` for obtaining the connection string to the container's blob storage.
+* `BlobStorageService.container_connection_string` for obtaining the connection string to be used inside a docker network.
+* `containers.short_id(container)` retrieves the short id of a container.
 ### Fixed
 * Bug where tests failed on linux because linux doesn't have `host.docker.internal`. Linux now uses IP `172.17.0.1` to target host.
 * Bug where services would fail if trying to run a non-pulled image.
