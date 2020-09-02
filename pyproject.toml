@@ -32,6 +32,8 @@ rabbit = ["pika"]
 kafka = ["kafka-python"]
 azure = ["azure-storage-blob", "cffi"]
 
+all = ["redis", "pika", "kafka-python", "azure-storage-blob", "cffi"]
+
 [build-system]
 requires = ["poetry>=1.0.0"]
 build-backend = "poetry.masonry.api"
