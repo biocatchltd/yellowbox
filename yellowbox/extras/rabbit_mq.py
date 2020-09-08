@@ -71,7 +71,7 @@ class RabbitMQService(SingleContainerService, RunMixin):
         try:
             management_url = self.management_url()
         except RuntimeError as e:
-            raise RuntimeError('management must be enabled for the service for clean_slate') from e
+            raise RuntimeError('management must be enabled for clean_slate') from e
 
         queues_url = management_url + 'api/queues'
         response = requests.get(queues_url, auth=(self.user, self.password))
