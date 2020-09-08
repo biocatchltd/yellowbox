@@ -30,7 +30,11 @@ jobs:
         sh scripts/install.sh
     - name: Assert Version Correctness
       run: |
-        [[ $(poetry version -s) == ${{ github.event.release.tag_name }} ]]
+        TOML_VER=$(poetry version -s)
+        echo "$TOML_VER"
+        GIT_VER=${{ github.event.release.tag_name }
+        echo "$GIT_VER"
+        [[ "$TOML_VER" == "$GIT" ]]
     - name: Publish
       env:
         PYPI_USERNAME: ${{ secrets.pypi_user }}
