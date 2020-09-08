@@ -42,7 +42,6 @@ class ContainerService(YellowService):
         return all(is_alive(c) for c in self.containers)
 
     @property
-    @abstractmethod
     def _endpoint_containers(self) -> Sequence[Container]:
         return self.containers
 
