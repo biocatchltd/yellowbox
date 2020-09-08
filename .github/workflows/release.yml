@@ -34,7 +34,7 @@ jobs:
         echo "$TOML_VER"
         GIT_VER=${{ github.event.release.tag_name }}
         echo "$GIT_VER"
-        [[ "$TOML_VER" == "$GIT" ]]
+        [[ "$TOML_VER" == "$GIT_VER" ]]
     - name: Publish
       env:
         PYPI_USERNAME: ${{ secrets.pypi_user }}
