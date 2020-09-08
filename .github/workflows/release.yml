@@ -30,7 +30,7 @@ jobs:
         sh scripts/install.sh
     - name: Assert Version Correctness
       run: |
-        TOML_VER=$(poetry version -s)
+        TOML_VER=$(poetry version | awk -F' ' '{ print $2 }')
         echo "$TOML_VER"
         GIT_VER=${{ github.event.release.tag_name }}
         echo "$GIT_VER"

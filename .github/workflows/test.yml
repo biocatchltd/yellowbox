@@ -31,7 +31,6 @@ jobs:
     - name: Install dependencies
       run: |
         sh scripts/install.sh
-        poetry version -s
     - name: Lint
       run: |
         sh scripts/lint.sh
