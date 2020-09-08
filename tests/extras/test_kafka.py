@@ -1,4 +1,3 @@
-from kafka import TopicPartition
 from pytest import mark
 
 from yellowbox.containers import create_and_pull
