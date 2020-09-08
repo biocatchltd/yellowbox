@@ -40,7 +40,7 @@ jobs:
         PYPI_USERNAME: ${{ secrets.pypi_user }}
         PYPI_PASSWORD: ${{ secrets.pypi_password }}
       run: |
-        poetry publish --username=$(PYPI_USERNAME) --password=$(PYPI_PASSWORD) --build
+        poetry publish -u $(PYPI_USERNAME) -p $(PYPI_PASSWORD) --build
     - name: Upload Binaries as Artifacts
       uses: actions/upload-artifact@v2
       with:
