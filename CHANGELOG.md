@@ -1,5 +1,5 @@
 # Yellowbox Changelog
-## 0.1.0: unreleased
+## 0.1.1: 9-8-2020
 ### Removed
 * Since logstash has no "latest" image tag, the default image name has been removed.
 ### Changed
