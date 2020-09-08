@@ -21,7 +21,6 @@ jobs:
     - name: Install PIP
       run: |
         python -m pip install --upgrade pip
-        TOML_VER=$(poetry version -s)
     - name: Setup Cache
       uses: actions/cache@v2
       with:
@@ -32,6 +31,7 @@ jobs:
     - name: Install dependencies
       run: |
         sh scripts/install.sh
+        TOML_VER=$(poetry version -s)
     - name: Lint
       run: |
         sh scripts/lint.sh
