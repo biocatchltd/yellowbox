@@ -8,6 +8,7 @@
 * `YellowLogstash` has been renamed to `LogstashService`
 * extra dependencies are now starred to increase compatibility.
 * Major overhaul to class hierarchy. All "extras" services can now only be initialized using docker client.
+* `KafkaService` Now accepts teo ports to bind to, one for external communication via docker host, and another for internal communication via networks.
 ### Added
 * Short examples in the readme
 * This changelog
@@ -22,6 +23,10 @@
 * The `clean_slate` context for `RedisService` that ensures the service is in an empty state before and after the context.
 * `RedisService`'s new `set_state` method to easily set the state of the internal redis DB.
 * automatic linting on every PR
+* all extra client methods also accept `**kwargs` forwarded to client constructor
+* `BlobStorageService.connection_string` for obtaining the connection string to the container's blob storage.
+* `BlobStorageService.container_connection_string` for obtaining the connection string to be used inside a docker network.
+* `containers.short_id(container)` retrieves the short id of a container.
 ### Fixed
 * Bug where tests failed on linux because linux doesn't have `host.docker.internal`. Linux now uses IP `172.17.0.1` to target host.
 * Bug where services would fail if trying to run a non-pulled image.

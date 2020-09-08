@@ -3,12 +3,14 @@ Azure Blob Storage module, for creating container, uploading files to it and dow
 """
 from __future__ import annotations
 
-from typing import Union
+from typing import List, Optional, Sequence, Union
 
 from docker import DockerClient
+from docker.api import container
+from docker.models.networks import Network
 
-from yellowbox.containers import create_and_pull, get_ports
-from yellowbox.subclasses import SingleContainerService, RunMixin
+from yellowbox.containers import create_and_pull, get_ports, short_id
+from yellowbox.subclasses import RunMixin, SingleContainerService
 from yellowbox.utils import retry
 
 BLOB_STORAGE_DEFAULT_PORT = 10000
@@ -27,8 +29,11 @@ class BlobStorageService(SingleContainerService, RunMixin):
     Provides helper functions for preparing the instance for testing.
     TODO: Make account name and key configurable.
     """
+    account_name = DEFAULT_ACCOUNT_NAME
+    account_key = DEFAULT_ACCOUNT_KEY
 
-    def __init__(self, docker_client: DockerClient, image: str = "mcr.microsoft.com/azure-storage/azurite:latest",
+    def __init__(self, docker_client: DockerClient,
+                 image: str = "mcr.microsoft.com/azure-storage/azurite:latest",
                  **kwargs):
         container = create_and_pull(
             docker_client, image, "azurite-blob --blobHost 0.0.0.0", publish_all_ports=True)
@@ -43,6 +48,25 @@ class BlobStorageService(SingleContainerService, RunMixin):
     def client_port(self):
         return get_ports(self.container)[BLOB_STORAGE_DEFAULT_PORT]
 
+    @property
+    def connection_string(self):
+        """Connection string to connect from host to container"""
+        return (
+            f"DefaultEndpointsProtocol=http;"
+            f"AccountName={self.account_name};"
+            f"AccountKey={self.account_key};"
+            f"BlobEndpoint=http://localhost:{self.client_port()}/{self.account_name};")
+
+    @property
+    def container_connection_string(self):
+        """Connection string to connect across containers in the same network"""
+        return (
+            f"DefaultEndpointsProtocol=http;"
+            f"AccountName={self.account_name};"
+            f"AccountKey={self.account_key};"
+            f"BlobEndpoint="
+            f"http://{short_id(self.container)}:{BLOB_STORAGE_DEFAULT_PORT}/{self.account_name};")
+
     def start(self):
         super().start()
 
@@ -52,3 +76,11 @@ class BlobStorageService(SingleContainerService, RunMixin):
 
         retry(check_ready, _ResourceNotReady)
         return self
+
+    def connect(self, network: Network, aliases: Optional[List[str]] = None,
+                **kwargs) -> Sequence[str]:
+        # Make sure the id is in the aliases list. Needed for the container
+        # connection string.
+        if aliases is not None:
+            aliases.append(short_id(self.container))
+        return super().connect(network, aliases=aliases, **kwargs)

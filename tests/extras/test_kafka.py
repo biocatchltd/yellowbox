@@ -1,4 +1,3 @@
-from kafka import TopicPartition
 from pytest import mark
 
 from yellowbox.containers import create_and_pull
@@ -19,8 +18,8 @@ def test_kafka_works(docker_client):
 
             producer.send('test', b'hello world')
 
-            partition = TopicPartition('test', 0)
-            consumer.assign([partition])
+            consumer.subscribe('test')
+            consumer.topics()
             consumer.seek_to_beginning()
 
             for msg in consumer:
@@ -36,7 +35,7 @@ def test_kafka_sibling_network(docker_client):
             connect(network, service) as alias:
         container = create_and_pull(docker_client,
                                     "confluentinc/cp-kafkacat:latest",
-                                    f"kafkacat -b {alias[0]}:9092 -L")
+                                    f"kafkacat -b {alias[0]}:{service.inner_port} -L")
         with connect(network, container):
             container.start()
             return_status = container.wait()
@@ -44,10 +43,10 @@ def test_kafka_sibling_network(docker_client):
 
 
 def test_kafka_sibling(docker_client, host_ip):
-    with KafkaService.run(docker_client, spinner=False):
+    with KafkaService.run(docker_client, spinner=False) as service:
         container = create_and_pull(docker_client,
-                                    "confluentinc/cp-kafkacat",
-                                    f"kafkacat -b {host_ip}:9092 -L")
+                                    "confluentinc/cp-kafkacat:latest",
+                                    f"kafkacat -b {host_ip}:{service.outer_port} -L")
         container.start()
         return_status = container.wait()
         assert return_status["StatusCode"] == 0

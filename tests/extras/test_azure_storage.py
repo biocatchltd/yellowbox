@@ -54,3 +54,25 @@ def test_connection_works_sibling(docker_client, host_ip):
         container.start()
         return_status = container.wait()
         assert return_status["StatusCode"] == 0
+
+def test_connection_string(docker_client):
+    with BlobStorageService.run(docker_client) as service:
+        BlobServiceClient.from_connection_string(service.connection_string)
+
+def test_container_connection_string(docker_client):
+    with temp_network(docker_client) as network,\
+            BlobStorageService.run(docker_client) as service:
+        client = BlobServiceClient.from_connection_string(service.connection_string)
+        client.create_container("test")
+        service.connect(network)
+        container = create_and_pull(
+            docker_client, "mcr.microsoft.com/azure-cli:latest",
+            ["az", "storage", "blob", "list", "--connection-string",
+             service.container_connection_string, "--container-name", "test"
+             ],
+            detach=True,
+            network=network.name
+        )
+        container.start()
+        return_status = container.wait()
+        assert return_status["StatusCode"] == 0
