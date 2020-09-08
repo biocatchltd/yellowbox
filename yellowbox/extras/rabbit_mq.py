@@ -1,3 +1,7 @@
+from contextlib import contextmanager
+from urllib.parse import quote
+
+import requests
 from docker import DockerClient
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.exceptions import AMQPConnectionError
@@ -57,3 +61,44 @@ class RabbitMQService(SingleContainerService, RunMixin):
             raise RuntimeError("Container must have the management port exposed.")
 
         self.container.exec_run("rabbitmq-plugins enable rabbitmq_management")
+
+    @contextmanager
+    def clean_slate(self, force_queue_deletion=False):
+        """
+        Notes:
+            This feature is experimental.
+        """
+        try:
+            management_url = self.management_url()
+        except RuntimeError as e:
+            raise RuntimeError('management must be enabled for clean_slate') from e
+
+        queues_url = management_url + 'api/queues'
+        response = requests.get(queues_url, auth=(self.user, self.password))
+        response.raise_for_status()
+        if response.json():
+            queue_names = [q['name'] for q in response.json()]
+            raise RuntimeError(f'rabbit has queues: {queue_names}')
+        yield
+        replies = requests.get(queues_url, auth=(self.user, self.password))
+        replies.raise_for_status()
+        extant_queues = replies.json()
+        delete_params = {}
+        if not force_queue_deletion:
+            delete_params['if-unused'] = 'true'
+        for queue in extant_queues:
+            name = quote(queue['name'], safe='')
+            vhost = quote(queue['vhost'], safe='')
+            requests.delete(
+                management_url + f'api/queues/{vhost}/{name}',
+                auth=(self.user, self.password), params=delete_params
+            ).raise_for_status()
+
+    @classmethod
+    @contextmanager
+    def run(cls, docker_client: DockerClient, *, enable_management=False, **kwargs):
+        cmg: RabbitMQService = super().run(docker_client, **kwargs)
+        with cmg as ret:
+            if enable_management:
+                ret.enable_management()
+            yield ret

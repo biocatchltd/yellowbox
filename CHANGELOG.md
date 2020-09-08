@@ -20,7 +20,7 @@
 * Utility functions `download_file` and `upload_file`
 * `RabbitMQService` now has multiple management-related methods (useful for debugging)
 * `BlobStorageService`: a new extra service that holds azurite blob storage.
-* The `clean_slate` context for `RedisService` that ensures the service is in an empty state before and after the context.
+* The `clean_slate` context for `RedisService` and `RabbitService` that ensures the service is in an empty state before and after the context.
 * `RedisService`'s new `set_state` method to easily set the state of the internal redis DB.
 * automatic linting on every PR
 * all extra client methods also accept `**kwargs` forwarded to client constructor
