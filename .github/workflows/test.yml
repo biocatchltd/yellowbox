@@ -31,7 +31,7 @@ jobs:
     - name: Install dependencies
       run: |
         sh scripts/install.sh
-        TOML_VER=$(poetry version -s)
+        poetry version -s
     - name: Lint
       run: |
         sh scripts/lint.sh
