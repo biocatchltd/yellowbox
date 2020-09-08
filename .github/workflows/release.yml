@@ -30,7 +30,7 @@ jobs:
         sh scripts/install.sh
     - name: Assert Version Correctness
       run: |
-        [[ $(poetry version -s) == ${{ github.ref }} ]]
+        [[ $(poetry version -s) == ${GITHUB_REF#refs/tags/} ]]
     - name: Publish
       env:
         PYPI_USERNAME: ${{ secrets.pypi_user }}
