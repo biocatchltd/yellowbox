@@ -6,23 +6,21 @@ from typing import IO
 
 import pytest
 
-from yellowbox.containers import create_and_pull as yellow_create_and_pull, download_file, upload_file
+from yellowbox.containers import download_file, upload_file
 
 
-def test_upload_file(docker_client):
-    container = yellow_create_and_pull(docker_client, "alpine:latest",
+def test_upload_file(docker_client, create_and_pull):
+    container = create_and_pull(docker_client, "alpine:latest",
                                 ["cat", "/tmp/test"])
     container.start()
     assert container.wait()["StatusCode"] != 0
-    container.remove(force=True, v=True)
 
-    container = docker_client.containers.create("alpine:latest",
+    container = create_and_pull(docker_client, "alpine:latest",
                                                 ["cat", "/tmp/test"])
     upload_file(container, "/tmp/test", b"testfile")
     container.start()
     assert container.wait()["StatusCode"] == 0
     assert download_file(container, "/tmp/test").read() == b"testfile"
-    container.remove(force=True, v=True)
 
 
 def _create_temp_file(data: bytes) -> IO[bytes]:
