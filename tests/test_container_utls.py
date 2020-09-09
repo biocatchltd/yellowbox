@@ -6,14 +6,15 @@ from typing import IO
 
 import pytest
 
-from yellowbox.containers import create_and_pull, download_file, upload_file
+from yellowbox.containers import create_and_pull as yellow_create_and_pull, download_file, upload_file
 
 
 def test_upload_file(docker_client):
-    container = create_and_pull(docker_client, "alpine:latest",
+    container = yellow_create_and_pull(docker_client, "alpine:latest",
                                 ["cat", "/tmp/test"])
     container.start()
     assert container.wait()["StatusCode"] != 0
+    container.remove(force=True, v=True)
 
     container = docker_client.containers.create("alpine:latest",
                                                 ["cat", "/tmp/test"])
@@ -21,6 +22,7 @@ def test_upload_file(docker_client):
     container.start()
     assert container.wait()["StatusCode"] == 0
     assert download_file(container, "/tmp/test").read() == b"testfile"
+    container.remove(force=True, v=True)
 
 
 def _create_temp_file(data: bytes) -> IO[bytes]:
@@ -31,7 +33,7 @@ def _create_temp_file(data: bytes) -> IO[bytes]:
 
 
 @pytest.mark.parametrize("fileobj_creation", [io.BytesIO, _create_temp_file])
-def test_upload_fileobj(docker_client, fileobj_creation):
+def test_upload_fileobj(docker_client, fileobj_creation, create_and_pull):
     container = create_and_pull(docker_client, "alpine:latest",
                                 ["cat", "/tmp/test"])
     with fileobj_creation(b"testfile") as file:
@@ -41,7 +43,7 @@ def test_upload_fileobj(docker_client, fileobj_creation):
     assert download_file(container, "/tmp/test").read() == b"testfile"
 
 
-def test_download_file(docker_client):
+def test_download_file(docker_client, create_and_pull):
     container = create_and_pull(docker_client, "alpine:latest")
     upload_file(container, "/tmp/test", b"abcd")
     with download_file(container, "/tmp/test") as file:

@@ -5,7 +5,7 @@ from pika import BlockingConnection
 import requests
 from pytest import mark, raises
 
-from yellowbox.containers import get_ports, create_and_pull
+from yellowbox.containers import get_ports
 from yellowbox.extras.rabbit_mq import RabbitMQService, RABBIT_HTTP_API_PORT
 from yellowbox.networks import temp_network, connect
 
@@ -32,7 +32,7 @@ def test_connection_works(docker_client, tag, vhost):
 
 
 @mark.parametrize('vhost', ["/", "guest-vhost"])
-def test_connection_works_sibling_network(docker_client, vhost):
+def test_connection_works_sibling_network(docker_client, vhost, create_and_pull):
     with temp_network(docker_client) as network:
         with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine", virtual_host=vhost) as rabbit, \
                 connect(network, rabbit) as aliases:
@@ -49,7 +49,7 @@ def test_connection_works_sibling_network(docker_client, vhost):
 
 
 @mark.parametrize('vhost', ["/", "guest-vhost"])
-def test_connection_works_sibling(docker_client, host_ip, vhost):
+def test_connection_works_sibling(docker_client, host_ip, vhost, create_and_pull):
     with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine", virtual_host=vhost) as rabbit:
         api_port = get_ports(rabbit.container)[RABBIT_HTTP_API_PORT]
         url = f"http://{host_ip}:{api_port}/api/vhosts"
