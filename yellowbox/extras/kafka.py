@@ -10,14 +10,14 @@ from kafka.errors import KafkaError
 from yellowbox.containers import get_ports, SafeContainerCreator
 from yellowbox.networks import anonymous_network
 from yellowbox.subclasses import SingleEndpointService, RunMixin
-from yellowbox.utils import retry
+from yellowbox.utils import retry, get_free_port
 
 
 class KafkaService(SingleEndpointService, RunMixin):
     def __init__(self, docker_client: DockerClient, tag_or_images: Union[str, Tuple[str, str]] = 'latest',
                  inner_port=0, outer_port=0, **kwargs):
-        self.inner_port = inner_port or randrange(32768, 61000)
-        self.outer_port = outer_port or randrange(32768, 61000)
+        self.inner_port = inner_port or get_free_port()
+        self.outer_port = outer_port or get_free_port()
         if isinstance(tag_or_images, str):
             zookeeper_image = f"bitnami/zookeeper:{tag_or_images}"
             broker_image = f"bitnami/kafka:{tag_or_images}"

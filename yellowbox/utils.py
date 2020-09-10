@@ -1,4 +1,5 @@
-from contextlib import AbstractContextManager, contextmanager, nullcontext, suppress
+from contextlib import AbstractContextManager, contextmanager, nullcontext, suppress, closing
+from socket import socket, SOL_SOCKET, SO_REUSEADDR, SOCK_STREAM, AF_INET
 from time import sleep
 from typing import Callable, Iterable, TypeVar, Union, Type
 
@@ -63,3 +64,10 @@ def _get_spinner(real=True) -> Callable[[str], AbstractContextManager]:
     if not real:
         return lambda text: nullcontext()
     return _spinner
+
+
+def get_free_port():
+    with closing(socket(AF_INET, SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        return s.getsockname()[1]
