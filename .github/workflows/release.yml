@@ -31,10 +31,13 @@ jobs:
     - name: Assert Version Correctness
       run: |
         TOML_VER=$(poetry version | awk -F' ' '{ print $2 }')
-        echo "$TOML_VER"
+        echo toml "$TOML_VER"
         GIT_VER=${{ github.event.release.tag_name }}
-        echo "$GIT_VER"
+        echo git "$GIT_VER"
+        LIB_VER=$(python -c "exec(open('yellowbox._version.py').read()); print(__version__)")
+        echo lib "$LIB_VER"
         [[ "$TOML_VER" == "$GIT_VER" ]]
+        [[ "$TOML_VER" == "$LIB_VER" ]]
     - name: Publish
       env:
         PYPI_USERNAME: ${{ secrets.pypi_user }}
