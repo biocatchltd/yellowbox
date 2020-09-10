@@ -4,7 +4,6 @@ Tests for Azure Storage module
 from pytest import mark
 
 from azure.storage.blob import BlobServiceClient
-from yellowbox.containers import create_and_pull
 from yellowbox.extras.azure_storage import BLOB_STORAGE_DEFAULT_PORT, DEFAULT_ACCOUNT_KEY, DEFAULT_ACCOUNT_NAME, \
     BlobStorageService
 from yellowbox.networks import temp_network, connect
@@ -26,7 +25,7 @@ def test_sanity(docker_client):
                 assert downloader.readall() == b"data"
 
 
-def test_connection_works_sibling_network(docker_client):
+def test_connection_works_sibling_network(docker_client, create_and_pull):
     with temp_network(docker_client) as network:
         with BlobStorageService.run(docker_client) as blob, \
                 connect(network, blob) as aliases:
@@ -42,7 +41,7 @@ def test_connection_works_sibling_network(docker_client):
                 assert return_status["StatusCode"] == 0
 
 
-def test_connection_works_sibling(docker_client, host_ip):
+def test_connection_works_sibling(docker_client, host_ip, create_and_pull):
     with BlobStorageService.run(docker_client) as blob:
         port = blob.client_port()
         url = f"http://{host_ip}:{port}"
@@ -59,7 +58,7 @@ def test_connection_string(docker_client):
     with BlobStorageService.run(docker_client) as service:
         BlobServiceClient.from_connection_string(service.connection_string)
 
-def test_container_connection_string(docker_client):
+def test_container_connection_string(docker_client, create_and_pull):
     with temp_network(docker_client) as network,\
             BlobStorageService.run(docker_client) as service:
         client = BlobServiceClient.from_connection_string(service.connection_string)
