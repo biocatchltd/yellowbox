@@ -98,11 +98,11 @@ class RunMixin:
 
     @classmethod
     @contextmanager
-    def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True, remove=True, **kwargs) \
+    def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True, **kwargs) \
             -> Generator[_T, None, None]:
         spinner = _get_spinner(spinner)
         with spinner(f"Fetching {cls.service_name()} ..."):
-            service = cls(docker_client, remove=remove, **kwargs)
+            service = cls(docker_client, **kwargs)
 
         with spinner(f"Waiting for {cls.service_name()} to start..."):
             service.start()

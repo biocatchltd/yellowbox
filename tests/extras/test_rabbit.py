@@ -3,7 +3,7 @@ from time import sleep
 import pytest
 from pika import BlockingConnection
 import requests
-from pytest import mark
+from pytest import mark, raises
 
 from yellowbox.containers import get_ports, create_and_pull
 from yellowbox.extras.rabbit_mq import RabbitMQService, RABBIT_HTTP_API_PORT
@@ -66,6 +66,51 @@ def test_connection_works_sibling(docker_client, host_ip, vhost):
 def test_management_enabling(docker_client):
     with RabbitMQService.run(docker_client) as rabbit:
         with pytest.raises(requests.exceptions.ConnectionError):
-            requests.get(rabbit.management_url())
+            requests.get(rabbit.management_url(), auth=(rabbit.user, rabbit.password))
         rabbit.enable_management()
-        requests.get(rabbit.management_url())
+        requests.get(rabbit.management_url()).raise_for_status()
+
+
+def assert_no_queues(rabbit: RabbitMQService):
+    url = rabbit.management_url() + "api/queues"
+    response = requests.get(url, auth=(rabbit.user, rabbit.password))
+    assert not response.json()
+
+
+def test_clean_slate_good(docker_client):
+    with RabbitMQService.run(docker_client, enable_management=True) as rabbit:
+        with rabbit.clean_slate(), rabbit.connection() as connection:
+            channel = connection.channel()
+            channel.queue_declare('routing')
+            channel.basic_consume('routing', lambda: 1 / 0)  # no-op
+        assert_no_queues(rabbit)
+
+
+def test_clean_slate_bad_enter(docker_client):
+    with RabbitMQService.run(docker_client, enable_management=True) as rabbit:
+        with rabbit.connection() as connection:
+            channel = connection.channel()
+            channel.queue_declare('routing')
+        with raises(RuntimeError):
+            with rabbit.clean_slate():
+                pass
+
+
+def test_clean_slate_bad_exit(docker_client):
+    with RabbitMQService.run(docker_client, enable_management=True) as rabbit:
+        with rabbit.connection() as connection:
+            with raises(requests.HTTPError):
+                with rabbit.clean_slate():
+                    channel = connection.channel()
+                    channel.queue_declare('routing')
+                    channel.basic_consume('routing', lambda: 1 / 0)  # no-op
+
+
+def test_clean_slate_bad_exit_force(docker_client):
+    with RabbitMQService.run(docker_client, enable_management=True) as rabbit:
+        with rabbit.connection() as connection:
+            with rabbit.clean_slate(force_queue_deletion=True):
+                channel = connection.channel()
+                channel.queue_declare('routing')
+                channel.basic_consume('routing', lambda: 1 / 0)  # no-op
+            assert_no_queues(rabbit)
