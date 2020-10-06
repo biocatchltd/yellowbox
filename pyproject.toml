@@ -12,7 +12,7 @@ python = "^3.7"
 docker = "^4.2.0"
 yaspin = "^1.0.0"
 
-redis = {version="*", optional=true}
+redis = {version=">=3.3.0", optional=true}
 pika = {version="*", optional=true}
 kafka-python = {version="*", optional=true}
 azure-storage-blob = { version = "^12.0.0", optional = true }
