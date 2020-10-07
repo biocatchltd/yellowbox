@@ -17,6 +17,9 @@ from docker.models.containers import Container
 from docker.models.networks import Network
 from requests import HTTPError
 
+__all__ = ['get_ports', 'get_aliases', 'is_alive', 'is_removed', 'killing', 'create_and_pull',
+           'download_file', 'upload_file', 'SafeContainerCreator']
+
 _DEFAULT_TIMEOUT = 10
 
 _T = TypeVar("_T")
@@ -240,6 +243,10 @@ def _create_tar(filename, data=None, fileobj=None) -> bytes:
 
 
 class SafeContainerCreator:
+    """
+    A class that can safely pull and create multiple containers in succession, where if one fails, all the previous
+     ones are removed
+    """
     def __init__(self, client: DockerClient):
         self.client = client
         self.created = []
