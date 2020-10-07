@@ -1,5 +1,4 @@
 from contextlib import closing
-from random import randrange
 from typing import ContextManager, cast, Union, Tuple
 from uuid import uuid1
 
@@ -103,3 +102,6 @@ class KafkaService(SingleEndpointService, RunMixin):
     @property
     def _single_endpoint(self):
         return self.broker
+
+
+__all__ = ['KafkaService']

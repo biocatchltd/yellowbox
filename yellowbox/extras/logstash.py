@@ -15,3 +15,6 @@ class LogstashService(SingleContainerService, RunMixin):
 
     def client_port(self):
         return get_ports(self.container)[LOGSTASH_DEFAULT_PORT]
+
+
+__all__ = ['LogstashService']

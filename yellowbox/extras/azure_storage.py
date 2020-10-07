@@ -6,7 +6,6 @@ from __future__ import annotations
 from typing import List, Optional, Sequence, Union
 
 from docker import DockerClient
-from docker.api import container
 from docker.models.networks import Network
 
 from yellowbox.containers import create_and_pull, get_ports, short_id
@@ -84,3 +83,6 @@ class BlobStorageService(SingleContainerService, RunMixin):
         if aliases is not None:
             aliases.append(short_id(self.container))
         return super().connect(network, aliases=aliases, **kwargs)
+
+
+__all__ = ['BlobStorageService']

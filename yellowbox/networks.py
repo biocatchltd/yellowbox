@@ -98,3 +98,6 @@ def disconnecting(network: _NT, *, remove: bool = False) -> Generator[_NT, None,
             network.disconnect(container)
         if remove:
             network.remove()
+
+
+__all__ = ['temp_network', 'anonymous_network', 'connect', 'disconnecting']

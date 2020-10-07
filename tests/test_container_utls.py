@@ -16,7 +16,7 @@ def test_upload_file(docker_client, create_and_pull):
     assert container.wait()["StatusCode"] != 0
 
     container = create_and_pull(docker_client, "alpine:latest",
-                                                ["cat", "/tmp/test"])
+                                ["cat", "/tmp/test"])
     upload_file(container, "/tmp/test", b"testfile")
     container.start()
     assert container.wait()["StatusCode"] == 0

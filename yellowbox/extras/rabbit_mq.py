@@ -102,3 +102,6 @@ class RabbitMQService(SingleContainerService, RunMixin):
             if enable_management:
                 ret.enable_management()
             yield ret
+
+
+__all__ = ['RabbitMQService', 'RABBIT_DEFAULT_PORT', 'RABBIT_HTTP_API_PORT']

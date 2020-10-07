@@ -74,3 +74,6 @@ class RedisService(SingleContainerService, RunMixin):
         with self.client() as client:
             client.flushall()
             append_state(client, db_dict)
+
+
+__all__ = ['RedisService', 'REDIS_DEFAULT_PORT', 'DEFAULT_RDB_PATH', 'append_state']
