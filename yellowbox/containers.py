@@ -17,6 +17,9 @@ from docker.models.containers import Container
 from docker.models.networks import Network
 from requests import HTTPError
 
+__all__ = ['get_ports', 'get_aliases', 'is_alive', 'is_removed', 'killing', 'create_and_pull',
+           'download_file', 'upload_file', 'SafeContainerCreator']
+
 _DEFAULT_TIMEOUT = 10
 
 _T = TypeVar("_T")
@@ -257,7 +260,3 @@ class SafeContainerCreator:
             raise
         self.created.append(container)
         return container
-
-
-__all__ = ['get_ports', 'get_aliases', 'is_alive', 'is_removed', 'killing', 'create_and_pull',
-           'download_file', 'upload_file', 'SafeContainerCreator']

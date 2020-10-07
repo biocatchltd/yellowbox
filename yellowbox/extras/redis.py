@@ -8,6 +8,8 @@ from yellowbox.containers import get_ports, create_and_pull, upload_file
 from yellowbox.subclasses import SingleContainerService, RunMixin
 from yellowbox.utils import retry
 
+__all__ = ['RedisService', 'REDIS_DEFAULT_PORT', 'DEFAULT_RDB_PATH', 'append_state']
+
 REDIS_DEFAULT_PORT = 6379
 DEFAULT_RDB_PATH = "/data/dump.rdb"
 
@@ -74,6 +76,3 @@ class RedisService(SingleContainerService, RunMixin):
         with self.client() as client:
             client.flushall()
             append_state(client, db_dict)
-
-
-__all__ = ['RedisService', 'REDIS_DEFAULT_PORT', 'DEFAULT_RDB_PATH', 'append_state']

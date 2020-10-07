@@ -9,6 +9,8 @@ from docker.models.containers import Container
 from yellowbox.containers import get_aliases, is_removed
 from yellowbox.service import YellowService
 
+__all__ = ['temp_network', 'anonymous_network', 'connect', 'disconnecting']
+
 _T = TypeVar("_T")
 _NT = TypeVar("_NT", bound=Network)
 
@@ -25,7 +27,7 @@ def temp_network(client: DockerClient, name=None, *args, **kwargs):
     Network will be automatically removed upon context manager completion.
 
     Example:
-        >>> client = docker.from_env()
+        >>> client = DockerClient.from_env()
         >>> with temp_network(client) as network:
         ...  print(network.name)
         ...
@@ -98,6 +100,3 @@ def disconnecting(network: _NT, *, remove: bool = False) -> Generator[_NT, None,
             network.disconnect(container)
         if remove:
             network.remove()
-
-
-__all__ = ['temp_network', 'anonymous_network', 'connect', 'disconnecting']

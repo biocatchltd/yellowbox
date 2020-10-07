@@ -12,6 +12,8 @@ from yellowbox.containers import create_and_pull, get_ports, short_id
 from yellowbox.subclasses import RunMixin, SingleContainerService
 from yellowbox.utils import retry
 
+__all__ = ['BlobStorageService']
+
 BLOB_STORAGE_DEFAULT_PORT = 10000
 DEFAULT_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 DEFAULT_ACCOUNT_NAME = "devstoreaccount1"
@@ -83,6 +85,3 @@ class BlobStorageService(SingleContainerService, RunMixin):
         if aliases is not None:
             aliases.append(short_id(self.container))
         return super().connect(network, aliases=aliases, **kwargs)
-
-
-__all__ = ['BlobStorageService']

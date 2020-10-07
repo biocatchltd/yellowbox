@@ -11,6 +11,8 @@ from yellowbox.networks import anonymous_network
 from yellowbox.subclasses import SingleEndpointService, RunMixin
 from yellowbox.utils import retry, get_free_port
 
+__all__ = ['KafkaService']
+
 
 class KafkaService(SingleEndpointService, RunMixin):
     def __init__(self, docker_client: DockerClient, tag_or_images: Union[str, Tuple[str, str]] = 'latest',
@@ -102,6 +104,3 @@ class KafkaService(SingleEndpointService, RunMixin):
     @property
     def _single_endpoint(self):
         return self.broker
-
-
-__all__ = ['KafkaService']

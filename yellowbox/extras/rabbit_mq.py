@@ -10,6 +10,8 @@ from yellowbox.containers import get_ports, create_and_pull
 from yellowbox.subclasses import SingleContainerService, RunMixin
 from yellowbox.utils import retry
 
+__all__ = ['RabbitMQService', 'RABBIT_DEFAULT_PORT', 'RABBIT_HTTP_API_PORT']
+
 RABBIT_DEFAULT_PORT = 5672
 RABBIT_HTTP_API_PORT = 15672
 
@@ -102,6 +104,3 @@ class RabbitMQService(SingleContainerService, RunMixin):
             if enable_management:
                 ret.enable_management()
             yield ret
-
-
-__all__ = ['RabbitMQService', 'RABBIT_DEFAULT_PORT', 'RABBIT_HTTP_API_PORT']
