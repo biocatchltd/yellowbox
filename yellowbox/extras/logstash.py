@@ -3,6 +3,8 @@ from docker import DockerClient
 from yellowbox.containers import get_ports, create_and_pull
 from yellowbox.subclasses import SingleContainerService, RunMixin
 
+__all__ = ['LogstashService', 'LOGSTASH_DEFAULT_PORT']
+
 LOGSTASH_DEFAULT_PORT = 5959
 
 

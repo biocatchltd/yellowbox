@@ -1,5 +1,4 @@
 from contextlib import closing
-from random import randrange
 from typing import ContextManager, cast, Union, Tuple
 from uuid import uuid1
 
@@ -11,6 +10,8 @@ from yellowbox.containers import get_ports, SafeContainerCreator
 from yellowbox.networks import anonymous_network
 from yellowbox.subclasses import SingleEndpointService, RunMixin
 from yellowbox.utils import retry, get_free_port
+
+__all__ = ['KafkaService']
 
 
 class KafkaService(SingleEndpointService, RunMixin):

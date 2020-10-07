@@ -54,12 +54,14 @@ def test_connection_works_sibling(docker_client, host_ip, create_and_pull):
         return_status = container.wait()
         assert return_status["StatusCode"] == 0
 
+
 def test_connection_string(docker_client):
     with BlobStorageService.run(docker_client) as service:
         BlobServiceClient.from_connection_string(service.connection_string)
 
+
 def test_container_connection_string(docker_client, create_and_pull):
-    with temp_network(docker_client) as network,\
+    with temp_network(docker_client) as network, \
             BlobStorageService.run(docker_client) as service:
         client = BlobServiceClient.from_connection_string(service.connection_string)
         client.create_container("test")

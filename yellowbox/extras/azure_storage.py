@@ -6,12 +6,13 @@ from __future__ import annotations
 from typing import List, Optional, Sequence, Union
 
 from docker import DockerClient
-from docker.api import container
 from docker.models.networks import Network
 
 from yellowbox.containers import create_and_pull, get_ports, short_id
 from yellowbox.subclasses import RunMixin, SingleContainerService
 from yellowbox.utils import retry
+
+__all__ = ['BlobStorageService']
 
 BLOB_STORAGE_DEFAULT_PORT = 10000
 DEFAULT_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
