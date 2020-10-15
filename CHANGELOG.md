@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## unreleased
+### Fixed
+* redis's minimum version was changed to 3.3.0
 ## 0.1.1: 9-8-2020
 ### Removed
 * Since logstash has no "latest" image tag, the default image name has been removed.
