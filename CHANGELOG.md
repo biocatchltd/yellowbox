@@ -1,7 +1,13 @@
 # Yellowbox Changelog
-## unreleased
+## 0.2.0
+### Added
+* all extra-containers with retrying startup mechanisms now support retry
+ arguments in run
+* RetryMixin to forward retry argument to a service
 ### Fixed
 * redis's minimum version was changed to 3.3.0
+### Changed
+* create_and_pull will throw an error if no tag is specified
 ## 0.1.1: 9-8-2020
 ### Removed
 * Since logstash has no "latest" image tag, the default image name has been removed.

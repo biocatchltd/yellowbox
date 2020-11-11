@@ -8,7 +8,7 @@ from pika.exceptions import AMQPConnectionError
 
 from yellowbox.containers import get_ports, create_and_pull
 from yellowbox.subclasses import SingleContainerService, RunMixin
-from yellowbox.utils import retry
+from yellowbox.utils import RetryMixin
 
 __all__ = ['RabbitMQService', 'RABBIT_DEFAULT_PORT', 'RABBIT_HTTP_API_PORT']
 
@@ -16,7 +16,7 @@ RABBIT_DEFAULT_PORT = 5672
 RABBIT_HTTP_API_PORT = 15672
 
 
-class RabbitMQService(SingleContainerService, RunMixin):
+class RabbitMQService(RetryMixin, SingleContainerService, RunMixin):
     def __init__(self, docker_client: DockerClient, image='rabbitmq:latest', *, user="guest", password="guest",
                  virtual_host="/", **kwargs):
         self.user = user
@@ -45,7 +45,7 @@ class RabbitMQService(SingleContainerService, RunMixin):
 
     def start(self):
         super().start()
-        conn = retry(self.connection, AMQPConnectionError)
+        conn = self.retry(self.connection, AMQPConnectionError)
         conn.close()
         return self
 

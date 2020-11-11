@@ -1,9 +1,13 @@
 from contextlib import AbstractContextManager, contextmanager, nullcontext, suppress, closing
+from functools import partial
+from math import ceil
 from socket import socket, SOL_SOCKET, SO_REUSEADDR, SOCK_STREAM, AF_INET
 from time import sleep
-from typing import Callable, Iterable, TypeVar, Union, Type
+from typing import Callable, Iterable, TypeVar, Union, Type, Optional
 
 from yaspin import yaspin
+
+__all__ = ['retry', 'RetryMixin']
 
 _T = TypeVar('_T')
 _SPINNER_FAILMSG = "💥 "
@@ -12,7 +16,7 @@ _SPINNER_SUCCESSMSG = "✅ "
 
 def retry(func: Callable[[], _T],
           exceptions: Union[Type[Exception], Iterable[Type[Exception]]] = (Exception,), *,
-          interval: float = 2, attempts: int = 10) -> _T:
+          interval: float = 2, attempts: int = 10, timeout: Optional[float] = None) -> _T:
     """Retry running func until it no longer raises the given exceptions
 
     Args:
@@ -22,6 +26,8 @@ def retry(func: Callable[[], _T],
         inside this iterable will be propagated.
         interval: Time between tries in seconds. Defaults to 2.
         attempts: Max number of attempts. Defaults to 10.
+        timeout: Overrides attempts if provided. Specifies the amount of time for which
+         to continue attempting.
 
     Returns:
         Result of `func` once it ran successfully.
@@ -30,6 +36,9 @@ def retry(func: Callable[[], _T],
         Any exception raised by `func` if max attempts were reached or exception
         wasn't specified in exceptions list.
     """
+    if timeout:
+        attempts = ceil(timeout / interval)
+
     if not isinstance(attempts, int):
         raise TypeError("Attempts must be an integer.")
 
@@ -47,6 +56,15 @@ def retry(func: Callable[[], _T],
         attempts -= 1
 
     return func()
+
+
+class RetryMixin:
+    def __init__(self, *args,
+                 interval: float = 2, attempts: int = 10, timeout: Optional[float] = None,
+                 **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.retry = partial(retry, interval=interval, attempts=attempts, timeout=timeout)
 
 
 @contextmanager

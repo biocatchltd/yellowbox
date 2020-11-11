@@ -132,7 +132,13 @@ def create_and_pull(docker_client: DockerClient, image, *args, **kwargs) -> Cont
 
     Returns:
         A non-started container.
+
+    Note:
+        Due to inconsistent behaviour of docker's "pull" command across
+        platforms, this function will raise an error if no tag is specified
     """
+    if ':' not in image:
+        raise ValueError('the image name must contain a tag')
     try:
         ret = docker_client.containers.create(image, *args, **kwargs)
     except ImageNotFound:
