@@ -8,13 +8,13 @@ from kafka.errors import KafkaError
 
 from yellowbox.containers import get_ports, SafeContainerCreator
 from yellowbox.networks import anonymous_network
-from yellowbox.subclasses import SingleEndpointService, RunMixin
-from yellowbox.utils import get_free_port, RetryMixin
+from yellowbox.subclasses import SingleEndpointService, RunMixinWithTimeout, ServiceWithTimeout
+from yellowbox.utils import get_free_port, retry
 
 __all__ = ['KafkaService']
 
 
-class KafkaService(RetryMixin, SingleEndpointService, RunMixin):
+class KafkaService(SingleEndpointService, ServiceWithTimeout, RunMixinWithTimeout):
     def __init__(self, docker_client: DockerClient, tag_or_images: Union[str, Tuple[str, str]] = 'latest',
                  inner_port=0, outer_port=0, **kwargs):
         self.inner_port = inner_port or get_free_port()
@@ -81,9 +81,9 @@ class KafkaService(RetryMixin, SingleEndpointService, RunMixin):
             closing(KafkaProducer(bootstrap_servers=[f'localhost:{port}'], security_protocol="PLAINTEXT", **kwargs))
         )
 
-    def start(self):
+    def start(self, **kwargs):
         super().start()
-        with self.retry(self.consumer, (KafkaError, ConnectionError, ValueError)):
+        with retry(self.consumer, (KafkaError, ConnectionError, ValueError), **kwargs):
             pass
         return self
 

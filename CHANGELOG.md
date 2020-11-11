@@ -3,7 +3,6 @@
 ### Added
 * all extra-containers with retrying startup mechanisms now support retry
  arguments in run
-* RetryMixin to forward retry argument to a service
 ### Fixed
 * redis's minimum version was changed to 3.3.0
 ### Changed

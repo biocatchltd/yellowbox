@@ -9,10 +9,11 @@ from docker import DockerClient
 from docker.models.networks import Network
 
 from yellowbox.containers import create_and_pull, get_ports, short_id
-from yellowbox.subclasses import RunMixin, SingleContainerService
-from yellowbox.utils import RetryMixin
+from yellowbox.subclasses import RunMixinWithTimeout, SingleContainerService, ServiceWithTimeout
 
 __all__ = ['BlobStorageService']
+
+from yellowbox.utils import retry
 
 BLOB_STORAGE_DEFAULT_PORT = 10000
 DEFAULT_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
@@ -24,7 +25,7 @@ class _ResourceNotReady(Exception):
     pass
 
 
-class BlobStorageService(RetryMixin, SingleContainerService, RunMixin):
+class BlobStorageService(SingleContainerService, ServiceWithTimeout, RunMixinWithTimeout):
     """
     Starts Azurite, Azure's storage emulator.
     Provides helper functions for preparing the instance for testing.
@@ -68,14 +69,14 @@ class BlobStorageService(RetryMixin, SingleContainerService, RunMixin):
             f"BlobEndpoint="
             f"http://{short_id(self.container)}:{BLOB_STORAGE_DEFAULT_PORT}/{self.account_name};")
 
-    def start(self):
+    def start(self, **kwargs):
         super().start()
 
         def check_ready():
             if b"Azurite Blob service successfully listens on" not in self.container.logs():
                 raise _ResourceNotReady
 
-        self.retry(check_ready, _ResourceNotReady)
+        retry(check_ready, _ResourceNotReady, **kwargs)
         return self
 
     def connect(self, network: Network, aliases: Optional[List[str]] = None,

@@ -5,10 +5,11 @@ from docker import DockerClient
 from redis import ConnectionError as RedisConnectionError, Redis
 
 from yellowbox.containers import get_ports, create_and_pull, upload_file
-from yellowbox.subclasses import SingleContainerService, RunMixin
-from yellowbox.utils import RetryMixin
+from yellowbox.subclasses import SingleContainerService, RunMixinWithTimeout, ServiceWithTimeout
+from yellowbox.utils import retry
 
 __all__ = ['RedisService', 'REDIS_DEFAULT_PORT', 'DEFAULT_RDB_PATH', 'append_state']
+
 
 REDIS_DEFAULT_PORT = 6379
 DEFAULT_RDB_PATH = "/data/dump.rdb"
@@ -28,7 +29,7 @@ def append_state(client: Redis, db_state: RedisState):
             client.set(k, v)
 
 
-class RedisService(RetryMixin, SingleContainerService, RunMixin):
+class RedisService(SingleContainerService, ServiceWithTimeout, RunMixinWithTimeout):
     def __init__(self, docker_client: DockerClient, image='redis:latest',
                  redis_file: Optional[IO[bytes]] = None, **kwargs):
         container = create_and_pull(docker_client, image, publish_all_ports=True, detach=True)
@@ -50,10 +51,10 @@ class RedisService(RetryMixin, SingleContainerService, RunMixin):
         port = self.client_port()
         return client_cls(host='localhost', port=port, **kwargs)
 
-    def start(self):
+    def start(self, **kwargs):
         super().start()
         with self.client() as client:
-            self.retry(client.ping, RedisConnectionError)
+            retry(client.ping, RedisConnectionError, **kwargs)
         self.started = True
         return self
 

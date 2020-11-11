@@ -1,13 +1,10 @@
 from contextlib import AbstractContextManager, contextmanager, nullcontext, suppress, closing
-from functools import partial
 from math import ceil
 from socket import socket, SOL_SOCKET, SO_REUSEADDR, SOCK_STREAM, AF_INET
 from time import sleep
 from typing import Callable, Iterable, TypeVar, Union, Type, Optional
 
 from yaspin import yaspin
-
-__all__ = ['retry', 'RetryMixin']
 
 _T = TypeVar('_T')
 _SPINNER_FAILMSG = "💥 "
@@ -56,15 +53,6 @@ def retry(func: Callable[[], _T],
         attempts -= 1
 
     return func()
-
-
-class RetryMixin:
-    def __init__(self, *args,
-                 interval: float = 2, attempts: int = 10, timeout: Optional[float] = None,
-                 **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.retry = partial(retry, interval=interval, attempts=attempts, timeout=timeout)
 
 
 @contextmanager
