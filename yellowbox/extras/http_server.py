@@ -2,7 +2,6 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from threading import Lock
 from types import new_class
 from typing import Pattern, Callable, Set, DefaultDict
 
@@ -17,9 +16,6 @@ class RoutedHandler:
     name: str
     route: Pattern[str]
     callback: Callable[[BaseHTTPRequestHandler], None]
-
-    def __post_init__(self):
-        self.route = re.compile(self.route)  # compile is idempotent
 
 
 class HttpService(YellowService):
