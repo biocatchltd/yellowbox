@@ -12,14 +12,14 @@ from yellowbox.networks import temp_network, connect
 
 @mark.parametrize('spinner', [True, False])
 def test_make_rabbit(docker_client, spinner):
-    with RabbitMQService.run(docker_client, spinner=spinner):
+    with RabbitMQService.run(docker_client, spinner=spinner, timeout=60):
         pass
 
 
 @mark.parametrize('tag', ['rabbitmq:management-alpine', 'rabbitmq:latest'])
 @mark.parametrize('vhost', ["/", "guest-vhost"])
 def test_connection_works(docker_client, tag, vhost):
-    with RabbitMQService.run(docker_client, image=tag, virtual_host=vhost) as rabbit:
+    with RabbitMQService.run(docker_client, image=tag, virtual_host=vhost, timeout=60) as rabbit:
         connection: BlockingConnection
         with rabbit.connection() as connection:
             channel = connection.channel()
@@ -34,7 +34,8 @@ def test_connection_works(docker_client, tag, vhost):
 @mark.parametrize('vhost', ["/", "guest-vhost"])
 def test_connection_works_sibling_network(docker_client, vhost, create_and_pull):
     with temp_network(docker_client) as network:
-        with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine", virtual_host=vhost) as rabbit, \
+        with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine", virtual_host=vhost, timeout=60)\
+                as rabbit, \
                 connect(network, rabbit) as aliases:
             url = f"http://{aliases[0]}:{RABBIT_HTTP_API_PORT}/api/vhosts"
             container = create_and_pull(
@@ -50,7 +51,8 @@ def test_connection_works_sibling_network(docker_client, vhost, create_and_pull)
 
 @mark.parametrize('vhost', ["/", "guest-vhost"])
 def test_connection_works_sibling(docker_client, host_ip, vhost, create_and_pull):
-    with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine", virtual_host=vhost) as rabbit:
+    with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine", virtual_host=vhost, timeout=60) \
+            as rabbit:
         api_port = get_ports(rabbit.container)[RABBIT_HTTP_API_PORT]
         url = f"http://{host_ip}:{api_port}/api/vhosts"
         container = create_and_pull(
@@ -64,7 +66,7 @@ def test_connection_works_sibling(docker_client, host_ip, vhost, create_and_pull
 
 
 def test_management_enabling(docker_client):
-    with RabbitMQService.run(docker_client) as rabbit:
+    with RabbitMQService.run(docker_client, timeout=60) as rabbit:
         with pytest.raises(requests.exceptions.ConnectionError):
             requests.get(rabbit.management_url(), auth=(rabbit.user, rabbit.password))
         rabbit.enable_management()
@@ -78,7 +80,7 @@ def assert_no_queues(rabbit: RabbitMQService):
 
 
 def test_clean_slate_good(docker_client):
-    with RabbitMQService.run(docker_client, enable_management=True) as rabbit:
+    with RabbitMQService.run(docker_client, enable_management=True, timeout=60) as rabbit:
         with rabbit.clean_slate(), rabbit.connection() as connection:
             channel = connection.channel()
             channel.queue_declare('routing')
@@ -87,7 +89,7 @@ def test_clean_slate_good(docker_client):
 
 
 def test_clean_slate_bad_enter(docker_client):
-    with RabbitMQService.run(docker_client, enable_management=True) as rabbit:
+    with RabbitMQService.run(docker_client, enable_management=True, timeout=60) as rabbit:
         with rabbit.connection() as connection:
             channel = connection.channel()
             channel.queue_declare('routing')
@@ -97,7 +99,7 @@ def test_clean_slate_bad_enter(docker_client):
 
 
 def test_clean_slate_bad_exit(docker_client):
-    with RabbitMQService.run(docker_client, enable_management=True) as rabbit:
+    with RabbitMQService.run(docker_client, enable_management=True, timeout=60) as rabbit:
         with rabbit.connection() as connection:
             with raises(requests.HTTPError):
                 with rabbit.clean_slate():
@@ -107,7 +109,7 @@ def test_clean_slate_bad_exit(docker_client):
 
 
 def test_clean_slate_bad_exit_force(docker_client):
-    with RabbitMQService.run(docker_client, enable_management=True) as rabbit:
+    with RabbitMQService.run(docker_client, enable_management=True, timeout=60) as rabbit:
         with rabbit.connection() as connection:
             with rabbit.clean_slate(force_queue_deletion=True):
                 channel = connection.channel()
