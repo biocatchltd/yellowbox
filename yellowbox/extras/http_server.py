@@ -7,7 +7,7 @@ from functools import partial
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from threading import Thread
 from types import new_class
-from typing import Pattern, Callable, Set, DefaultDict, Union, Optional, Type, cast, NamedTuple
+from typing import Pattern, Callable, Set, DefaultDict, Union, Optional, Type, cast, NamedTuple, ClassVar
 from urllib.parse import urlparse, ParseResult
 
 import requests
@@ -39,11 +39,13 @@ class RouterHTTPRequestHandler(BaseHTTPRequestHandler):
     A BaseHTTPRequestHandler that allows adding and deleting routed handlers.
     Also contains some utility argument parsing.
     """
+    _parse_url: ParseResult
+    _body: bytes
 
-    routes_by_method: DefaultDict[str, Set[RoutedHandler]]
-    route_lock: rwlock.RWLockWrite
+    routes_by_method: ClassVar[DefaultDict[str, Set[RoutedHandler]]]
+    route_lock: ClassVar[rwlock.RWLockWrite]
 
-    def body(self):
+    def body(self) -> bytes:
         try:
             return self._body
         except AttributeError:
@@ -149,7 +151,7 @@ class HttpService(ServiceWithTimeout):
 
     @staticmethod
     def _to_callback(side_effect: SideEffect):
-        def _respond(handler: RouterHTTPRequestHandler, response):
+        def _respond(handler: RouterHTTPRequestHandler, response: SideEffectResponse):
             if isinstance(response, int):
                 handler.send_error(response)
                 handler.end_headers()
@@ -157,8 +159,6 @@ class HttpService(ServiceWithTimeout):
             handler.send_response(200)
             handler.end_headers()
             if isinstance(response, str):
-                if not response.isascii():
-                    raise TypeError('cannot respond with non-ascii string')
                 response = bytes(response, 'ascii')
             handler.wfile.write(response)
 
@@ -168,7 +168,7 @@ class HttpService(ServiceWithTimeout):
                 _respond(handler, result)
         else:
             def callback(handler: RouterHTTPRequestHandler):
-                _respond(handler, side_effect)
+                _respond(handler, cast(SideEffectResponse, side_effect))
         return callback
 
     def patch_route(self, method, route: Union[str, Pattern[str]], side_effect: SideEffect = ...,

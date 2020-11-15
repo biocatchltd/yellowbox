@@ -100,7 +100,7 @@ def test_route_query_regex(method):
 
 
 @mark.parametrize('method', ['GET', 'PUT'])
-def test_route_query_regex(method):
+def test_route_ambiguous(method):
     with HttpService().start() as service:
         with service.patch_route(method, re.compile('/[abc]'), '1'), \
              service.patch_route(method, re.compile('/[cde]'), '2'):
