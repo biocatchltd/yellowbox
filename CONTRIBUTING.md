@@ -20,3 +20,9 @@ The tests should run and pass for python 3.7 and 3.8, across Windows, macOS and 
 
 # Submit your PR
 Submit a PR with changes. Your code should be well documented and efficient. Your code must pass the unit tests as well as receive an approval from at least one code owner.
+
+# Notes:
+* when running tests on macOS, hostname resolution can be very slow, to fix this, run the following line on terminal:
+```shell script
+scutil --set HostName $(scutil --get LocalHostName)
+```

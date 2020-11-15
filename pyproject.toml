@@ -11,6 +11,7 @@ repository = "https://github.com/biocatchltd/yellowbox"
 python = "^3.7"
 docker = "^4.2.0"
 yaspin = "^1.0.0"
+requests = "*"
 readerwriterlock = "^1.0.0"
 
 redis = {version=">=3.3.0", optional=true}
