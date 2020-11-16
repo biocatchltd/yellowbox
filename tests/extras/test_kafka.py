@@ -10,11 +10,6 @@ def test_make_kafka(docker_client, spinner):
         pass
 
 
-def test_make_kafka_timeout(docker_client):
-    with KafkaService.run(docker_client):
-        pass
-
-
 def test_kafka_works(docker_client):
     with KafkaService.run(docker_client, spinner=False) as service:
         with service.consumer() as consumer, \
