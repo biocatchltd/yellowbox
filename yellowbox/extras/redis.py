@@ -4,9 +4,10 @@ from typing import TypeVar, Callable, Mapping, Union, Sequence, IO, Optional
 from docker import DockerClient
 from redis import ConnectionError as RedisConnectionError, Redis
 
+from yellowbox import RunMixin
 from yellowbox.containers import get_ports, create_and_pull, upload_file
-from yellowbox.retry import RetrySpecs
-from yellowbox.subclasses import SingleContainerService, RunMixinWithBlockingStart, BlockingStartService
+from yellowbox.retry import RetrySpec
+from yellowbox.subclasses import SingleContainerService
 
 __all__ = ['RedisService', 'REDIS_DEFAULT_PORT', 'DEFAULT_RDB_PATH', 'append_state']
 
@@ -29,7 +30,7 @@ def append_state(client: Redis, db_state: RedisState):
             client.set(k, v)
 
 
-class RedisService(SingleContainerService, BlockingStartService, RunMixinWithBlockingStart):
+class RedisService(SingleContainerService, RunMixin):
     def __init__(self, docker_client: DockerClient, image='redis:latest',
                  redis_file: Optional[IO[bytes]] = None, **kwargs):
         container = create_and_pull(docker_client, image, publish_all_ports=True, detach=True)
@@ -51,10 +52,10 @@ class RedisService(SingleContainerService, BlockingStartService, RunMixinWithBlo
         port = self.client_port()
         return client_cls(host='localhost', port=port, **kwargs)
 
-    def start(self, retry_specs: Optional[RetrySpecs] = None):
+    def start(self, retry_specs: Optional[RetrySpec] = None):
         super().start()
         with self.client() as client:
-            retry_specs = retry_specs or RetrySpecs(attempts=10)
+            retry_specs = retry_specs or RetrySpec(attempts=10)
             retry_specs.retry(client.ping, RedisConnectionError)
         self.started = True
         return self

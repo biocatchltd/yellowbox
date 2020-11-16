@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from contextlib import contextmanager
 from typing import Sequence, TypeVar, Type, Generator, Optional
 
@@ -7,7 +7,7 @@ from docker.models.containers import Container
 from docker.models.networks import Network
 
 from yellowbox.containers import is_alive, _DEFAULT_TIMEOUT, get_aliases
-from yellowbox.retry import RetrySpecs
+from yellowbox.retry import RetrySpec
 from yellowbox.service import YellowService
 from yellowbox.utils import _get_spinner
 
@@ -21,7 +21,8 @@ class ContainerService(YellowService):
         self.containers = containers
         self.remove = remove
 
-    def start(self):
+    @abstractmethod
+    def start(self, retry_spec: Optional[RetrySpec] = None):
         for c in self.containers:
             if c.status.lower() == 'started':
                 continue
@@ -76,7 +77,7 @@ class SingleEndpointService(ContainerService):
         self._single_endpoint.reload()
 
 
-class SingleContainerService(SingleEndpointService):
+class SingleContainerService(SingleEndpointService, ABC):
     def __init__(self, container: Container, **kwargs):
         super().__init__((container,), **kwargs)
 
@@ -99,48 +100,8 @@ class RunMixin:
 
     @classmethod
     @contextmanager
-    def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True, **kwargs) \
-            -> Generator[_T, None, None]:
-        """
-        A context manager to create, start, and finally close a service
-        Args:
-            docker_client: a DockerClient instance to use when creating the service
-            spinner: whether or not to use a yaspin spinner
-            **kwargs: all keyword arguments are forwarded to the class's constructor
-        """
-        spinner = _get_spinner(spinner)
-        with spinner(f"Fetching {cls.service_name()} ..."):
-            service = cls(docker_client, **kwargs)
-
-        with spinner(f"Waiting for {cls.service_name()} to start..."):
-            service.start()
-
-        with service:
-            yield service
-
-
-class BlockingStartService(YellowService):
-    @abstractmethod
-    def start(self: _T, *, retry_specs: Optional[RetrySpecs] = None) -> _T:
-        """
-        Start the service. Wait for startup by repeating an attempted operation
-
-        Args:
-            retry_specs: The specifications for the repeated attempts. If not provided,
-             a predefined default RetrySpec should be used.
-
-        Returns:
-            self, for usage as a context manager.
-
-        """
-        pass
-
-
-class RunMixinWithBlockingStart(RunMixin):
-    @classmethod
-    @contextmanager
     def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True,
-            retry_specs: Optional[RetrySpecs] = None, **kwargs) -> Generator[_T, None, None]:
+            retry_specs: Optional[RetrySpec] = None, **kwargs) -> Generator[_T, None, None]:
         """
         Same as RunMixin.run, but allows to forward retry arguments to the blocking start method.
 

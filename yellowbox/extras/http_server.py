@@ -13,8 +13,8 @@ from urllib.parse import urlparse, ParseResult
 import requests
 from requests import HTTPError, ConnectionError
 
-from yellowbox import BlockingStartService
-from yellowbox.retry import RetrySpecs
+from yellowbox.service import YellowService
+from yellowbox.retry import RetrySpec
 
 __all__ = ['HttpService', 'RouterHTTPRequestHandler']
 SideEffectResponse = Union[bytes, str, int]
@@ -115,7 +115,7 @@ else:
     _docker_host_name = 'host.docker.internal'
 
 
-class HttpService(BlockingStartService):
+class HttpService(YellowService):
     """
     The HttpService class is used to mock http servers. Although it is a YellowService,
     it does not wrap a docker container, rather, it wraps a standard library HTTPServer, with a server
@@ -219,10 +219,10 @@ class HttpService(BlockingStartService):
 
         return _helper()
 
-    def start(self, retry_specs: Optional[RetrySpecs] = None):
+    def start(self, retry_specs: Optional[RetrySpec] = None):
         with self.patch_route('GET', '/health', 200):
             self.server_thread.start()
-            retry_specs = retry_specs or RetrySpecs(attempts=10)
+            retry_specs = retry_specs or RetrySpec(attempts=10)
             retry_specs.retry(
                 lambda: requests.get(self.local_url + '/health').raise_for_status(),
                 (ConnectionError, HTTPError)

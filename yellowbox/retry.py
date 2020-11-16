@@ -9,7 +9,7 @@ _T = TypeVar('_T')
 
 
 @dataclass
-class RetrySpecs:
+class RetrySpec:
     """
     Specifications for a repeated attempts af an arbitrary action that might fail.
     """
