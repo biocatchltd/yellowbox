@@ -113,7 +113,7 @@ class RunMixin:
 
 class ServiceWithTimeout(YellowService):
     @abstractmethod
-    def start(self, *, interval: float = 2, attempts: int = 10, timeout: Optional[float] = None):
+    def start(self, *, retry_interval: float = 2, retry_attempts: int = 10, timeout: Optional[float] = None):
         pass
 
 
@@ -121,14 +121,14 @@ class RunMixinWithTimeout(RunMixin):
     @classmethod
     @contextmanager
     def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True,
-            interval: float = 2, attempts: int = 10, timeout: Optional[float] = None,
+            retry_interval: float = 2, retry_attempts: int = 10, timeout: Optional[float] = None,
             **kwargs) -> Generator[_T, None, None]:
         spinner = _get_spinner(spinner)
         with spinner(f"Fetching {cls.service_name()} ..."):
             service = cls(docker_client, **kwargs)
 
         with spinner(f"Waiting for {cls.service_name()} to start..."):
-            service.start(interval=interval, attempts=attempts, timeout=timeout)
+            service.start(retry_interval=retry_interval, retry_attempts=retry_attempts, timeout=timeout)
 
         with service:
             yield service

@@ -81,9 +81,10 @@ class KafkaService(SingleEndpointService, ServiceWithTimeout, RunMixinWithTimeou
             closing(KafkaProducer(bootstrap_servers=[f'localhost:{port}'], security_protocol="PLAINTEXT", **kwargs))
         )
 
-    def start(self, **kwargs):
+    def start(self, retry_interval=2, retry_attempts=15, timeout=None):
         super().start()
-        with retry(self.consumer, (KafkaError, ConnectionError, ValueError), **kwargs):
+        with retry(self.consumer, (KafkaError, ConnectionError, ValueError),
+                   interval=retry_interval, attempts=retry_attempts, timeout=timeout):
             pass
         return self
 

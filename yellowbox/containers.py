@@ -121,7 +121,7 @@ def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT,
             container.wait(timeout=timeout)
 
 
-def create_and_pull(docker_client: DockerClient, image, *args, **kwargs) -> Container:
+def create_and_pull(docker_client: DockerClient, image: str, *args, **kwargs) -> Container:
     """
     Create a docker container, pulling the image if necessary.
     Args:
@@ -137,7 +137,8 @@ def create_and_pull(docker_client: DockerClient, image, *args, **kwargs) -> Cont
         Due to inconsistent behaviour of docker's "pull" command across
         platforms, this function will raise an error if no tag is specified
     """
-    if ':' not in image:
+    split_by_tag = image.rsplit(':', 2)
+    if len(split_by_tag) < 2 or not split_by_tag[1]:
         raise ValueError('the image name must contain a tag')
     try:
         ret = docker_client.containers.create(image, *args, **kwargs)

@@ -69,14 +69,14 @@ class BlobStorageService(SingleContainerService, ServiceWithTimeout, RunMixinWit
             f"BlobEndpoint="
             f"http://{short_id(self.container)}:{BLOB_STORAGE_DEFAULT_PORT}/{self.account_name};")
 
-    def start(self, **kwargs):
+    def start(self, retry_interval=2, retry_attempts=10, timeout=None):
         super().start()
 
         def check_ready():
             if b"Azurite Blob service successfully listens on" not in self.container.logs():
                 raise _ResourceNotReady
 
-        retry(check_ready, _ResourceNotReady, **kwargs)
+        retry(check_ready, _ResourceNotReady, interval=retry_interval, attempts=retry_attempts, timeout=timeout)
         return self
 
     def connect(self, network: Network, aliases: Optional[List[str]] = None,

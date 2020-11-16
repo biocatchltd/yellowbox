@@ -43,9 +43,10 @@ class RabbitMQService(SingleContainerService, ServiceWithTimeout, RunMixinWithTi
         )
         return BlockingConnection(connection_params)
 
-    def start(self, **kwargs):
+    def start(self, retry_interval=2, retry_attempts=15, timeout=None):
         super().start()
-        conn = retry(self.connection, AMQPConnectionError, **kwargs)
+        conn = retry(self.connection, AMQPConnectionError,
+                     interval=retry_interval, attempts=retry_attempts, timeout=timeout)
         conn.close()
         return self
 

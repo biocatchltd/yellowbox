@@ -51,10 +51,10 @@ class RedisService(SingleContainerService, ServiceWithTimeout, RunMixinWithTimeo
         port = self.client_port()
         return client_cls(host='localhost', port=port, **kwargs)
 
-    def start(self, **kwargs):
+    def start(self, retry_interval=2, retry_attempts=10, timeout=None):
         super().start()
         with self.client() as client:
-            retry(client.ping, RedisConnectionError, **kwargs)
+            retry(client.ping, RedisConnectionError, interval=retry_interval, attempts=retry_attempts, timeout=timeout)
         self.started = True
         return self
 

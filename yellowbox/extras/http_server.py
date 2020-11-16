@@ -5,7 +5,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from functools import partial
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from threading import Thread
+from threading import Thread, Lock
 from types import new_class
 from typing import Pattern, Callable, Set, DefaultDict, Union, Optional, Type, cast, NamedTuple, ClassVar
 from urllib.parse import urlparse, ParseResult
@@ -19,7 +19,9 @@ from yellowbox.utils import retry
 
 __all__ = ['HttpService', 'RouterHTTPRequestHandler']
 SideEffectResponse = Union[bytes, str, int]
-SideEffect = Union[Callable[['RouterHTTPRequestHandler'], Optional[SideEffectResponse]], SideEffectResponse]
+SideEffect = Union[Callable[['RouterHTTPRequestHandler'], None],
+                   Callable[['RouterHTTPRequestHandler'], SideEffectResponse],
+                   SideEffectResponse]
 
 
 class RoutedHandler(NamedTuple):
@@ -43,7 +45,7 @@ class RouterHTTPRequestHandler(BaseHTTPRequestHandler):
     _body: bytes
 
     routes_by_method: ClassVar[DefaultDict[str, Set[RoutedHandler]]]
-    route_lock: ClassVar[rwlock.RWLockWrite]
+    route_lock: ClassVar[Lock]
 
     def body(self) -> bytes:
         try:
@@ -64,28 +66,31 @@ class RouterHTTPRequestHandler(BaseHTTPRequestHandler):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         cls.routes_by_method = defaultdict(set)
-        cls.route_lock = rwlock.RWLockWrite()
+        cls.route_lock = Lock()
 
     @classmethod
     def add_route(cls, handler: RoutedHandler):
-        with cls.route_lock.gen_wlock():
+        with cls.route_lock:
             cls.routes_by_method[handler.method].add(handler)
 
     @classmethod
     def del_route(cls, handler: RoutedHandler):
-        with cls.route_lock.gen_wlock():
+        with cls.route_lock:
             cls.routes_by_method[handler.method].remove(handler)
 
     def _do(self):
+        """
+        A generic handler for all http methods.
+        Filters through all added routes and calls the appropriate callback, if one is found.
+        """
         parsed = self.parse_url()
 
-        with self.route_lock.gen_rlock():
-            candidates = self.routes_by_method.get(self.command, ())
-            matched_candidates = []
-            for candidate in candidates:
-                match = candidate.route_match(parsed.path)
-                if match:
-                    matched_candidates.append((candidate, match))
+        candidates = tuple(self.routes_by_method.get(self.command, ()))
+        matched_candidates = []
+        for candidate in candidates:
+            match = candidate.route_match(parsed.path)
+            if match:
+                matched_candidates.append((candidate, match))
         if not matched_candidates:
             self.send_error(404, 'mock server matched no routes')
             self.end_headers()
@@ -215,13 +220,13 @@ class HttpService(ServiceWithTimeout):
 
         return _helper()
 
-    def start(self, **kwargs):
+    def start(self, retry_interval=2, retry_attempts=10, timeout=None):
         with self.patch_route('GET', '/health', 200):
             self.server_thread.start()
             retry(
                 lambda: requests.get(self.local_url + '/health').raise_for_status(),
                 (ConnectionError, HTTPError),
-                **kwargs)
+                interval=retry_interval, attempts=retry_attempts, timeout=timeout)
         return self
 
     def stop(self):
