@@ -9,7 +9,7 @@ from docker import DockerClient
 from docker.models.networks import Network
 
 from yellowbox.containers import create_and_pull, get_ports, short_id
-from yellowbox.subclasses import RunMixinWithTimeout, SingleContainerService, ServiceWithTimeout
+from yellowbox.subclasses import RunMixinWithBlockingStart, SingleContainerService, BlockingStartService
 
 __all__ = ['BlobStorageService']
 
@@ -25,7 +25,7 @@ class _ResourceNotReady(Exception):
     pass
 
 
-class BlobStorageService(SingleContainerService, ServiceWithTimeout, RunMixinWithTimeout):
+class BlobStorageService(SingleContainerService, BlockingStartService, RunMixinWithBlockingStart):
     """
     Starts Azurite, Azure's storage emulator.
     Provides helper functions for preparing the instance for testing.

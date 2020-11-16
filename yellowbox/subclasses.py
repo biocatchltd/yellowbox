@@ -100,6 +100,13 @@ class RunMixin:
     @contextmanager
     def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True, **kwargs) \
             -> Generator[_T, None, None]:
+        """
+        A context manager to create, start, and finally close a service
+        Args:
+            docker_client: a DockerClient instance to use when creating the service
+            spinner: whether or not to use a yaspin spinner
+            **kwargs: all keyword arguments are forwarded to the class's constructor
+        """
         spinner = _get_spinner(spinner)
         with spinner(f"Fetching {cls.service_name()} ..."):
             service = cls(docker_client, **kwargs)
@@ -111,18 +118,41 @@ class RunMixin:
             yield service
 
 
-class ServiceWithTimeout(YellowService):
+class BlockingStartService(YellowService):
     @abstractmethod
-    def start(self, *, retry_interval: float = 2, retry_attempts: int = 10, timeout: Optional[float] = None):
+    def start(self: _T, *, retry_interval: float = 2, retry_attempts: int = 10, timeout: Optional[float] = None) -> _T:
+        """
+        Start the service. Wait for startup by repeating an attempted operation
+
+        Args:
+            retry_interval: Time to wait after a failed attempt.
+            retry_attempts: Number of attempts to make before failing.
+            timeout: Optional, overrides `retry_attempts`, time to spend retrying the operation before failing.
+
+        Returns:
+            self, for usage as a context manager.
+
+        """
         pass
 
 
-class RunMixinWithTimeout(RunMixin):
+class RunMixinWithBlockingStart(RunMixin):
     @classmethod
     @contextmanager
     def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True,
             retry_interval: float = 2, retry_attempts: int = 10, timeout: Optional[float] = None,
             **kwargs) -> Generator[_T, None, None]:
+        """
+        Same as RunMixin.run, but allows to forward retry arguments to the blocking start method.
+
+        Args:
+            docker_client: a DockerClient instance to use when creating the service
+            spinner: whether or not to use a yaspin spinner
+            retry_interval: forwarded to cls.start
+            retry_attempts: forwarded to cls.start
+            timeout: forwarded to cls.start
+            **kwargs: all keyword arguments are forwarded to the class's constructor
+        """
         spinner = _get_spinner(spinner)
         with spinner(f"Fetching {cls.service_name()} ..."):
             service = cls(docker_client, **kwargs)

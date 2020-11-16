@@ -7,7 +7,7 @@ from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.exceptions import AMQPConnectionError
 
 from yellowbox.containers import get_ports, create_and_pull
-from yellowbox.subclasses import SingleContainerService, RunMixinWithTimeout, ServiceWithTimeout
+from yellowbox.subclasses import SingleContainerService, RunMixinWithBlockingStart, BlockingStartService
 from yellowbox.utils import retry
 
 __all__ = ['RabbitMQService', 'RABBIT_DEFAULT_PORT', 'RABBIT_HTTP_API_PORT']
@@ -16,7 +16,7 @@ RABBIT_DEFAULT_PORT = 5672
 RABBIT_HTTP_API_PORT = 15672
 
 
-class RabbitMQService(SingleContainerService, ServiceWithTimeout, RunMixinWithTimeout):
+class RabbitMQService(SingleContainerService, BlockingStartService, RunMixinWithBlockingStart):
     def __init__(self, docker_client: DockerClient, image='rabbitmq:latest', *, user="guest", password="guest",
                  virtual_host="/", **kwargs):
         self.user = user

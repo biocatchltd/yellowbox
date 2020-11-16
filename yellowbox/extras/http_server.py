@@ -14,7 +14,7 @@ import requests
 from readerwriterlock import rwlock
 from requests import HTTPError, ConnectionError
 
-from yellowbox import ServiceWithTimeout
+from yellowbox import BlockingStartService
 from yellowbox.utils import retry
 
 __all__ = ['HttpService', 'RouterHTTPRequestHandler']
@@ -116,7 +116,7 @@ else:
     _docker_host_name = 'host.docker.internal'
 
 
-class HttpService(ServiceWithTimeout):
+class HttpService(BlockingStartService):
     """
     The HttpService class is used to mock http servers. Although it is a YellowService,
     it does not wrap a docker container, rather, it wraps a standard library HTTPServer, with a server
