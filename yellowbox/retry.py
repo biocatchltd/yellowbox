@@ -13,7 +13,7 @@ class RetrySpecs:
     """
     Specifications for a repeated attempts af an arbitrary action that might fail.
     """
-    
+
     interval: float = 2
     """
     Time between attempts in seconds.

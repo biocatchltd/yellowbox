@@ -106,3 +106,8 @@ class RabbitMQService(SingleContainerService, BlockingStartService, RunMixinWith
             if enable_management:
                 ret.enable_management()
             yield ret
+
+    def stop(self, signal='SIGKILL'):
+        # change in default
+        return super().stop(signal)
+
