@@ -5,8 +5,8 @@ from docker import DockerClient
 from redis import ConnectionError as RedisConnectionError, Redis
 
 from yellowbox.containers import get_ports, create_and_pull, upload_file
+from yellowbox.retry import RetrySpecs
 from yellowbox.subclasses import SingleContainerService, RunMixinWithBlockingStart, BlockingStartService
-from yellowbox.utils import retry
 
 __all__ = ['RedisService', 'REDIS_DEFAULT_PORT', 'DEFAULT_RDB_PATH', 'append_state']
 
@@ -51,10 +51,11 @@ class RedisService(SingleContainerService, BlockingStartService, RunMixinWithBlo
         port = self.client_port()
         return client_cls(host='localhost', port=port, **kwargs)
 
-    def start(self, retry_interval=2, retry_attempts=10, timeout=None):
+    def start(self, retry_specs: Optional[RetrySpecs] = None):
         super().start()
         with self.client() as client:
-            retry(client.ping, RedisConnectionError, interval=retry_interval, attempts=retry_attempts, timeout=timeout)
+            retry_specs = retry_specs or RetrySpecs(attempts=10)
+            retry_specs.retry(client.ping, RedisConnectionError)
         self.started = True
         return self
 

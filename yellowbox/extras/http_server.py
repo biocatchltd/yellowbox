@@ -11,11 +11,10 @@ from typing import Pattern, Callable, Set, DefaultDict, Union, Optional, Type, c
 from urllib.parse import urlparse, ParseResult
 
 import requests
-from readerwriterlock import rwlock
 from requests import HTTPError, ConnectionError
 
 from yellowbox import BlockingStartService
-from yellowbox.utils import retry
+from yellowbox.retry import RetrySpecs
 
 __all__ = ['HttpService', 'RouterHTTPRequestHandler']
 SideEffectResponse = Union[bytes, str, int]
@@ -220,13 +219,14 @@ class HttpService(BlockingStartService):
 
         return _helper()
 
-    def start(self, retry_interval=2, retry_attempts=10, timeout=None):
+    def start(self, retry_specs: Optional[RetrySpecs] = None):
         with self.patch_route('GET', '/health', 200):
             self.server_thread.start()
-            retry(
+            retry_specs = retry_specs or RetrySpecs(attempts=10)
+            retry_specs.retry(
                 lambda: requests.get(self.local_url + '/health').raise_for_status(),
-                (ConnectionError, HTTPError),
-                interval=retry_interval, attempts=retry_attempts, timeout=timeout)
+                (ConnectionError, HTTPError)
+            )
         return self
 
     def stop(self):

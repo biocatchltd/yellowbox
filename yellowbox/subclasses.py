@@ -7,6 +7,7 @@ from docker.models.containers import Container
 from docker.models.networks import Network
 
 from yellowbox.containers import is_alive, _DEFAULT_TIMEOUT, get_aliases
+from yellowbox.retry import RetrySpecs
 from yellowbox.service import YellowService
 from yellowbox.utils import _get_spinner
 
@@ -120,14 +121,13 @@ class RunMixin:
 
 class BlockingStartService(YellowService):
     @abstractmethod
-    def start(self: _T, *, retry_interval: float = 2, retry_attempts: int = 10, timeout: Optional[float] = None) -> _T:
+    def start(self: _T, *, retry_specs: Optional[RetrySpecs] = None) -> _T:
         """
         Start the service. Wait for startup by repeating an attempted operation
 
         Args:
-            retry_interval: Time to wait after a failed attempt.
-            retry_attempts: Number of attempts to make before failing.
-            timeout: Optional, overrides `retry_attempts`, time to spend retrying the operation before failing.
+            retry_specs: The specifications for the repeated attempts. If not provided,
+             a predefined default RetrySpec should be used.
 
         Returns:
             self, for usage as a context manager.
@@ -140,17 +140,14 @@ class RunMixinWithBlockingStart(RunMixin):
     @classmethod
     @contextmanager
     def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True,
-            retry_interval: float = 2, retry_attempts: int = 10, timeout: Optional[float] = None,
-            **kwargs) -> Generator[_T, None, None]:
+            retry_specs: Optional[RetrySpecs] = None, **kwargs) -> Generator[_T, None, None]:
         """
         Same as RunMixin.run, but allows to forward retry arguments to the blocking start method.
 
         Args:
             docker_client: a DockerClient instance to use when creating the service
             spinner: whether or not to use a yaspin spinner
-            retry_interval: forwarded to cls.start
-            retry_attempts: forwarded to cls.start
-            timeout: forwarded to cls.start
+            retry_specs: forwarded to cls.start
             **kwargs: all keyword arguments are forwarded to the class's constructor
         """
         spinner = _get_spinner(spinner)
@@ -158,7 +155,7 @@ class RunMixinWithBlockingStart(RunMixin):
             service = cls(docker_client, **kwargs)
 
         with spinner(f"Waiting for {cls.service_name()} to start..."):
-            service.start(retry_interval=retry_interval, retry_attempts=retry_attempts, timeout=timeout)
+            service.start(retry_specs=retry_specs)
 
         with service:
             yield service

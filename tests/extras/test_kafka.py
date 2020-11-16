@@ -11,7 +11,7 @@ def test_make_kafka(docker_client, spinner):
 
 
 def test_make_kafka_timeout(docker_client):
-    with KafkaService.run(docker_client, timeout=30):
+    with KafkaService.run(docker_client):
         pass
 
 
