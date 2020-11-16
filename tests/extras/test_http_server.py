@@ -107,3 +107,20 @@ def test_route_ambiguous(method):
             assert requests.request(method, service.local_url + '/a').content == b'1'
             assert requests.request(method, service.local_url + '/d').content == b'2'
             assert requests.request(method, service.local_url + '/c').status_code == 500
+
+
+@mark.parametrize('method', ['GET', 'PUT'])
+def test_body(method):
+    with HttpService().start() as service:
+        @service.patch_route(method, '/square')
+        def square(request_handler: RouterHTTPRequestHandler):
+            try:
+                n = int(str(request_handler.body(), 'ascii'))
+            except ValueError:
+                return 400
+            return str(n * n)
+
+        with square:
+            response = requests.request(method, service.local_url + '/square', data=b'12')
+            response.raise_for_status()
+            assert response.content.strip() == b'144'
