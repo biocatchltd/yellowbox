@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import count
-from time import time, sleep
-from typing import Optional, ClassVar, Callable, Type, Union, Iterable, TypeVar
+from time import perf_counter, sleep
+from typing import Optional, Callable, Type, Union, Iterable, TypeVar
 
 _T = TypeVar('_T')
 
@@ -60,7 +60,7 @@ class RetrySpec:
             exceptions = (exceptions,)
 
         if self.timeout:
-            time_limit = time() + self.timeout
+            time_limit = perf_counter() + self.timeout
         else:
             time_limit = float('inf')
 
@@ -68,7 +68,7 @@ class RetrySpec:
             try:
                 return func()
             except exceptions:
-                if time() > time_limit:
+                if perf_counter() > time_limit:
                     raise
             sleep(self.interval)
         return func()
