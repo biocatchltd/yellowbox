@@ -33,7 +33,7 @@ class RetrySpecs:
             raise ValueError('RetrySpec must have either a timeout or attempts')
 
     def retry(self, func: Callable[[], _T],
-              exceptions: Union[Type[Exception], Iterable[Type[Exception]]]):
+              exceptions: Union[Type[Exception], Iterable[Type[Exception]]]) -> _T:
         """
         Retry running func until it succeeds
 
