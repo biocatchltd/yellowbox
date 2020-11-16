@@ -13,8 +13,7 @@ class RetrySpecs:
     """
     Specifications for a repeated attempts af an arbitrary action that might fail.
     """
-    default: ClassVar[RetrySpecs]
-
+    
     interval: float = 2
     """
     Time between attempts in seconds.
@@ -73,6 +72,3 @@ class RetrySpecs:
                     raise
             sleep(self.interval)
         return func()
-
-
-RetrySpecs.default = RetrySpecs(attempts=10)
