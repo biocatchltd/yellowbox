@@ -34,12 +34,13 @@ def test_connection_works(docker_client, tag, vhost):
 @mark.parametrize('vhost', ["/", "guest-vhost"])
 def test_connection_works_sibling_network(docker_client, vhost, create_and_pull):
     with temp_network(docker_client) as network:
-        with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine", virtual_host=vhost) as rabbit, \
+        with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine", virtual_host=vhost)\
+                as rabbit, \
                 connect(network, rabbit) as aliases:
             url = f"http://{aliases[0]}:{RABBIT_HTTP_API_PORT}/api/vhosts"
             container = create_and_pull(
                 docker_client,
-                "byrnedo/alpine-curl", f'-u guest:guest -vvv -I "{url}" --http0.9',
+                "byrnedo/alpine-curl:latest", f'-u guest:guest -vvv -I "{url}" --http0.9',
                 detach=True
             )
             with connect(network, container):
@@ -50,12 +51,13 @@ def test_connection_works_sibling_network(docker_client, vhost, create_and_pull)
 
 @mark.parametrize('vhost', ["/", "guest-vhost"])
 def test_connection_works_sibling(docker_client, host_ip, vhost, create_and_pull):
-    with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine", virtual_host=vhost) as rabbit:
+    with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine", virtual_host=vhost) \
+            as rabbit:
         api_port = get_ports(rabbit.container)[RABBIT_HTTP_API_PORT]
         url = f"http://{host_ip}:{api_port}/api/vhosts"
         container = create_and_pull(
             docker_client,
-            "byrnedo/alpine-curl", f'-u guest:guest -vvv -I "{url}" --http0.9',
+            "byrnedo/alpine-curl:latest", f'-u guest:guest -vvv -I "{url}" --http0.9',
             detach=True
         )
         container.start()

@@ -32,7 +32,7 @@ def test_connection_works_sibling_network(docker_client, create_and_pull):
             url = f"http://{aliases[0]}:{BLOB_STORAGE_DEFAULT_PORT}"
             container = create_and_pull(
                 docker_client,
-                "byrnedo/alpine-curl", f'-vvv -I "{url}" --http0.9',
+                "byrnedo/alpine-curl:latest", f'-vvv -I "{url}" --http0.9',
                 detach=True
             )
             with connect(network, container):
@@ -47,7 +47,7 @@ def test_connection_works_sibling(docker_client, host_ip, create_and_pull):
         url = f"http://{host_ip}:{port}"
         container = create_and_pull(
             docker_client,
-            "byrnedo/alpine-curl", f'-vvv -I "{url}" --http0.9',
+            "byrnedo/alpine-curl:latest", f'-vvv -I "{url}" --http0.9',
             detach=True
         )
         container.start()

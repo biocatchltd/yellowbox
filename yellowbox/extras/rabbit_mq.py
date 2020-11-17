@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from typing import Optional
 from urllib.parse import quote
 
 import requests
@@ -7,8 +8,8 @@ from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.exceptions import AMQPConnectionError
 
 from yellowbox.containers import get_ports, create_and_pull
+from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import SingleContainerService, RunMixin
-from yellowbox.utils import retry
 
 __all__ = ['RabbitMQService', 'RABBIT_DEFAULT_PORT', 'RABBIT_HTTP_API_PORT']
 
@@ -43,9 +44,10 @@ class RabbitMQService(SingleContainerService, RunMixin):
         )
         return BlockingConnection(connection_params)
 
-    def start(self):
+    def start(self, retry_specs: Optional[RetrySpec] = None):
         super().start()
-        conn = retry(self.connection, AMQPConnectionError)
+        retry_specs = retry_specs or RetrySpec(attempts=20)
+        conn = retry_specs.retry(self.connection, AMQPConnectionError)
         conn.close()
         return self
 
@@ -104,3 +106,8 @@ class RabbitMQService(SingleContainerService, RunMixin):
             if enable_management:
                 ret.enable_management()
             yield ret
+
+    def stop(self, signal='SIGKILL'):
+        # change in default
+        return super().stop(signal)
+

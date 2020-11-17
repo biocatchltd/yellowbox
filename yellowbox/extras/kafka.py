@@ -1,5 +1,5 @@
 from contextlib import closing
-from typing import ContextManager, cast, Union, Tuple
+from typing import ContextManager, cast, Union, Tuple, Optional
 from uuid import uuid1
 
 from docker import DockerClient
@@ -8,8 +8,9 @@ from kafka.errors import KafkaError
 
 from yellowbox.containers import get_ports, SafeContainerCreator
 from yellowbox.networks import anonymous_network
+from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import SingleEndpointService, RunMixin
-from yellowbox.utils import retry, get_free_port
+from yellowbox.utils import get_free_port
 
 __all__ = ['KafkaService']
 
@@ -81,9 +82,10 @@ class KafkaService(SingleEndpointService, RunMixin):
             closing(KafkaProducer(bootstrap_servers=[f'localhost:{port}'], security_protocol="PLAINTEXT", **kwargs))
         )
 
-    def start(self):
+    def start(self, retry_specs: Optional[RetrySpec] = None):
         super().start()
-        with retry(self.consumer, (KafkaError, ConnectionError, ValueError), attempts=15):
+        retry_specs = retry_specs or RetrySpec(attempts=20)
+        with retry_specs.retry(self.consumer, (KafkaError, ConnectionError, ValueError)):
             pass
         return self
 

@@ -9,8 +9,8 @@ from docker import DockerClient
 from docker.models.networks import Network
 
 from yellowbox.containers import create_and_pull, get_ports, short_id
-from yellowbox.subclasses import RunMixin, SingleContainerService
-from yellowbox.utils import retry
+from yellowbox.retry import RetrySpec
+from yellowbox.subclasses import SingleContainerService, RunMixin
 
 __all__ = ['BlobStorageService']
 
@@ -68,14 +68,16 @@ class BlobStorageService(SingleContainerService, RunMixin):
             f"BlobEndpoint="
             f"http://{short_id(self.container)}:{BLOB_STORAGE_DEFAULT_PORT}/{self.account_name};")
 
-    def start(self):
+    def start(self, retry_specs: Optional[RetrySpec] = None):
         super().start()
 
         def check_ready():
             if b"Azurite Blob service successfully listens on" not in self.container.logs():
                 raise _ResourceNotReady
 
-        retry(check_ready, _ResourceNotReady)
+        retry_specs = retry_specs or RetrySpec(attempts=10)
+
+        retry_specs.retry(check_ready, _ResourceNotReady)
         return self
 
     def connect(self, network: Network, aliases: Optional[List[str]] = None,
