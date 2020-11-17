@@ -82,10 +82,10 @@ class KafkaService(SingleEndpointService, RunMixin):
             closing(KafkaProducer(bootstrap_servers=[f'localhost:{port}'], security_protocol="PLAINTEXT", **kwargs))
         )
 
-    def start(self, retry_specs: Optional[RetrySpec] = None):
+    def start(self, retry_spec: Optional[RetrySpec] = None):
         super().start()
-        retry_specs = retry_specs or RetrySpec(attempts=20)
-        with retry_specs.retry(self.consumer, (KafkaError, ConnectionError, ValueError)):
+        retry_spec = retry_spec or RetrySpec(attempts=20)
+        with retry_spec.retry(self.consumer, (KafkaError, ConnectionError, ValueError)):
             pass
         return self
 

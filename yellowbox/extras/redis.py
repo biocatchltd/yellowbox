@@ -52,11 +52,11 @@ class RedisService(SingleContainerService, RunMixin):
         port = self.client_port()
         return client_cls(host='localhost', port=port, **kwargs)
 
-    def start(self, retry_specs: Optional[RetrySpec] = None):
+    def start(self, retry_spec: Optional[RetrySpec] = None):
         super().start()
         with self.client() as client:
-            retry_specs = retry_specs or RetrySpec(attempts=10)
-            retry_specs.retry(client.ping, RedisConnectionError)
+            retry_spec = retry_spec or RetrySpec(attempts=10)
+            retry_spec.retry(client.ping, RedisConnectionError)
         self.started = True
         return self
 

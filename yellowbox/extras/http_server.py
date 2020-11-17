@@ -219,11 +219,11 @@ class HttpService(YellowService):
 
         return _helper()
 
-    def start(self, retry_specs: Optional[RetrySpec] = None):
+    def start(self, retry_spec: Optional[RetrySpec] = None):
         with self.patch_route('GET', '/health', 200):
             self.server_thread.start()
-            retry_specs = retry_specs or RetrySpec(attempts=10)
-            retry_specs.retry(
+            retry_spec = retry_spec or RetrySpec(attempts=10)
+            retry_spec.retry(
                 lambda: requests.get(self.local_url + '/health').raise_for_status(),
                 (ConnectionError, HTTPError)
             )

@@ -1,4 +1,8 @@
 # Yellowbox Changelog
+## 0.2.1
+### Fixed
+* logstash is now fixed
+* all `retry_specs` parameters have been replaced with `retry_spec`
 ## 0.2.0
 ### Added
 * all extra-containers with retrying startup mechanisms now support retry

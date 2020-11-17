@@ -101,14 +101,14 @@ class RunMixin:
     @classmethod
     @contextmanager
     def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True,
-            retry_specs: Optional[RetrySpec] = None, **kwargs) -> Generator[_T, None, None]:
+            retry_spec: Optional[RetrySpec] = None, **kwargs) -> Generator[_T, None, None]:
         """
         Same as RunMixin.run, but allows to forward retry arguments to the blocking start method.
 
         Args:
             docker_client: a DockerClient instance to use when creating the service
             spinner: whether or not to use a yaspin spinner
-            retry_specs: forwarded to cls.start
+            retry_spec: forwarded to cls.start
             **kwargs: all keyword arguments are forwarded to the class's constructor
         """
         spinner = _get_spinner(spinner)
@@ -116,7 +116,7 @@ class RunMixin:
             service = cls(docker_client, **kwargs)
 
         with spinner(f"Waiting for {cls.service_name()} to start..."):
-            service.start(retry_specs=retry_specs)
+            service.start(retry_spec=retry_spec)
 
         with service:
             yield service
