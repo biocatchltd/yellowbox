@@ -137,8 +137,8 @@ def create_and_pull(docker_client: DockerClient, image: str, *args, **kwargs) ->
         Due to inconsistent behaviour of docker's "pull" command across
         platforms, this function will raise an error if no tag is specified
     """
-    split_by_tag = image.rsplit(':', 2)
-    if len(split_by_tag) < 2 or not split_by_tag[1]:
+    name, _, tag = image.partition(":")
+    if not tag:
         raise ValueError('the image name must contain a tag')
     try:
         ret = docker_client.containers.create(image, *args, **kwargs)
