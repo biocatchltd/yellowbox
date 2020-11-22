@@ -150,6 +150,16 @@ class LogstashService(YellowService):
                 logging.getLevelName(record["level"]) >= level)
 
     def assert_logs(self, level: Union[str, int]):
+        """Asserts that log messages were received in the given level or above.
+
+        Resembles unittest.assertLogs.
+
+        Args:
+            level: Log level by name or number
+
+        Raises:
+            AssertionError: No logs above the given level were received.
+        """
         if not isinstance(level, int):
             level = logging.getLevelName(level.upper())
 
@@ -161,6 +171,14 @@ class LogstashService(YellowService):
                                  f"or above were received.")
 
     def assert_no_logs(self, level: Union[str, int]):
+        """Asserts that no log messages were received in the given level or above.
+
+         Args:
+             level: Log level by name or number
+
+         Raises:
+             AssertionError: A log above the given level was received.
+         """
         if not isinstance(level, int):
             level = logging.getLevelName(level.upper())
 
