@@ -1,6 +1,7 @@
 import json
+import logging
 import threading
-from typing import Optional, cast
+from typing import Optional, Union, cast
 
 from docker import DockerClient
 from yellowbox.utils import _docker_host_name
@@ -14,9 +15,13 @@ from yellowbox.containers import get_ports, create_and_pull
 from yellowbox.subclasses import SingleContainerService, RunMixin, YellowService
 
 __all__ = ['LogstashService', 'LOGSTASH_DEFAULT_PORT']
+_logger = logging.getLogger(__name__)
 
 LOGSTASH_DEFAULT_PORT = 5959
 
+_CLOSE_SENTINEL = b"\0"
+_LISTEN_BACKLOG = 5
+_STOP_TIMEOUT = 5
 
 
 class LogstashService(YellowService):
@@ -29,9 +34,11 @@ class LogstashService(YellowService):
         sock.bind(("0.0.0.0", 0))
         self._root = sock
         _background = WeakMethod(self._background_thread)
-        self._thread = threading.Thread(target=lambda: _background()())
+        self._thread = threading.Thread(target=lambda: _background()(),
+                                        daemon=True)
         self._selector = selectors.DefaultSelector()
         self._rclose, self._wclose = socket.socketpair()
+        self.port = self._root.getsockname()[1]
 
     def __del__(self):
         # Will never happen while thread is running.
@@ -45,41 +52,49 @@ class LogstashService(YellowService):
             pass
 
     def _create_callback(self, sock):
-        partial_part = b""
+        partial_parts = []
+        split_token = self.split_token
+        encoding = self.encoding
 
-        def callback():
-            nonlocal partial_part
-
+        def process_socket_data():
             data = sock.recv(1024)
             if not data:
                 self._selector.unregister(sock)
                 return
 
-            parts = data.split(self.split_token)
+            parts = data.split(split_token)
+
+            # Single partial part (no token)
             if len(parts) == 1:
-                partial_part += parts[0]
+                partial_parts.append(parts[0])
                 return
 
-            parts[0] = partial_part + parts[0]
-            partial_part = parts.pop()
+            partial_parts.append(parts[0])
+            parts[0] = b"".join(partial_parts)
+            partial_parts[:] = parts.pop()
 
-            for part in parts:
-                record_dict = json.loads(part.decode(self.encoding))
-                self.records.append(record_dict)
+            try:
+                for part in parts:
+                    record_dict = json.loads(part.decode(encoding))
+                    self.records.append(record_dict)
+            except json.JSONDecodeError:
+                self._selector.unregister(sock)
+                sock.close()
+                # noinspection PyUnboundLocalVariable
+                _logger.exception("Failed decoding json, closing socket. "
+                                  "Data received: %s", part)
+                return
 
-        return callback
+        return process_socket_data
 
     def _background_thread(self):
         while True:
             events = self._selector.select(timeout=5)  # For signal handling
             for key, mask in events:
-
                 # Handle closing request
-                if key.fileobj is self._wclose:
-                    for sock in self._selector.get_map():
-                        sock = cast(socket.socket, sock)
-                        sock.close()
-                    self._selector.close()
+                if key.fileobj is self._rclose:
+                    assert self._rclose.recv(
+                        len(_CLOSE_SENTINEL)) == _CLOSE_SENTINEL
                     return
 
                 # Handle new connection
@@ -90,17 +105,37 @@ class LogstashService(YellowService):
                     continue
 
                 # Run callback
-                key.data()
+                try:
+                    key.data()
+                except Exception:
+                    _logger.exception("Unknown error occurred, closing connection.")
+                    self._selector.unregister(key.fileobj)
+                    # noinspection PyUnresolvedReferences
+                    key.fileobj.close()
 
     def start(self, *, retry_spec: Optional[RetrySpec] = None):
+        self._root.listen(_LISTEN_BACKLOG)
+        self._selector.register(self._root, selectors.EVENT_READ)
+        self._selector.register(self._rclose, selectors.EVENT_READ)
         self._thread.start()
         super(LogstashService, self).start(retry_spec=retry_spec)
 
     def stop(self):
-        self._rclose.send(b"\0")
-        self._thread.join(5)  # Should almost never timeout
+        if not self._thread.is_alive():
+            return
+        self._wclose.send(_CLOSE_SENTINEL)
+        self._thread.join(_STOP_TIMEOUT)  # Should almost never timeout
         if self._thread.is_alive():
             raise RuntimeError(f"Failed stopping {self.__class__.__name__}.")
+
+        for key in self._selector.get_map().values():
+            sock = cast(socket.socket, key.fileobj)
+            sock.close()
+
+        self._selector.close()
+
+    def is_alive(self):
+        return self._thread.is_alive()
 
     def connect(self, network):
         # since the logstash service is not docker related, it cannot actually connect to the network. However,
@@ -110,3 +145,29 @@ class LogstashService(YellowService):
     def disconnect(self, network):
         pass
 
+    def _filter_records(self, level: int):
+        return (record for record in self.records if
+                logging.getLevelName(record["level"]) >= level)
+
+    def assert_logs(self, level: Union[str, int]):
+        if not isinstance(level, int):
+            level = logging.getLevelName(level.upper())
+
+        # In rare cases it might be false, but shouldn't happen generally.
+        assert isinstance(level, int)
+
+        if not any(self._filter_records(level)):
+            raise AssertionError(f"No logs of level {logging.getLevelName(level)} "
+                                 f"or above were received.")
+
+    def assert_no_logs(self, level: Union[str, int]):
+        if not isinstance(level, int):
+            level = logging.getLevelName(level.upper())
+
+        # In rare cases it might be false, but shouldn't happen generally.
+        assert isinstance(level, int)
+
+        record = next(self._filter_records(level), None)
+        if record:
+            raise AssertionError(f"A log level {record['level']} was received. "
+                                 f"Message: {record['message']}")
