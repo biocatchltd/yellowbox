@@ -13,7 +13,6 @@ from yellowbox.utils import _docker_host_name
 __all__ = ['LogstashService']
 _logger = logging.getLogger(__name__)
 
-_LISTEN_BACKLOG = 5  # Awaiting connections backlog count
 _STOP_TIMEOUT = 5  # Timeout for stopping the service
 
 # Sent on internal connection to signal closing of background thread
@@ -172,7 +171,7 @@ class LogstashService(YellowService):
         Args:
             retry_spec: Ignored.
         """
-        self._root.listen(_LISTEN_BACKLOG)
+        self._root.listen()
         self._selector.register(self._root, selectors.EVENT_READ)
         self._selector.register(self._rshutdown, selectors.EVENT_READ)
         self._thread.start()
