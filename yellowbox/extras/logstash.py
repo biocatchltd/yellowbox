@@ -231,7 +231,7 @@ class FakeLogstashService(YellowService):
         # Logstash service is not docker related. It cannot actually connect to
         # the network. However, other containers connected to the network can
         # connect to the service with docker's usual host
-        return [docker_host_name]
+        return [self.container_host]
 
     def disconnect(self, network: Any):
         """Does nothing. Conforms to YellowService interface."""
