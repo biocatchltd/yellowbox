@@ -85,6 +85,7 @@ class FakeLogstashService(YellowService):
         root.bind(("0.0.0.0", port))
         self._root = root
 
+        # Avoiding a cyclic reference.
         _background = WeakMethod(self._background_thread)
         self._thread = threading.Thread(target=lambda: _background()(),
                                         daemon=True)
