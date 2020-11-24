@@ -71,6 +71,8 @@ class FakeLogstashService(YellowService):
 
     delimiter: bytes = b"\n"
     encoding: str = "utf-8"
+    local_host: str = "localhost"
+    container_host: str = docker_host_name
 
     def __init__(self, port: int = 0) -> None:
         """Initialize the service.
@@ -96,9 +98,6 @@ class FakeLogstashService(YellowService):
         self._rshutdown, self._wshutdown = socket.socketpair()
 
         self.port = self._root.getsockname()[1]
-
-        self.local_host = "localhost"  # Requested by Ben.
-        self.container_host = docker_host_name
 
     def __del__(self):
         # Will never happen while thread is running.
