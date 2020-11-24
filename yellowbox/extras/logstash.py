@@ -3,14 +3,13 @@ import logging
 import selectors
 import socket
 import threading
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union, cast, TypedDict
+from typing import Any, Callable, Dict, Iterable, List, Union, cast
 from weakref import WeakMethod
 
-from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import YellowService
-from yellowbox.utils import _docker_host_name
+from yellowbox.utils import docker_host_name
 
-__all__ = ['LogstashService']
+__all__ = ['FakeLogstashService']
 _logger = logging.getLogger(__name__)
 
 _STOP_TIMEOUT = 5  # Timeout for stopping the service
@@ -19,22 +18,37 @@ _STOP_TIMEOUT = 5  # Timeout for stopping the service
 _CLOSE_SENTINEL = b"\0"
 
 
-class LogstashService(YellowService):
+class FakeLogstashService(YellowService):
     """Implements a fake logging service that closely resembles Logstash.
 
-    Accepts external connections, with logs received in the "json_lines" format.
+    Accepts external TCP connections, with logs received in the "json_lines"
+    format.
 
     Attributes:
         records: A list of all records received. You are welcome to modify,
         clear or iterate over this during runtime. New logs will be added in the
         order they were received. Each record is a dict - for possible keys see
         attribute docs.
-        port: Dynamic port external service should connect to. LogstashService
-        automatically binds a free port during initialization.
+        port: Dynamic port external service should connect to. FakeLogstashService
+        automatically binds a free port during initialization unless chosen
+        otherwise.
+        local_host: Host to connect to from the local machine (=="localhost")
+        container_host: Host to connect to from inside containers.
         encoding: Encoding of the json lines received. Defaults to utf-8 per
         specification.
-        delimiter: Delimiter splitting between json objects. Defaults to b'\n' per
-        specification.
+        delimiter: Delimiter splitting between json objects. Defaults to b'\n'
+        per specification.
+
+    Example:
+        >>> import socket
+        >>> import time
+        >>> ls = FakeLogstashService()
+        >>> ls.start()
+        >>> s = socket.create_connection((ls.local_host, ls.port))  # Logstash Handler
+        >>> s.sendall(b'{"record": "value", "level": "ERROR"}\\n')
+        >>> time.sleep(0.01)  # Wait for service to process message
+        >>> ls.assert_logs("ERROR")
+        >>> assert ls.records[0]["record"] == "value"
     """
     port: int
     records: List[Dict[str, Any]]
@@ -58,12 +72,17 @@ class LogstashService(YellowService):
     delimiter: bytes = b"\n"
     encoding: str = "utf-8"
 
-    def __init__(self) -> None:
-        """Initialize the service."""
+    def __init__(self, port: int = 0) -> None:
+        """Initialize the service.
+
+        Args:
+            port: Port to listen on. By default or if set to 0, port is chosen
+            by the OS.
+        """
         self.records = []
 
         root = socket.socket()
-        root.bind(("0.0.0.0", 0))
+        root.bind(("0.0.0.0", port))
         self._root = root
 
         _background = WeakMethod(self._background_thread)
@@ -76,6 +95,9 @@ class LogstashService(YellowService):
         self._rshutdown, self._wshutdown = socket.socketpair()
 
         self.port = self._root.getsockname()[1]
+
+        self.local_host = "localhost"  # Requested by Ben.
+        self.container_host = docker_host_name
 
     def __del__(self):
         # Will never happen while thread is running.
@@ -175,7 +197,7 @@ class LogstashService(YellowService):
         self._selector.register(self._root, selectors.EVENT_READ)
         self._selector.register(self._rshutdown, selectors.EVENT_READ)
         self._thread.start()
-        super(LogstashService, self).start(retry_spec=retry_spec)
+        super(FakeLogstashService, self).start(retry_spec=retry_spec)
 
     def stop(self) -> None:
         """Stop the service
@@ -197,7 +219,7 @@ class LogstashService(YellowService):
         self._selector.close()
 
     def is_alive(self) -> bool:
-        """Check if LogstashService is alive.
+        """Check if FakeLogstashService is alive.
 
         Returns:
             Boolean.
@@ -209,7 +231,7 @@ class LogstashService(YellowService):
         # Logstash service is not docker related. It cannot actually connect to
         # the network. However, other containers connected to the network can
         # connect to the service with docker's usual host
-        return [_docker_host_name]
+        return [docker_host_name]
 
     def disconnect(self, network: Any):
         """Does nothing. Conforms to YellowService interface."""

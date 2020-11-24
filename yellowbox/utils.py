@@ -34,6 +34,6 @@ def get_free_port():
         return s.getsockname()[1]
 
 if platform.system() == "Linux":
-    _docker_host_name = '172.17.0.1'
+    docker_host_name = '172.17.0.1'
 else:
-    _docker_host_name = 'host.docker.internal'
+    docker_host_name = 'host.docker.internal'

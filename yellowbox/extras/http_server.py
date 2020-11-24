@@ -15,6 +15,7 @@ from requests import HTTPError, ConnectionError
 
 from yellowbox.service import YellowService
 from yellowbox.retry import RetrySpec
+from  yellowbox.utils import docker_host_name
 
 __all__ = ['HttpService', 'RouterHTTPRequestHandler']
 SideEffectResponse = Union[bytes, str, int]
@@ -109,11 +110,6 @@ class RouterHTTPRequestHandler(BaseHTTPRequestHandler):
         raise AttributeError(item)
 
 
-if platform.system() == "Linux":
-    _docker_host_name = '172.17.0.1'
-else:
-    _docker_host_name = 'host.docker.internal'
-
 
 class HttpService(YellowService):
     """
@@ -151,7 +147,7 @@ class HttpService(YellowService):
 
     @property
     def container_url(self):
-        return f'http://{_docker_host_name}:{self.server_port}'
+        return f'http://{docker_host_name}:{self.server_port}'
 
     @staticmethod
     def _to_callback(side_effect: SideEffect):
@@ -239,7 +235,7 @@ class HttpService(YellowService):
     def connect(self, network):
         # since the http service is not docker related, it cannot actually connect to the network. However,
         # other containers, connected to the network or not, can connect to the service with docker's usual host
-        return [_docker_host_name]
+        return [docker_host_name]
 
     def disconnect(self, network):
         pass
