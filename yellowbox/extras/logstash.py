@@ -129,7 +129,7 @@ class FakeLogstashService(YellowService):
             self._selector.close()
             self._rshutdown.close()
             self._wshutdown.close()
-        except AttributeError:
+        except AttributeError:  # pragma: no cover  # Hard and pointless to test.
             pass
 
     def _create_data_callback(self, sock: socket.socket) -> Callable[[], None]:
@@ -220,7 +220,7 @@ class FakeLogstashService(YellowService):
         Args:
             retry_spec: Ignored.
         """
-        if retry_spec:
+        if retry_spec:  # pragma: no cover
             _logger.warning(f"{self.__class__.__name__} does not support passing "
                             f"a retry spec.")
         self._root.listen()
@@ -239,7 +239,7 @@ class FakeLogstashService(YellowService):
             return
         self._wshutdown.send(_CLOSE_SENTINEL)
         self._thread.join(_STOP_TIMEOUT)  # Should almost never timeout
-        if self._thread.is_alive():
+        if self._thread.is_alive():  # pragma: no cover
             raise RuntimeError(f"Failed stopping {self.__class__.__name__}.")
 
         for key in self._selector.get_map().values():
@@ -256,14 +256,14 @@ class FakeLogstashService(YellowService):
         """
         return self._thread.is_alive()
 
-    def connect(self, network: Any) -> List[str]:
+    def connect(self, network: Any) -> List[str]:  # pragma: no cover
         """Does nothing. Conforms to YellowService interface."""
         # Logstash service is not docker related. It cannot actually connect to
         # the network. However, other containers connected to the network can
         # connect to the service with docker's usual host
         return [self.container_host]
 
-    def disconnect(self, network: Any):
+    def disconnect(self, network: Any):  # pragma: no cover
         """Does nothing. Conforms to YellowService interface."""
         pass
 
