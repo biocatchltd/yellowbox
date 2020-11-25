@@ -104,3 +104,11 @@ def test_body(method):
             response = requests.request(method, service.local_url + '/square', data=b'12')
             response.raise_for_status()
             assert response.content.strip() == b'144'
+
+
+def test_session_const():
+    with HttpService().start() as service:
+        with service.patch_route('GET', '/hi', b'he\0llo'), \
+             requests.Session() as session:
+            assert session.get(service.local_url + '/hi').text == 'he\0llo'
+            assert session.get(service.local_url + '/hi').text == 'he\0llo'
