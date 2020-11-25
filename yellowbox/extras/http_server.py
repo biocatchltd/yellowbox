@@ -1,21 +1,21 @@
 from __future__ import annotations
 
-import platform
 from collections import defaultdict
 from contextlib import contextmanager
 from functools import partial
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from threading import Thread, Lock
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from threading import Lock, Thread
 from types import new_class
-from typing import Pattern, Callable, Set, DefaultDict, Union, Optional, Type, cast, NamedTuple, ClassVar
-from urllib.parse import urlparse, ParseResult
+from typing import Callable, ClassVar, DefaultDict, NamedTuple, Optional, Pattern, Set, Type, Union, \
+    cast
+from urllib.parse import ParseResult, urlparse
 
 import requests
-from requests import HTTPError, ConnectionError
+from requests import ConnectionError, HTTPError
 
-from yellowbox.service import YellowService
 from yellowbox.retry import RetrySpec
-from  yellowbox.utils import docker_host_name
+from yellowbox.service import YellowService
+from yellowbox.utils import docker_host_name
 
 __all__ = ['HttpService', 'RouterHTTPRequestHandler']
 SideEffectResponse = Union[bytes, str, int]
@@ -110,7 +110,6 @@ class RouterHTTPRequestHandler(BaseHTTPRequestHandler):
         raise AttributeError(item)
 
 
-
 class HttpService(YellowService):
     """
     The HttpService class is used to mock http servers. Although it is a YellowService,
@@ -135,7 +134,8 @@ class HttpService(YellowService):
         self.router_cls = cast(Type[RouterHTTPRequestHandler],
                                new_class(name + '_RequestHandler', (RouterHTTPRequestHandler,)))
         self.server = HTTPServer((host, port), self.router_cls)
-        self.server_thread = Thread(name=name + '_thread', target=self.server.serve_forever, daemon=True)
+        self.server_thread = Thread(name=name + '_thread', target=self.server.serve_forever,
+                                    daemon=True)
 
     @property
     def server_port(self):
