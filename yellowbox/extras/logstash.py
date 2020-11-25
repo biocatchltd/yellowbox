@@ -64,6 +64,7 @@ class FakeLogstashService(YellowService):
         >>> s = socket.create_connection((ls.local_host, ls.port))  # Logstash Handler
         >>> s.sendall(b'{"record": "value", "level": "ERROR"}\\n')
         >>> time.sleep(0.01)  # Wait for service to process message
+        >>> ls.stop()
         >>> ls.assert_logs("ERROR")
         >>> assert ls.records[0]["record"] == "value"
     """
