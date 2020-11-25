@@ -3,7 +3,7 @@ import logging
 import selectors
 import socket
 import threading
-from typing import Any, Callable, Dict, Iterator, List, Union, cast
+from typing import Any, Callable, Dict, Iterator, List, TypeVar, Union, cast
 from weakref import WeakMethod
 
 from yellowbox.subclasses import YellowService
@@ -11,6 +11,8 @@ from yellowbox.utils import docker_host_name
 
 __all__ = ['FakeLogstashService']
 _logger = logging.getLogger(__name__)
+
+_T = TypeVar("_T")
 
 _STOP_TIMEOUT = 5  # Timeout for stopping the service
 
@@ -211,7 +213,7 @@ class FakeLogstashService(YellowService):
                     sock.shutdown(socket.SHUT_RDWR)
                     sock.close()
 
-    def start(self, *, retry_spec: None = None) -> None:
+    def start(self: _T, *, retry_spec: None = None) -> _T:
         """Start the service.
 
         Args:
