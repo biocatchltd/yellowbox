@@ -31,7 +31,9 @@ def _level_to_int(level: Union[str, int]) -> int:
         level = logging.getLevelName(level.upper())
 
     # In rare cases it might be false, but it shouldn't generally happen.
-    assert isinstance(level, int)
+    if not isinstance(level, int):
+        raise ValueError(f"Unknown level {level!r}.")
+
     return level
 
 

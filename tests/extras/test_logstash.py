@@ -21,7 +21,7 @@ def send_record(logstash, **kwargs):
     s = create_socket(logstash)
     s.sendall(json.dumps(kwargs).encode("utf-8") + b"\n")
     s.close()
-    sleep(0.01)
+    sleep(0.01)  # Wait for LogstashService to process.
 
 
 def send_records(logstash, *records):
