@@ -169,6 +169,8 @@ class FakeLogstashService(YellowService):
             chunks[0] = b"".join(partial_chunks)
             partial_chunks[:] = chunks.pop()
 
+            chunk = b""  # Linters are stupid. Required for it to pass.
+
             # Parse all chunks into records.
             try:
                 for chunk in chunks:
@@ -179,7 +181,7 @@ class FakeLogstashService(YellowService):
                 sock.shutdown(socket.SHUT_RDWR)
                 sock.close()
                 _logger.exception("Failed decoding json, closing socket. "
-                                  "Data received: %s", chunk)  # noqa  # not unbound.
+                                  "Data received: %s", chunk)
                 return
 
         return process_socket_data
