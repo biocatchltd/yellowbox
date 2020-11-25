@@ -4,7 +4,7 @@ from urllib.parse import parse_qs
 import requests
 from pytest import mark
 
-from yellowbox import connect, temp_network
+from yellowbox import temp_network
 from yellowbox.extras.http_server import HttpService, RouterHTTPRequestHandler
 
 
@@ -50,17 +50,14 @@ def test_route_query(method):
 @mark.parametrize('method', ['GET', 'POST'])
 def test_from_container(create_and_pull, docker_client, method):
     with temp_network(docker_client) as network:
-        with HttpService().start() as service, \
-                connect(network, service) as aliases:
-            url = f"http://{aliases[0]}:{service.server_port}"
-            assert url == service.container_url
+        with HttpService().start() as service:
             container = create_and_pull(
                 docker_client,
-                "byrnedo/alpine-curl:latest", f'-vvv "{url}" --fail -X "{method}"',
+                "byrnedo/alpine-curl:latest",
+                f'-vvv "{service.container_url}" --fail -X "{method}"',
                 detach=True
             )
-            with service.patch_route(method, '/', 200), \
-                 connect(network, container):
+            with service.patch_route(method, '/', 200):
                 container.start()
                 return_status = container.wait()
                 assert return_status["StatusCode"] == 0
