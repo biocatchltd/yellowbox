@@ -1,16 +1,18 @@
+import json
+import socket
 from time import sleep
 
 import pytest
-import json
-import socket
+
 from yellowbox.extras.logstash import FakeLogstashService
+
 
 @pytest.fixture
 def logstash():
     ls = FakeLogstashService()
     ls.start()
     with ls:
-      yield ls
+        yield ls
 
 
 def create_socket(logstash):
@@ -19,7 +21,7 @@ def create_socket(logstash):
 
 def send_record(logstash, **kwargs):
     s = create_socket(logstash)
-    s.sendall(json.dumps(kwargs).encode("utf-8")+b"\n")
+    s.sendall(json.dumps(kwargs).encode("utf-8") + b"\n")
     s.close()
     sleep(0.01)
 
