@@ -9,9 +9,7 @@ from yellowbox.extras.logstash import FakeLogstashService
 
 @pytest.fixture
 def logstash():
-    ls = FakeLogstashService()
-    ls.start()
-    with ls:
+    with FakeLogstashService().start() as ls:
         yield ls
 
 
