@@ -1,5 +1,6 @@
 import json
 import socket
+import weakref
 from time import sleep
 
 import pytest
@@ -113,3 +114,14 @@ def test_is_alive():
     assert logstash.is_alive()
     logstash.stop()
     assert not logstash.is_alive()
+
+
+def test_garbage_collection():
+    """Make sure LogstashService gets collected and has no cyclic references
+
+    Important for cleaning OS resources.
+    """
+    ls = FakeLogstashService()
+    r = weakref.ref(ls)
+    del ls
+    assert r() is None
