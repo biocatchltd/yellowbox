@@ -28,7 +28,7 @@ class ContainerService(YellowService):
                 continue
             c.start()
             c.reload()
-        return self
+        return super(ContainerService, self).start(retry_spec=retry_spec)
 
     def stop(self, signal='SIGTERM'):
         for c in reversed(self.containers):

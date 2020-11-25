@@ -223,7 +223,7 @@ class HttpService(YellowService):
                 lambda: requests.get(self.local_url + '/health').raise_for_status(),
                 (ConnectionError, HTTPError)
             )
-        return self
+        return super(HttpService, self).start(retry_spec=retry_spec)
 
     def stop(self):
         self.server.shutdown()
