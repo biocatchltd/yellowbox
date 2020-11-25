@@ -1,8 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from typing import Optional, TypeVar
 
-from docker.models.networks import Network
-
 from yellowbox.retry import RetrySpec
 
 _T = TypeVar("_T")
@@ -30,14 +28,6 @@ class YellowService(metaclass=ABCMeta):
 
     @abstractmethod
     def is_alive(self) -> bool:
-        pass
-
-    @abstractmethod
-    def connect(self, network: Network):
-        pass
-
-    @abstractmethod
-    def disconnect(self, network: Network):
         pass
 
     def __enter__(self):
