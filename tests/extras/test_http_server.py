@@ -61,21 +61,6 @@ def test_from_container(create_and_pull, docker_client, method):
             assert return_status["StatusCode"] == 0
 
 
-@mark.parametrize('method', ['GET', 'POST'])
-def test_from_container_no_network(create_and_pull, docker_client, method):
-    with HttpService().start() as service:
-        url = service.container_url
-        container = create_and_pull(
-            docker_client,
-            "byrnedo/alpine-curl:latest", f'-vvv "{url}" --fail -X "{method}"',
-            detach=True
-        )
-        with service.patch_route(method, '/', 200):
-            container.start()
-            return_status = container.wait()
-            assert return_status["StatusCode"] == 0
-
-
 @mark.parametrize('method', ['GET', 'PUT'])
 def test_route_query_regex(method):
     with HttpService().start() as service:
