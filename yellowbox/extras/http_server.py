@@ -231,11 +231,3 @@ class HttpService(YellowService):
 
     def is_alive(self):
         return self.server_thread.is_alive()
-
-    def connect(self, network):
-        # since the http service is not docker related, it cannot actually connect to the network. However,
-        # other containers, connected to the network or not, can connect to the service with docker's usual host
-        return [docker_host_name]
-
-    def disconnect(self, network):
-        pass

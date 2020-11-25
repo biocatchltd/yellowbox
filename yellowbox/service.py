@@ -32,14 +32,6 @@ class YellowService(metaclass=ABCMeta):
     def is_alive(self) -> bool:
         pass
 
-    @abstractmethod
-    def connect(self, network: Network):
-        pass
-
-    @abstractmethod
-    def disconnect(self, network: Network):
-        pass
-
     def __enter__(self):
         return self
 

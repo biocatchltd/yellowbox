@@ -1,4 +1,8 @@
 # Yellowbox Changelog
+## 0.3.0
+## Changed
+* Revamped LogstashService. It now fakes the Logstash json_lines protocol.
+* YellowService no longer has `connect` & `disconnect`. They are now delegated to `ContainerService`.
 ## 0.2.1
 ### Fixed
 * logstash is now fixed

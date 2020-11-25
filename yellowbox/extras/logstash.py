@@ -256,17 +256,6 @@ class FakeLogstashService(YellowService):
         """
         return self._thread.is_alive()
 
-    def connect(self, network: Any) -> List[str]:  # pragma: no cover
-        """Does nothing. Conforms to YellowService interface."""
-        # Logstash service is not docker related. It cannot actually connect to
-        # the network. However, other containers connected to the network can
-        # connect to the service with docker's usual host
-        return [self.container_host]
-
-    def disconnect(self, network: Any):  # pragma: no cover
-        """Does nothing. Conforms to YellowService interface."""
-        pass
-
     def filter_records(self, level: Union[str, int]) -> Iterator[Dict[str, Any]]:
         """Filter records in the given level or above."""
         level = _level_to_int(level)
