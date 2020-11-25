@@ -20,7 +20,7 @@ class YellowService(metaclass=ABCMeta):
             self, for usage as a context manager.
 
         """
-        pass
+        return self
 
     @abstractmethod
     def stop(self):
