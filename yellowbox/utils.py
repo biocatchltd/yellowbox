@@ -1,5 +1,6 @@
-from contextlib import AbstractContextManager, contextmanager, nullcontext, closing
-from socket import socket, SOL_SOCKET, SO_REUSEADDR, SOCK_STREAM, AF_INET
+import platform
+from contextlib import AbstractContextManager, closing, contextmanager, nullcontext
+from socket import AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, socket
 from typing import Callable, TypeVar
 
 from yaspin import yaspin
@@ -31,3 +32,9 @@ def get_free_port():
         s.bind(('', 0))
         s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         return s.getsockname()[1]
+
+
+if platform.system() == "Linux":
+    docker_host_name = '172.17.0.1'
+else:
+    docker_host_name = 'host.docker.internal'

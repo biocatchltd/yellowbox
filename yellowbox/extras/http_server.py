@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-import platform
 from collections import defaultdict
 from contextlib import contextmanager
 from functools import partial
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from threading import Thread, Lock
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from threading import Lock, Thread
 from types import new_class
-from typing import Pattern, Callable, Set, DefaultDict, Union, Optional, Type, cast, NamedTuple, ClassVar
-from urllib.parse import urlparse, ParseResult
+from typing import Callable, ClassVar, DefaultDict, NamedTuple, Optional, Pattern, Set, Type, Union, \
+    cast
+from urllib.parse import ParseResult, urlparse
 
 import requests
-from requests import HTTPError, ConnectionError
+from requests import ConnectionError, HTTPError
 
-from yellowbox.service import YellowService
 from yellowbox.retry import RetrySpec
+from yellowbox.service import YellowService
+from yellowbox.utils import docker_host_name
 
 __all__ = ['HttpService', 'RouterHTTPRequestHandler']
 SideEffectResponse = Union[bytes, str, int]
@@ -109,12 +110,6 @@ class RouterHTTPRequestHandler(BaseHTTPRequestHandler):
         raise AttributeError(item)
 
 
-if platform.system() == "Linux":
-    _docker_host_name = '172.17.0.1'
-else:
-    _docker_host_name = 'host.docker.internal'
-
-
 class HttpService(YellowService):
     """
     The HttpService class is used to mock http servers. Although it is a YellowService,
@@ -139,7 +134,8 @@ class HttpService(YellowService):
         self.router_cls = cast(Type[RouterHTTPRequestHandler],
                                new_class(name + '_RequestHandler', (RouterHTTPRequestHandler,)))
         self.server = HTTPServer((host, port), self.router_cls)
-        self.server_thread = Thread(name=name + '_thread', target=self.server.serve_forever, daemon=True)
+        self.server_thread = Thread(name=name + '_thread', target=self.server.serve_forever,
+                                    daemon=True)
 
     @property
     def server_port(self):
@@ -151,7 +147,7 @@ class HttpService(YellowService):
 
     @property
     def container_url(self):
-        return f'http://{_docker_host_name}:{self.server_port}'
+        return f'http://{docker_host_name}:{self.server_port}'
 
     @staticmethod
     def _to_callback(side_effect: SideEffect):
@@ -227,7 +223,7 @@ class HttpService(YellowService):
                 lambda: requests.get(self.local_url + '/health').raise_for_status(),
                 (ConnectionError, HTTPError)
             )
-        return self
+        return super(HttpService, self).start(retry_spec=retry_spec)
 
     def stop(self):
         self.server.shutdown()
@@ -239,7 +235,7 @@ class HttpService(YellowService):
     def connect(self, network):
         # since the http service is not docker related, it cannot actually connect to the network. However,
         # other containers, connected to the network or not, can connect to the service with docker's usual host
-        return [_docker_host_name]
+        return [docker_host_name]
 
     def disconnect(self, network):
         pass

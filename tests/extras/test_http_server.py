@@ -4,7 +4,7 @@ from urllib.parse import parse_qs
 import requests
 from pytest import mark
 
-from yellowbox import temp_network, connect
+from yellowbox import connect, temp_network
 from yellowbox.extras.http_server import HttpService, RouterHTTPRequestHandler
 
 

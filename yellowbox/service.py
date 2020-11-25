@@ -1,14 +1,16 @@
 from abc import ABCMeta, abstractmethod
-from typing import Optional
+from typing import Optional, TypeVar
 
 from docker.models.networks import Network
 
 from yellowbox.retry import RetrySpec
 
+_T = TypeVar("_T")
+
 
 class YellowService(metaclass=ABCMeta):
     @abstractmethod
-    def start(self, *, retry_spec: Optional[RetrySpec] = None):
+    def start(self: _T, *, retry_spec: Optional[RetrySpec] = None) -> _T:
         """
         Start the service. Wait for startup by repeatedly attempting an operation until success
 
@@ -20,14 +22,14 @@ class YellowService(metaclass=ABCMeta):
             self, for usage as a context manager.
 
         """
-        pass
+        return self
 
     @abstractmethod
     def stop(self):
         pass
 
     @abstractmethod
-    def is_alive(self):
+    def is_alive(self) -> bool:
         pass
 
     @abstractmethod
