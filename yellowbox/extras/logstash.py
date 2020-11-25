@@ -220,7 +220,7 @@ class FakeLogstashService(YellowService):
         self._selector.register(self._root, selectors.EVENT_READ)
         self._selector.register(self._rshutdown, selectors.EVENT_READ)
         self._thread.start()
-        super(FakeLogstashService, self).start(retry_spec=retry_spec)
+        return super(FakeLogstashService, self).start(retry_spec=retry_spec)
 
     def stop(self) -> None:
         """Stop the service
