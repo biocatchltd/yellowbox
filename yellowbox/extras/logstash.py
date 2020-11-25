@@ -178,9 +178,8 @@ class FakeLogstashService(YellowService):
                 self._selector.unregister(sock)
                 sock.shutdown(socket.SHUT_RDWR)
                 sock.close()
-                # noinspection PyUnboundLocalVariable
                 _logger.exception("Failed decoding json, closing socket. "
-                                  "Data received: %s", chunk)
+                                  "Data received: %s", chunk)  # noqa  # not unbound.
                 return
 
         return process_socket_data
