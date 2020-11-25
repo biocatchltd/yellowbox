@@ -9,7 +9,8 @@ from yellowbox.extras.logstash import FakeLogstashService
 def logstash():
     ls = FakeLogstashService()
     ls.start()
-    return ls
+    with ls:
+      yield ls
 
 
 def create_socket(logstash):
@@ -112,4 +113,3 @@ def test_is_alive():
     assert logstash.is_alive()
     logstash.stop()
     assert not logstash.is_alive()
-
