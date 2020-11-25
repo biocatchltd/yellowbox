@@ -3,11 +3,11 @@ from typing import Generator, TypeVar, Union
 from uuid import uuid1
 
 from docker import DockerClient
-from docker.models.networks import Network
 from docker.models.containers import Container
+from docker.models.networks import Network
 
+from yellowbox import ContainerService
 from yellowbox.containers import get_aliases, is_removed
-from yellowbox.service import YellowService
 
 __all__ = ['temp_network', 'anonymous_network', 'connect', 'disconnecting']
 
@@ -51,7 +51,7 @@ def temp_network(client: DockerClient, name=None, *args, **kwargs):
 
 
 @contextmanager
-def connect(network: Network, obj: Union[Container, YellowService], **kwargs):
+def connect(network: Network, obj: Union[Container, ContainerService], **kwargs):
     """Temporarily connect a container or yellow service into a network.
 
     Args:
@@ -61,7 +61,7 @@ def connect(network: Network, obj: Union[Container, YellowService], **kwargs):
     Returns:
         Context manager for handling the connection.
     """
-    if isinstance(obj, YellowService):
+    if isinstance(obj, ContainerService):
         ret = obj.connect(network, **kwargs)
     else:
         network.connect(obj, **kwargs)
@@ -70,7 +70,7 @@ def connect(network: Network, obj: Union[Container, YellowService], **kwargs):
     try:
         yield ret
     finally:
-        if isinstance(obj, YellowService):
+        if isinstance(obj, ContainerService):
             obj.disconnect(network)
         elif not is_removed(obj):
             network.disconnect(obj)
