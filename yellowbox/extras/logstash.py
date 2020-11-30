@@ -167,7 +167,7 @@ class FakeLogstashService(YellowService):
             # Combine all partial chunks with first.
             partial_chunks.append(chunks[0])
             chunks[0] = b"".join(partial_chunks)
-            partial_chunks[:] = chunks.pop()
+            partial_chunks[:] = [chunks.pop()]
 
             chunk = b""  # Linters are stupid. Required for it to pass.
 

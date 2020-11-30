@@ -50,14 +50,16 @@ def test_multiple_connections(logstash):
     assert logstash.records == [{"msg": "test"}, {"msg": "test2"}]
 
 
-def test_half_record(logstash):
+def test_half_records(logstash):
     s = create_socket(logstash)
     s.sendall(b'{"ms')
     s.sendall(b'g": "t')
-    s.sendall(b'est"}\n')
+    s.sendall(b'est"}\n{"ms')
+    sleep(0.01)
+    s.sendall(b'g2": "test2"}\n')
     s.close()
     sleep(0.01)
-    assert logstash.records[0] == {"msg": "test"}
+    assert logstash.records == [{"msg": "test"}, {"msg2": "test2"}]
 
 
 def test_bad_record(logstash):
