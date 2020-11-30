@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## 0.3.1
+## Fixed
+* `LogstashService` correctly reconstructs fragmented data.
 ## 0.3.0
 ## Changed
 * Revamped LogstashService. It now fakes the Logstash json_lines protocol.
