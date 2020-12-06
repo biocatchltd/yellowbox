@@ -1,11 +1,14 @@
 # Yellowbox Changelog
+## unreleased
+### Added
+* new properties in `BlobStorageService`: `endpoint_url`, `container_endpoint_url`, `account_credentials`.
 ## 0.3.1
-## Fixed
+### Fixed
 * `LogstashService` correctly reconstructs fragmented data.
 ## 0.3.0
-## Changed
+### Changed
 * Revamped LogstashService. It now fakes the Logstash json_lines protocol.
-## Removed
+### Removed
 * YellowService no longer has `connect` & `disconnect`. They are now delegated to `ContainerService`.
 ## 0.2.1
 ### Fixed
