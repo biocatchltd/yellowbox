@@ -56,7 +56,7 @@ class BlobStorageService(SingleContainerService, RunMixin):
             f"DefaultEndpointsProtocol=http;"
             f"AccountName={self.account_name};"
             f"AccountKey={self.account_key};"
-            f"BlobEndpoint=http://localhost:{self.client_port()}/{self.account_name};")
+            f"BlobEndpoint={self.endpoint_url};")
 
     @property
     def container_connection_string(self):
@@ -65,8 +65,22 @@ class BlobStorageService(SingleContainerService, RunMixin):
             f"DefaultEndpointsProtocol=http;"
             f"AccountName={self.account_name};"
             f"AccountKey={self.account_key};"
-            f"BlobEndpoint="
-            f"http://{short_id(self.container)}:{BLOB_STORAGE_DEFAULT_PORT}/{self.account_name};")
+            f"BlobEndpoint={self.container_endpoint_url};")
+
+    @property
+    def endpoint_url(self):
+        """URL for the endpoint from docker host"""
+        return f'http://localhost:{self.client_port()}/{self.account_name}'
+
+    @property
+    def container_endpoint_url(self):
+        """URL for the endpoint from another container"""
+        return f'http://{short_id(self.container)}:{BLOB_STORAGE_DEFAULT_PORT}/{self.account_name}'
+
+    @property
+    def account_credentials(self):
+        """Azure credentials dict to connect to the service"""
+        return {'account_name': self.account_name, 'account_key': self.account_key}
 
     def start(self, retry_spec: Optional[RetrySpec] = None):
         super().start()
