@@ -2,6 +2,8 @@
 ## unreleased
 ### Added
 * new properties in `BlobStorageService`: `endpoint_url`, `container_endpoint_url`, `account_credentials`.
+### Fixed
+* `RabbitMQService` suppress `ConnectionError`s on startup retries.
 ## 0.3.1
 ### Fixed
 * `LogstashService` correctly reconstructs fragmented data.
@@ -56,7 +58,7 @@
 * Bug where services would fail if trying to run a non-pulled image.
 * Issue where the rabbit service test was not tries on the main tag.
 * restored some network tests
-* Bug in `connect` where networks would try to disconnect containers that have since been removed. 
+* Bug in `connect` where networks would try to disconnect containers that have since been removed.
 * Bug in `KafkaService` where the service would try to kill if the containers even if they are no longer running.
 * Bug in `KafkaService` where the network would not disconnect from the server after.
 * Bug in `RabbitMQService` where the container would no kill cleanly
