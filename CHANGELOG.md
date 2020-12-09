@@ -1,5 +1,5 @@
 # Yellowbox Changelog
-## unreleased
+## 0.3.2
 ### Added
 * new properties in `BlobStorageService`: `endpoint_url`, `container_endpoint_url`, `account_credentials`.
 ### Fixed
