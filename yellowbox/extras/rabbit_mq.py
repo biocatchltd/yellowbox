@@ -48,7 +48,7 @@ class RabbitMQService(SingleContainerService, RunMixin):
     def start(self, retry_spec: Optional[RetrySpec] = None):
         super().start()
         retry_spec = retry_spec or RetrySpec(attempts=20)
-        conn = retry_spec.retry(self.connection, AMQPConnectionError)
+        conn = retry_spec.retry(self.connection, (AMQPConnectionError, ConnectionError))
         conn.close()
         return self
 
