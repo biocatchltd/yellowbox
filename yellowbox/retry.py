@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from itertools import count
 from time import perf_counter, sleep
-from typing import Optional, Callable, Type, Union, Iterable, TypeVar
+from typing import Optional, Callable, Type, Union, TypeVar, Tuple
 
 _T = TypeVar('_T')
 
@@ -32,7 +32,7 @@ class RetrySpec:
             raise ValueError('RetrySpec must have either a timeout or attempts')
 
     def retry(self, func: Callable[[], _T],
-              exceptions: Union[Type[Exception], Iterable[Type[Exception]]]) -> _T:
+              exceptions: Union[Type[Exception], Tuple[Type[Exception], ...]]) -> _T:
         """
         Retry running func until it succeeds
 
@@ -55,9 +55,6 @@ class RetrySpec:
             raise ValueError("Attempts must be greater than zero.")
         else:
             attempt_iterator = range(self.attempts - 1)
-
-        if isinstance(exceptions, type) and issubclass(exceptions, Exception):
-            exceptions = (exceptions,)
 
         if self.timeout:
             time_limit = perf_counter() + self.timeout

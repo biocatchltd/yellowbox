@@ -1,5 +1,7 @@
 # Yellowbox Changelog
 ## 0.4.0
+### Changed
+* now retry is only a a parameter for select services, including all container services
 ### Added
 * New PostgreSQL service
 ## 0.3.2

@@ -1,4 +1,4 @@
-from sqlalchemy import Table, Column, Integer, String, select, BLANK_SCHEMA, MetaData
+from sqlalchemy import Table, Column, Integer, String, select, MetaData
 from pytest import mark
 
 from yellowbox import temp_network, connect
