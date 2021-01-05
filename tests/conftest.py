@@ -33,9 +33,10 @@ def create_and_pull():
     created: List[Container] = []
 
     @wraps(_create_and_pull)
-    def ret(*args, **kwargs):
+    def ret(*args, remove=True, **kwargs):
         container = _create_and_pull(*args, **kwargs)
-        created.append(container)
+        if remove:
+            created.append(container)
         return container
 
     yield ret
