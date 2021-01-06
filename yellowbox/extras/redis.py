@@ -60,18 +60,9 @@ class RedisService(SingleContainerService, RunMixin):
         self.started = True
         return self
 
-    @contextmanager
-    def clean_slate(self):
-        """
-        Notes:
-            This feature is experimental.
-        """
+    def reset_state(self):
         client: Redis
         with self.client() as client:
-            keys = client.keys()
-            if keys:
-                raise RuntimeError(f'Redis db is not empty (found keys {keys})')
-            yield
             client.flushall()
 
     def set_state(self, db_dict: RedisState):
