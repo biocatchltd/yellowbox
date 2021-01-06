@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 from typing import TypeVar, Callable, Mapping, Union, Sequence, IO, Optional
 
 from docker import DockerClient
@@ -10,7 +9,6 @@ from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import SingleContainerService
 
 __all__ = ['RedisService', 'REDIS_DEFAULT_PORT', 'DEFAULT_RDB_PATH', 'append_state']
-
 
 REDIS_DEFAULT_PORT = 6379
 DEFAULT_RDB_PATH = "/data/dump.rdb"
