@@ -1,7 +1,7 @@
 # Yellowbox Changelog
 ## 0.4.0
 ### Removed
-* `clean_slate` methods are now gone, replaced with `clear_state`.
+* `clean_slate` methods are now gone, replaced with `reset_state`.
 ### Changed
 * now retry is only a a parameter for select services, including all container services.
 ### Added

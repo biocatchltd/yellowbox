@@ -17,15 +17,16 @@ class PostgreSQLService(SingleContainerService, RunMixin):
     """
     A postgresSQL service
     """
+
     def __init__(self, docker_client: DockerClient, image='postgres:latest', *, user='postgres',
-                 password='guest', default_db=..., **kwargs):
+                 password='guest', default_db: str = None, **kwargs):
         """
         Args:
             user: the Name of the default user for the database
             password: The password of the default user for the database
             default_db: The name of the default database. Defaults to the user name.
         """
-        if default_db is ...:
+        if default_db is None:
             default_db = user
 
         self.user = user
@@ -92,8 +93,8 @@ class PostgreSQLService(SingleContainerService, RunMixin):
         return self.engine().connect(**kwargs)
 
     def start(self, retry_spec: Optional[RetrySpec] = None):
-        super().start(retry_spec)
         retry_spec = retry_spec or RetrySpec(attempts=20)
+        super().start(retry_spec)
 
         def connect():
             with self.connection():
