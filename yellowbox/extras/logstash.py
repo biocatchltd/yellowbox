@@ -214,20 +214,12 @@ class FakeLogstashService(YellowService):
                     sock.shutdown(socket.SHUT_RDWR)
                     sock.close()
 
-    def start(self: _T, *, retry_spec: None = None) -> _T:
-        """Start the service.
-
-        Args:
-            retry_spec: Ignored.
-        """
-        if retry_spec:  # pragma: no cover
-            _logger.warning(f"{self.__class__.__name__} does not support passing "
-                            f"a retry spec.")
+    def start(self: _T) -> _T:
         self._root.listen()
         self._selector.register(self._root, selectors.EVENT_READ)
         self._selector.register(self._rshutdown, selectors.EVENT_READ)
         self._thread.start()
-        return super(FakeLogstashService, self).start(retry_spec=retry_spec)
+        return super(FakeLogstashService, self).start()
 
     def stop(self) -> None:
         """Stop the service

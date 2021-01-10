@@ -68,7 +68,7 @@ def test_bad_record(logstash):
     sleep(0.05)
 
     # Bad socket was closed
-    with pytest.raises(BrokenPipeError):
+    with pytest.raises((BrokenPipeError, ConnectionError)):
         s.sendall(b"asdasd")
         sleep(0.05)
         s.sendall(b"asdasd")

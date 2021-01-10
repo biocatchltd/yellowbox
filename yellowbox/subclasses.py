@@ -23,12 +23,26 @@ class ContainerService(YellowService):
 
     @abstractmethod
     def start(self, retry_spec: Optional[RetrySpec] = None):
+        """
+        Start the service. Wait for startup by repeatedly attempting an operation until success
+
+        Args:
+            retry_spec: The specifications for the repeated attempts. If not provided,
+             a predefined default RetrySpec should be used.
+
+        Returns:
+            self, for usage as a context manager.
+
+        Notes:
+            This method should block until the service is fully operational.
+
+        """
         for c in self.containers:
             if c.status.lower() == 'started':
                 continue
             c.start()
             c.reload()
-        return super(ContainerService, self).start(retry_spec=retry_spec)
+        return super(ContainerService, self).start()
 
     def stop(self, signal='SIGTERM'):
         for c in reversed(self.containers):
@@ -90,7 +104,7 @@ class SingleContainerService(SingleEndpointService, ABC):
         return self.container
 
 
-_T = TypeVar("_T")
+_T = TypeVar("_T", bound=ContainerService)
 
 
 class RunMixin:

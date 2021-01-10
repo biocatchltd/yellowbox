@@ -1,4 +1,12 @@
 # Yellowbox Changelog
+## 0.4.0
+### Removed
+* `clean_slate` methods are now gone, replaced with `reset_state`.
+### Changed
+* now retry is only a a parameter for select services, including all container services.
+### Added
+* New PostgreSQL service.
+* `clear_state` to reset the data on select services.
 ## 0.3.2
 ### Added
 * new properties in `BlobStorageService`: `endpoint_url`, `container_endpoint_url`, `account_credentials`.

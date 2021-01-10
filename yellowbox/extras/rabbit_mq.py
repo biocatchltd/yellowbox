@@ -67,24 +67,13 @@ class RabbitMQService(SingleContainerService, RunMixin):
 
         self.container.exec_run("rabbitmq-plugins enable rabbitmq_management")
 
-    @contextmanager
-    def clean_slate(self, force_queue_deletion=False):
-        """
-        Notes:
-            This feature is experimental.
-        """
+    def reset_state(self, force_queue_deletion=False):
         try:
             management_url = self.management_url()
         except RuntimeError as e:
             raise RuntimeError('management must be enabled for clean_slate') from e
 
         queues_url = management_url + 'api/queues'
-        response = requests.get(queues_url, auth=(self.user, self.password))
-        response.raise_for_status()
-        if response.json():
-            queue_names = [q['name'] for q in response.json()]
-            raise RuntimeError(f'rabbit has queues: {queue_names}')
-        yield
         replies = requests.get(queues_url, auth=(self.user, self.password))
         replies.raise_for_status()
         extant_queues = replies.json()

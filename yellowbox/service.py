@@ -1,24 +1,17 @@
 from abc import ABCMeta, abstractmethod
-from typing import Optional, TypeVar
-
-from yellowbox.retry import RetrySpec
+from typing import TypeVar
 
 _T = TypeVar("_T")
 
 
 class YellowService(metaclass=ABCMeta):
     @abstractmethod
-    def start(self: _T, *, retry_spec: Optional[RetrySpec] = None) -> _T:
+    def start(self: _T) -> _T:
         """
-        Start the service. Wait for startup by repeatedly attempting an operation until success
-
-        Args:
-            retry_spec: The specifications for the repeated attempts. If not provided,
-             a predefined default RetrySpec should be used.
+        Start the service.
 
         Returns:
             self, for usage as a context manager.
-
         """
         return self
 
