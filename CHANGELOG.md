@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## 0.4.1
+### Changed
+* Excluded usage of a broken version of azure-storage-blob package: 12.7.0  
 ## 0.4.0
 ### Removed
 * `clean_slate` methods are now gone, replaced with `reset_state`.
