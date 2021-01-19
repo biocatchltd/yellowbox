@@ -1,6 +1,6 @@
 # Yellowbox Changelog
 ## 0.4.1
-### Changed
+### Fixed
 * Excluded usage of a broken version of azure-storage-blob package: 12.7.0  
 ## 0.4.0
 ### Removed
