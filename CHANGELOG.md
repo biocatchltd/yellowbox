@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## next release
+### Internal
+* changed `local_url` to use 127.0.0.1, to earn a speedup in some cases.
 ## 0.4.1
 ### Fixed
 * Excluded usage of a broken version of azure-storage-blob package: 12.7.0  

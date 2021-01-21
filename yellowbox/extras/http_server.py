@@ -143,7 +143,7 @@ class HttpService(YellowService):
 
     @property
     def local_url(self):
-        return f'http://localhost:{self.server_port}'
+        return f'http://127.0.0.1:{self.server_port}'
 
     @property
     def container_url(self):
