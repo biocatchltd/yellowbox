@@ -7,8 +7,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Lock, Thread
 from types import new_class
 from typing import Callable, ClassVar, DefaultDict, NamedTuple, Optional, Pattern, Set, Type, Union, \
-    cast
-from urllib.parse import ParseResult, urlparse
+    cast, Mapping, List
+from urllib.parse import ParseResult, urlparse, parse_qs
 
 import requests
 from requests import ConnectionError, HTTPError
@@ -42,18 +42,26 @@ class RouterHTTPRequestHandler(BaseHTTPRequestHandler):
     Also contains some utility argument parsing.
     """
     _parse_url: ParseResult
-    _body: bytes
+    _body: Optional[bytes]
 
     routes_by_method: ClassVar[DefaultDict[str, Set[RoutedHandler]]]
     route_lock: ClassVar[Lock]
 
-    def body(self) -> bytes:
+    def body(self) -> Optional[bytes]:
         try:
             return self._body
         except AttributeError:
-            length = int(self.headers['Content-Length'])
-            self._body = self.rfile.read(length)
+            raw_body_len = self.headers['Content-Length']
+            if raw_body_len is None:
+                self._body = None
+            else:
+                length = int(raw_body_len)
+                self._body = self.rfile.read(length)
             return self._body
+
+    def path_params(self, **kwargs) -> Mapping[str, List[str]]:
+        parsed = self.parse_url()
+        return parse_qs(parsed.query, **kwargs)
 
     def parse_url(self) -> ParseResult:
         try:

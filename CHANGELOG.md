@@ -1,5 +1,9 @@
 # Yellowbox Changelog
 ## next release
+### Added
+* HttpServer: added `path_params` method to parse path parameters of a request.
+### Fixed
+* `TypeError` when accessing body of a request without a body. (now `handler.body()` of a request returns `None`)
 ### Internal
 * changed `local_url` to use 127.0.0.1, to earn a speedup in some cases.
 ## 0.4.1

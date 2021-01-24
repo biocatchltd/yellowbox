@@ -112,3 +112,20 @@ def test_session_const():
              requests.Session() as session:
             assert session.get(service.local_url + '/hi').text == 'he\0llo'
             assert session.get(service.local_url + '/hi').text == 'he\0llo'
+
+
+def test_get_params():
+    with HttpService().start() as service:
+        @service.patch_route('GET', '/square')
+        def square(request_handler: RouterHTTPRequestHandler):
+            assert request_handler.body() is None
+            try:
+                n = int(request_handler.path_params()['n'][0])
+            except ValueError:
+                return 400
+            return str(n * n)
+
+        with square:
+            response = requests.get(service.local_url + '/square', params={'n': '12'})
+        response.raise_for_status()
+        assert response.content.strip() == b'144'
