@@ -83,7 +83,7 @@ def test_route_query_regex(method):
 def test_route_ambiguous(method):
     with HttpService().start() as service:
         with service.patch_route(method, re.compile('/[abc]'), '1'), \
-             service.patch_route(method, re.compile('/[cde]'), '2'):
+                service.patch_route(method, re.compile('/[cde]'), '2'):
             assert requests.request(method, service.local_url + '/a').content == b'1'
             assert requests.request(method, service.local_url + '/d').content == b'2'
             assert requests.request(method, service.local_url + '/c').status_code == 500
@@ -109,7 +109,7 @@ def test_body(method):
 def test_session_const():
     with HttpService().start() as service:
         with service.patch_route('GET', '/hi', b'he\0llo'), \
-             requests.Session() as session:
+                requests.Session() as session:
             assert session.get(service.local_url + '/hi').text == 'he\0llo'
             assert session.get(service.local_url + '/hi').text == 'he\0llo'
 
