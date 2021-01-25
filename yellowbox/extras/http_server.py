@@ -60,6 +60,15 @@ class RouterHTTPRequestHandler(BaseHTTPRequestHandler):
             return self._body
 
     def path_params(self, **kwargs) -> Mapping[str, List[str]]:
+        """
+        Extract the path parameters from the query
+        Args:
+            **kwargs: forwarded to urllib.parse.parse_qs
+
+        Returns:
+            A mapping from parameter name to a list of values provided
+
+        """
         parsed = self.parse_url()
         return parse_qs(parsed.query, **kwargs)
 
