@@ -1,26 +1,101 @@
 from __future__ import annotations
 
 from http.server import BaseHTTPRequestHandler
+
+try:
+    from functools import cached_property
+# Support 3.7
+except ImportError:
+    cached_property = property  # type: ignore
+
+import threading
+from urllib.parse import urlparse
 import re
 from subprocess import Popen
 from unittest.mock import Mock
-from typing import Any, Callable, Generator, Optional, Pattern, List, Dict, Union, cast, no_type_check, overload
+from typing import (Any, Callable, Generator, Optional, Pattern, List, Dict,
+                    Union, cast, no_type_check, overload, TypeVar)
 from threading import RLock
 from simple_websocket_server import WebSocket, WebSocketServer
 from functools import partial, wraps
 from types import new_class
 from weakref import WeakMethod
+from logging import getLogger
 
 from yellowbox.service import YellowService
+from yellowbox.utils import docker_host_name
+
+logger = getLogger(__name__)
 
 
 class _WebsocketTemplate(WebSocket):
-    callback = None
+    _callback: Optional[WeakMethod] = None
+    _generator: _GENERAOTR_TYPE
+
+    def connected(self) -> None:
+        initialized = False
+        try:
+            path = urlparse(self.request.path).path
+            if path is None:
+                # Not supposed to happen.
+                logger.warning("Message received with no path")
+                return
+
+            assert self._callback
+            callback = self._callback()  # Resolve weakref
+            assert callback
+            self._generator = callback(self)
+            initialized = True
+        except Exception:
+            logger.exception("Exception raised on generator start.")
+            raise
+
+        finally:
+            if not initialized:
+                self.close()
+
+        self._advance_generator()
+
+    def _advance_generator(
+            self, data: Union[bytearray, str, None] = None) -> None:
+        try:
+            try:
+                # First one will send None, rest will send data.
+                msg = self._generator.send(data)  # type: ignore
+            except StopIteration as exc:
+                if exc.value:
+                    self.send_message(exc.value)  # May throw an exception.
+                self.close()
+            else:
+                if msg is not None:
+                    self.send_message(msg)
+        except Exception:
+            logger.exception("Exception raised while handling callback.")
+            raise  # Handle_close will be called
+
+    def handle(self) -> None:
+        self._advance_generator(self.data)
+
+    def handle_close(self) -> None:
+        err = ConnectionAbortedError()
+        generator = self._generator
+        del self._generator
+
+        try:
+            self._generator.throw(err)
+        except Exception as exc:
+            # Check if it's our exception. If it is, ignore it.
+            if isinstance(exc, ConnectionAbortedError) and exc is err:
+                return
+            logger.exception("Exception raised on connection close.")
+            raise
+        finally:
+            self._generator.close()  # May throw an exception. Ignore it.
 
 
 @no_type_check
 def _to_generator(side_effect: SIDE_EFFECT_TYPE
-                  ) -> Callable[[BaseHTTPRequestHandler], _GENERAOTR_TYPE]:
+                  ) -> _GEN_FUNCTION_TYPE:
     """Convert a side effect to a generator function.
 
     Args:
@@ -32,7 +107,8 @@ def _to_generator(side_effect: SIDE_EFFECT_TYPE
     # Side effect == normal string
     if isinstance(side_effect, (str, bytes, bytearray, memoryview)):
         def gen(*args: Any, **kwargs: Any) -> _GENERAOTR_TYPE:
-            yield side_effect
+            return side_effect
+            yield  # On purpose.
         return gen
 
     @wraps(side_effect)  # type: ignore # Mypy GH-10002
@@ -40,48 +116,88 @@ def _to_generator(side_effect: SIDE_EFFECT_TYPE
         # Side effect == normal function that returns a string.
         result = side_effect(*args, **kwargs)
         if isinstance(result, (str, bytes, bytearray, memoryview)):
-            yield result
-        else:
-            # Side effect == generator function
-            return (yield from result)
+            return result
+
+        # Side effect == generator function
+        return (yield from result)
 
     return gen
 
 
-_YIELDTYPES = Union[str, bytes, bytearray, memoryview]
+##### Type aliases used all around #####
+_YIELDTYPES = Union[str, bytes, bytearray, memoryview, None]
 
 _GENERAOTR_TYPE = Generator[_YIELDTYPES,
-                            bytearray, Any]
+                            Union[bytearray, str], _YIELDTYPES]
+
+_GEN_FUNCTION_TYPE = Callable[[WebSocket], _GENERAOTR_TYPE]
 
 SIDE_EFFECT_TYPE = Union[
-    _YIELDTYPES, Callable[[BaseHTTPRequestHandler], Optional[_YIELDTYPES]],
-    Callable[[BaseHTTPRequestHandler], _GENERAOTR_TYPE]
+    _YIELDTYPES, Callable[[WebSocket], Optional[_YIELDTYPES]],
+    _GEN_FUNCTION_TYPE
 ]
+
+_T = TypeVar("_T")
+########################################
 
 
 class WebsocketService(YellowService):
     def __init__(self) -> None:
         self._routes: Dict[str, Callable] = {}
-        self._re_routes: List[Pattern[str]] = []
+        self._re_routes: Dict[Pattern[str], Callable] = {}
         self._lock = RLock()
+        _stop_event = self._stop_event = threading.Event()
 
         class _WebsocketImpl(_WebsocketTemplate):
-            pass
-        # self._server = a
+            _callback = WeakMethod(self._get_callback)  # type: ignore
 
-    def start(self) -> None:
+        server = self._server = WebSocketServer("0.0.0.0", 0, _WebsocketImpl)
+
+        # serve_forever() doesn't let you close the server without throwing
+        # an exception >.<
+        def loop() -> None:
+            while not _stop_event.is_set():
+                server.handle_request()
+
+        self._thread = threading.Thread(target=loop)
+
+    @cached_property
+    def server_port(self) -> int:
+        return self._server.serversocket.getsockname()[1]
+
+    @cached_property
+    def local_url(self) -> str:
+        return f'http://127.0.0.1:{self.server_port}'
+
+    @cached_property
+    def container_url(self) -> str:
+        return f'http://{docker_host_name}:{self.server_port}'
+
+    # Mypy doesn't support self generics yet without manual binding (bound=)
+    # https://mypy.readthedocs.io/en/stable/generics.html#generic-methods-and-generic-self
+    @no_type_check
+    def start(self: _T) -> _T:
+        self._thread.start()
         return super().start()
 
     def stop(self) -> None:
+        self._stop_event.set()
+        self._thread.join(1)
+        self._server.close()
         return super().stop()
 
-    def _create_websocket(self):
-        pass
+    def _get_callback(self, path: str) -> Union[_GEN_FUNCTION_TYPE, None]:
+        callback = self._routes.get(path)
+        if callback:
+            return callback
 
-    def get(self, uri=None, regex=None):
-        """Gets a previously added route.
+        items = reversed(tuple(self._re_routes.items()))  # Thread safety
+        for pattern, callback in items:
+            if pattern.fullmatch(path):
+                return callback
 
-        """
+        return None
+
 
     def route(self, uri: Optional[str] = None, *,
               regex: Optional[Union[Pattern[str], str]] = None
@@ -140,7 +256,7 @@ class WebsocketService(YellowService):
             if uri:
                 self._routes[uri] = gen
             else:
-                self._re_routes.append(gen)
+                self._re_routes[regex] = gen  # type: ignore
 
     def set(self, side_effect: SIDE_EFFECT_TYPE,
             uri: Optional[str] = None, *,
@@ -154,6 +270,7 @@ class WebsocketService(YellowService):
 
     def remove(self, uri: Optional[str] = None, *,
                regex: Optional[Union[Pattern[str], str]] = None) -> None:
+        """Remove a route"""
         if uri and regex:
             raise ValueError("Only one of URI or regex can be specified.")
 
@@ -164,8 +281,9 @@ class WebsocketService(YellowService):
             del self._routes[uri]
         else:
             assert regex  # For Mypy
+            regex = re.compile(regex)
             with self._lock:
-                self._re_routes.remove(re.compile(regex))
+                del self._re_routes[regex]
 
     def clear(self) -> None:
         """Remove all routes"""
