@@ -1,6 +1,8 @@
 from __future__ import annotations
+from contextlib import contextmanager
 
 from http.server import BaseHTTPRequestHandler
+import logging
 
 try:
     from functools import cached_property
@@ -13,24 +15,22 @@ from urllib.parse import urlparse
 import re
 from subprocess import Popen
 from unittest.mock import Mock
-from typing import (Any, Callable, Generator, Optional, Pattern, List, Dict,
+from typing import (Any, Callable, Generator, Iterator, Optional, Pattern, List, Dict,
                     Union, cast, no_type_check, overload, TypeVar)
 from threading import RLock
 from simple_websocket_server import WebSocket, WebSocketServer
 from functools import partial, wraps
 from types import new_class
 from weakref import WeakMethod
-from logging import getLogger
-
 from yellowbox.service import YellowService
 from yellowbox.utils import docker_host_name
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class _WebsocketTemplate(WebSocket):
     _callback: Optional[WeakMethod] = None
-    _generator: _GENERAOTR_TYPE
+    _generator: Optional[_GENERAOTR_TYPE] = None
 
     def connected(self) -> None:
         initialized = False
@@ -42,9 +42,16 @@ class _WebsocketTemplate(WebSocket):
                 return
 
             assert self._callback
-            callback = self._callback()  # Resolve weakref
-            assert callback
-            self._generator = callback(self)
+            find_generator = self._callback()  # Resolve weakref
+            assert find_generator
+            generator_function = find_generator(path)
+
+            if generator_function is None:
+                logger.info(f"No handler assigned to {path}. "
+                            "Closing connection.")
+                return
+
+            self._generator = generator_function(self)
             initialized = True
         except Exception:
             logger.exception("Exception raised on generator start.")
@@ -79,10 +86,12 @@ class _WebsocketTemplate(WebSocket):
     def handle_close(self) -> None:
         err = ConnectionAbortedError()
         generator = self._generator
+        if generator is None:
+            return
         del self._generator
 
         try:
-            self._generator.throw(err)
+            generator.throw(err)
         except Exception as exc:
             # Check if it's our exception. If it is, ignore it.
             if isinstance(exc, ConnectionAbortedError) and exc is err:
@@ -90,7 +99,7 @@ class _WebsocketTemplate(WebSocket):
             logger.exception("Exception raised on connection close.")
             raise
         finally:
-            self._generator.close()  # May throw an exception. Ignore it.
+            generator.close()  # May throw an exception. Ignore it.
 
 
 @no_type_check
@@ -159,7 +168,7 @@ class WebsocketService(YellowService):
             while not _stop_event.is_set():
                 server.handle_request()
 
-        self._thread = threading.Thread(target=loop)
+        self._thread = threading.Thread(target=loop, daemon=True)
 
     @cached_property
     def server_port(self) -> int:
@@ -167,11 +176,14 @@ class WebsocketService(YellowService):
 
     @cached_property
     def local_url(self) -> str:
-        return f'http://127.0.0.1:{self.server_port}'
+        return f'ws://127.0.0.1:{self.server_port}'
 
     @cached_property
     def container_url(self) -> str:
-        return f'http://{docker_host_name}:{self.server_port}'
+        return f'ws://{docker_host_name}:{self.server_port}'
+
+    def is_alive(self) -> bool:
+        return self._thread.is_alive()
 
     # Mypy doesn't support self generics yet without manual binding (bound=)
     # https://mypy.readthedocs.io/en/stable/generics.html#generic-methods-and-generic-self
@@ -198,7 +210,6 @@ class WebsocketService(YellowService):
 
         return None
 
-
     def route(self, uri: Optional[str] = None, *,
               regex: Optional[Union[Pattern[str], str]] = None
               ) -> Callable[[SIDE_EFFECT_TYPE], None]:
@@ -209,8 +220,6 @@ class WebsocketService(YellowService):
         Args:
             side_effect: Side effect can be either a string or a
             generator function.
-
-        Raises:
         """
 
         if uri and regex:
@@ -234,8 +243,8 @@ class WebsocketService(YellowService):
             generator function.
 
         Raises:
+            RuntimeError: Trying to add a route while it already exists.
         """
-
         if uri and regex:
             raise ValueError("Only one of URI or regex can be specified.")
 
@@ -258,19 +267,36 @@ class WebsocketService(YellowService):
             else:
                 self._re_routes[regex] = gen  # type: ignore
 
+    @contextmanager
+    def patch(self, side_effect: SIDE_EFFECT_TYPE,
+              uri: Optional[str] = None, *,
+              regex: Optional[Union[Pattern[str], str]] = None) -> Iterator[None]:
+        """Temporarily patch a route.
+
+        Raises an exception if the route already exists.
+
+        Args:
+            Same as add().
+        """
+        self.add(side_effect, uri, regex=regex)
+        try:
+            yield
+        finally:
+            self.remove(uri, regex=regex)
+
     def set(self, side_effect: SIDE_EFFECT_TYPE,
             uri: Optional[str] = None, *,
             regex: Optional[Union[Pattern[str], str]] = None) -> None:
-        """Set a route
+        """Set a route.
 
-        Like `route()` but overwrites existing routes.
+        Like `add()` but overwrites existing routes.
         """
         self.add(side_effect=side_effect, uri=uri,
                  regex=regex, _overwrite=True)
 
     def remove(self, uri: Optional[str] = None, *,
                regex: Optional[Union[Pattern[str], str]] = None) -> None:
-        """Remove a route"""
+        """Remove a route."""
         if uri and regex:
             raise ValueError("Only one of URI or regex can be specified.")
 
@@ -286,6 +312,37 @@ class WebsocketService(YellowService):
                 del self._re_routes[regex]
 
     def clear(self) -> None:
-        """Remove all routes"""
+        """Remove all routes."""
         with self._lock:
             self._routes.clear()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    # Create a simple echo websocket server
+    server = WebsocketService()
+
+    @server.route(regex=".*")
+    def echo(websocket):
+        data = None
+        while True:
+            data = yield data
+
+    print("Starting echo websocket server...")
+    server.start()
+    print(f"Server started at {server.local_url}. Press Ctrl+C to stop.")
+    import signal
+    try:
+        try:
+            signal.pause()
+        except AttributeError:
+            pass
+        import time
+        while True:
+            time.sleep(60)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print("Stopping server...")
+        server.stop()
