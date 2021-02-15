@@ -124,7 +124,8 @@ def _to_generator(side_effect: SIDE_EFFECT_TYPE
     def gen(*args: Any, **kwargs: Any) -> _GENERAOTR_TYPE:
         # Side effect == normal function that returns a string.
         result = side_effect(*args, **kwargs)
-        if isinstance(result, (str, bytes, bytearray, memoryview)):
+        if result is None or isinstance(result, (str, bytes,
+                                                 bytearray, memoryview)):
             return result
 
         # Side effect == generator function
@@ -171,16 +172,16 @@ class WebsocketService(YellowService):
         self._thread = threading.Thread(target=loop, daemon=True)
 
     @cached_property
-    def server_port(self) -> int:
+    def port(self) -> int:
         return self._server.serversocket.getsockname()[1]
 
     @cached_property
     def local_url(self) -> str:
-        return f'ws://127.0.0.1:{self.server_port}'
+        return f'ws://127.0.0.1:{self.port}'
 
     @cached_property
     def container_url(self) -> str:
-        return f'ws://{docker_host_name}:{self.server_port}'
+        return f'ws://{docker_host_name}:{self.port}'
 
     def is_alive(self) -> bool:
         return self._thread.is_alive()
@@ -221,7 +222,6 @@ class WebsocketService(YellowService):
             side_effect: Side effect can be either a string or a
             generator function.
         """
-
         if uri and regex:
             raise ValueError("Only one of URI or regex can be specified.")
 
