@@ -67,7 +67,7 @@ def test_websocket_route(websocket_service: WebsocketService,
 @mark.parametrize("regex", [None, "/A?test"])
 def test_websocket_add(websocket_service: WebsocketService,
                        expected_response, side_effect, regex):
-    if regex: 
+    if regex:
         websocket_service.add(side_effect, regex=regex)
     else:
         websocket_service.add(side_effect, TEST_PATH)
@@ -79,7 +79,7 @@ def test_websocket_add(websocket_service: WebsocketService,
 @mark.parametrize("regex", [None, "/A?test"])
 def test_websocket_set(websocket_service: WebsocketService,
                        expected_response, side_effect, regex):
-    if regex: 
+    if regex:
         websocket_service.set(side_effect, regex=regex)
     else:
         websocket_service.set(side_effect, TEST_PATH)
@@ -91,11 +91,11 @@ def test_websocket_set(websocket_service: WebsocketService,
 @mark.parametrize("regex", [None, "/A?test"])
 def test_websocket_patch(websocket_service: WebsocketService,
                          expected_response, side_effect, regex):
-    if regex: 
+    if regex:
         patch = websocket_service.patch(side_effect, regex=regex)
     else:
-        patch = websocket_service.patch(side_effect, TEST_PATH)   
-    
+        patch = websocket_service.patch(side_effect, TEST_PATH)
+
     with patch:
         conn = _connect(websocket_service)
         assert conn.recv() == expected_response
@@ -130,6 +130,7 @@ def test_websocket_remove(websocket_service: WebsocketService):
     with raises(KeyError):
         websocket_service.remove("test")
 
+
 def test_websocket_remove_regex(websocket_service: WebsocketService):
     websocket_service.add("test", regex="test")
     websocket_service.remove(regex="test")
@@ -147,6 +148,7 @@ def test_websocket_clear(websocket_service: WebsocketService):
 def test_websocket_generator_recv(websocket_service: WebsocketService):
     event = threading.Event()
     data = []
+
     def gen(ws):
         data.append((yield))
         data.append((yield))
@@ -159,8 +161,10 @@ def test_websocket_generator_recv(websocket_service: WebsocketService):
     assert data == ["testy", "bin"]
     conn.close()
 
+
 def test_websocket_stop():
-    websocket_service = WebsocketService()  # prevent stoppping session websocket.
+    # prevent stoppping session websocket.
+    websocket_service = WebsocketService()
     websocket_service.start()
     done = False
 

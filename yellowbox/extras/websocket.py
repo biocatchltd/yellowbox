@@ -1,7 +1,6 @@
 from __future__ import annotations
 from contextlib import contextmanager
 
-from http.server import BaseHTTPRequestHandler
 import logging
 
 try:
@@ -15,12 +14,11 @@ from urllib.parse import urlparse
 import re
 from subprocess import Popen
 from unittest.mock import Mock
-from typing import (Any, Callable, Generator, Iterator, Optional, Pattern, List, Dict,
-                    Union, cast, no_type_check, overload, TypeVar)
+from typing import (Any, Callable, Generator, Iterator, Optional, Pattern,  Dict,
+                    Union, no_type_check, TypeVar)
 from threading import RLock
 from simple_websocket_server import WebSocket, WebSocketServer
 from functools import partial, wraps
-from types import new_class
 from weakref import WeakMethod
 from yellowbox.service import YellowService
 from yellowbox.utils import docker_host_name
