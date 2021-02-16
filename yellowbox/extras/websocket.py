@@ -253,6 +253,9 @@ class WebsocketService(YellowService):
 
         if regex:
             regex = re.compile(regex)
+        elif not isinstance(uri, str):
+            # Prevent variable order confusion.
+            raise TypeError("URI must be a string.")
 
         gen = _to_generator(side_effect)
 
@@ -315,6 +318,7 @@ class WebsocketService(YellowService):
         """Remove all routes."""
         with self._lock:
             self._routes.clear()
+            self._re_routes.clear()
 
 
 if __name__ == "__main__":

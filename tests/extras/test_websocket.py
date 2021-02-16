@@ -1,5 +1,7 @@
+import socket
+import threading
 import websocket
-from pytest import mark, fixture
+from pytest import mark, fixture, raises
 from urllib.parse import urljoin
 
 from yellowbox.extras.websocket import WebsocketService
@@ -23,7 +25,7 @@ def _connect(service):
     return websocket.create_connection(urljoin(service.local_url, TEST_PATH))
 
 
-def _parametrize_side_effect(wrapped):
+def _parametrize_side_effect_response(wrapped):
     def func(websocket):
         return "respdata"
 
@@ -42,16 +44,149 @@ def _parametrize_side_effect(wrapped):
         return b"respdata"
 
     return mark.parametrize(
-        "side_effect",
+        "expected_response,side_effect",
         [("respdata", "respdata"), (b"respdata", b"respdata"),
          (b"respdata", bytearray(b"respdata")), ("respdata", func),
          ("respdata", func2), ("respdata", gen), ("respdata", gen2),
          (b"respdata", bytefunc)])(wrapped)
 
 
-@_parametrize_side_effect
-def test_websocket_route(websocket_service: WebsocketService, side_effect):
-    expected_response, side_effect = side_effect
-    websocket_service.route(TEST_PATH)(side_effect)
+@_parametrize_side_effect_response
+@mark.parametrize("regex", [None, "/A?test"])
+def test_websocket_route(websocket_service: WebsocketService,
+                         expected_response, side_effect, regex):
+    if regex:
+        websocket_service.route(regex=regex)(side_effect)
+    else:
+        websocket_service.route(TEST_PATH)(side_effect)
     conn = _connect(websocket_service)
     assert conn.recv() == expected_response
+
+
+@_parametrize_side_effect_response
+@mark.parametrize("regex", [None, "/A?test"])
+def test_websocket_add(websocket_service: WebsocketService,
+                       expected_response, side_effect, regex):
+    if regex: 
+        websocket_service.add(side_effect, regex=regex)
+    else:
+        websocket_service.add(side_effect, TEST_PATH)
+    conn = _connect(websocket_service)
+    assert conn.recv() == expected_response
+
+
+@_parametrize_side_effect_response
+@mark.parametrize("regex", [None, "/A?test"])
+def test_websocket_set(websocket_service: WebsocketService,
+                       expected_response, side_effect, regex):
+    if regex: 
+        websocket_service.set(side_effect, regex=regex)
+    else:
+        websocket_service.set(side_effect, TEST_PATH)
+    conn = _connect(websocket_service)
+    assert conn.recv() == expected_response
+
+
+@_parametrize_side_effect_response
+@mark.parametrize("regex", [None, "/A?test"])
+def test_websocket_patch(websocket_service: WebsocketService,
+                         expected_response, side_effect, regex):
+    if regex: 
+        patch = websocket_service.patch(side_effect, regex=regex)
+    else:
+        patch = websocket_service.patch(side_effect, TEST_PATH)   
+    
+    with patch:
+        conn = _connect(websocket_service)
+        assert conn.recv() == expected_response
+
+
+def test_websocket_double_add(websocket_service: WebsocketService):
+    websocket_service.add("test", "test")
+    with raises(RuntimeError):
+        websocket_service.add("test", "test")
+
+
+def test_websocket_double_route(websocket_service: WebsocketService):
+    websocket_service.route("test")("test")
+    with raises(RuntimeError):
+        websocket_service.route("test")("test")
+
+
+def test_websocket_double_set(websocket_service: WebsocketService):
+    websocket_service.set("test", "test")
+    websocket_service.set("test", "test")  # No error
+
+
+def test_websocket_double_patch(websocket_service: WebsocketService):
+    with websocket_service.patch("test", "test"), raises(RuntimeError), \
+            websocket_service.patch("test", "test"):
+        pass
+
+
+def test_websocket_remove(websocket_service: WebsocketService):
+    websocket_service.add("test", "test")
+    websocket_service.remove("test")
+    with raises(KeyError):
+        websocket_service.remove("test")
+
+def test_websocket_remove_regex(websocket_service: WebsocketService):
+    websocket_service.add("test", regex="test")
+    websocket_service.remove(regex="test")
+    with raises(KeyError):
+        websocket_service.remove(regex="test")
+
+
+def test_websocket_clear(websocket_service: WebsocketService):
+    websocket_service.add("test", "test")
+    websocket_service.clear()
+    # Make sure it was cleared, no error.
+    websocket_service.add("test", "test")
+
+
+def test_websocket_generator_recv(websocket_service: WebsocketService):
+    event = threading.Event()
+    data = []
+    def gen(ws):
+        data.append((yield))
+        data.append((yield))
+        event.set()
+    websocket_service.add(gen, TEST_PATH)
+    conn = _connect(websocket_service)
+    conn.send("testy")
+    conn.send("bin")
+    event.wait()
+    assert data == ["testy", "bin"]
+    conn.close()
+
+def test_websocket_stop():
+    websocket_service = WebsocketService()  # prevent stoppping session websocket.
+    websocket_service.start()
+    done = False
+
+    def stuck(ws):
+        nonlocal done
+        try:
+            while True:
+                yield  # Should be able to close while a generator is stuck.
+        finally:
+            done = True
+    websocket_service.add(stuck, TEST_PATH)
+    conn = _connect(websocket_service)
+    conn.send("test")
+    websocket_service.stop()
+    assert done
+
+    # Make sure we're actually closed.
+    with raises((ConnectionRefusedError, socket.timeout)):
+        websocket.create_connection(
+            urljoin(websocket_service.local_url, TEST_PATH), timeout=0.2)
+
+
+def test_websocket_nonexisting_route(websocket_service: WebsocketService):
+    conn = _connect(websocket_service)
+    conn.send("asd")
+
+    # Should be auto-closed.
+    with raises(ConnectionAbortedError):
+        conn.send("asd")
