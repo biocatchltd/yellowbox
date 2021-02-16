@@ -1,14 +1,15 @@
 # Yellowbox Changelog
-## next release
+## 0.5.0
 ### Added
 * HttpServer: added `path_params` method to parse path parameters of a request.
 ### Fixed
 * `TypeError` when accessing body of a request without a body. (now `handler.body()` of a request returns `None`)
+* Excluded usage of any azure-storage-blob version above 12.7.0 as a tempfix.
 ### Internal
 * changed `local_url` to use 127.0.0.1, to earn a speedup in some cases.
 ## 0.4.1
 ### Fixed
-* Excluded usage of a broken version of azure-storage-blob package: 12.7.0  
+* Excluded usage of a broken version of azure-storage-blob package: 12.7.0
 ## 0.4.0
 ### Removed
 * `clean_slate` methods are now gone, replaced with `reset_state`.
