@@ -12,8 +12,6 @@ except ImportError:
 import threading
 from urllib.parse import urlparse
 import re
-from subprocess import Popen
-from unittest.mock import Mock
 from typing import (Any, Callable, Generator, Iterator, Optional, Pattern,  Dict,
                     Union, no_type_check, TypeVar)
 from threading import RLock
@@ -132,7 +130,7 @@ def _to_generator(side_effect: SIDE_EFFECT_TYPE
     return gen
 
 
-##### Type aliases used all around #####
+# Type aliases used all around
 _YIELDTYPES = Union[str, bytes, bytearray, memoryview, None]
 
 _GENERAOTR_TYPE = Generator[_YIELDTYPES,
@@ -146,7 +144,6 @@ SIDE_EFFECT_TYPE = Union[
 ]
 
 _T = TypeVar("_T")
-########################################
 
 
 class WebsocketService(YellowService):
