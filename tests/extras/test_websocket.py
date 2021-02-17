@@ -42,10 +42,12 @@ def _parametrize_side_effect_response(wrapped):
 
     def bytefunc(websocket):
         return b"respdata"
+    
 
     return mark.parametrize(
         "expected_response,side_effect",
         [("respdata", "respdata"), (b"respdata", b"respdata"),
+         ("respdata", ["respdata"]), (b"respdata", [b"respdata"]),
          (b"respdata", bytearray(b"respdata")), ("respdata", func),
          ("respdata", func2), ("respdata", gen), ("respdata", gen2),
          (b"respdata", bytefunc)])(wrapped)

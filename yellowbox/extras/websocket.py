@@ -12,7 +12,7 @@ except ImportError:
 import threading
 from urllib.parse import urlparse
 import re
-from typing import (Any, Callable, Generator, Iterator, Optional, Pattern,  Dict,
+from typing import (Any, Callable, Generator, Iterable, Iterator, Optional, Pattern,  Dict,
                     Union, no_type_check, TypeVar)
 from threading import RLock
 from simple_websocket_server import WebSocket, WebSocketServer
@@ -114,6 +114,13 @@ def _to_generator(side_effect: SIDE_EFFECT_TYPE
         def gen(*args: Any, **kwargs: Any) -> _GENERAOTR_TYPE:
             return side_effect
             yield  # On purpose.
+        return gen
+    
+    # Side effect == list of strings
+    if isinstance(side_effect, Iterable):
+        def gen(*args, **kwargs) -> _GENERAOTR_TYPE:
+            for item in side_effect:
+                yield item
         return gen
 
     @wraps(side_effect)  # type: ignore # Mypy GH-10002
