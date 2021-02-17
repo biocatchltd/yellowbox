@@ -54,49 +54,37 @@ def _parametrize_side_effect_response(wrapped):
 
 
 @_parametrize_side_effect_response
-@mark.parametrize("regex", [None, "/A?test"])
+@mark.parametrize("uri,regex", [[TEST_PATH, None], [None, "/A?test"]])
 def test_websocket_route(websocket_service: WebsocketService,
-                         expected_response, side_effect, regex):
-    if regex:
-        websocket_service.route(regex=regex)(side_effect)
-    else:
-        websocket_service.route(TEST_PATH)(side_effect)
+                         expected_response, side_effect, uri,regex):
+    websocket_service.route(uri, regex=regex)(side_effect)
     conn = _connect(websocket_service)
     assert conn.recv() == expected_response
 
 
 @_parametrize_side_effect_response
-@mark.parametrize("regex", [None, "/A?test"])
+@mark.parametrize("uri,regex", [[TEST_PATH, None], [None, "/A?test"]])
 def test_websocket_add(websocket_service: WebsocketService,
-                       expected_response, side_effect, regex):
-    if regex:
-        websocket_service.add(side_effect, regex=regex)
-    else:
-        websocket_service.add(side_effect, TEST_PATH)
+                       expected_response, side_effect, uri, regex):
+    websocket_service.add(side_effect, uri, regex=regex)
     conn = _connect(websocket_service)
     assert conn.recv() == expected_response
 
 
 @_parametrize_side_effect_response
-@mark.parametrize("regex", [None, "/A?test"])
+@mark.parametrize("uri,regex", [[TEST_PATH, None], [None, "/A?test"]])
 def test_websocket_set(websocket_service: WebsocketService,
-                       expected_response, side_effect, regex):
-    if regex:
-        websocket_service.set(side_effect, regex=regex)
-    else:
-        websocket_service.set(side_effect, TEST_PATH)
+                       expected_response, side_effect, uri, regex):
+    websocket_service.set(side_effect, uri, regex=regex)
     conn = _connect(websocket_service)
     assert conn.recv() == expected_response
 
 
 @_parametrize_side_effect_response
-@mark.parametrize("regex", [None, "/A?test"])
+@mark.parametrize("uri,regex", [[TEST_PATH, None], [None, "/A?test"]])
 def test_websocket_patch(websocket_service: WebsocketService,
-                         expected_response, side_effect, regex):
-    if regex:
-        patch = websocket_service.patch(side_effect, regex=regex)
-    else:
-        patch = websocket_service.patch(side_effect, TEST_PATH)
+                         expected_response, side_effect, uri, regex):
+    patch = websocket_service.patch(side_effect, uri, regex=regex)
 
     with patch:
         conn = _connect(websocket_service)
