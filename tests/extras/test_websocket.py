@@ -10,15 +10,15 @@ TEST_PATH = "/test"
 
 
 @fixture(scope="module")
-def global_websocket_service():
+def _global_websocket_service():
     with WebsocketService().start() as ws:
         yield ws
 
 
 @fixture(scope="function")
-def websocket_service(global_websocket_service) -> WebsocketService:
-    global_websocket_service.clear()
-    return global_websocket_service
+def websocket_service(_global_websocket_service) -> WebsocketService:
+    _global_websocket_service.clear()
+    return _global_websocket_service
 
 
 def _connect(service):

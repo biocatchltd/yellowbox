@@ -57,10 +57,10 @@ class _WebsocketTemplate(WebSocket):
             if not initialized:
                 self.close()
 
-        self._advance_generator()
+        self._advance_generator(None)
 
     def _advance_generator(
-            self, data: Union[bytearray, str, None] = None) -> None:
+            self, data: Union[bytearray, str, None]) -> None:
         try:
             try:
                 # First one will send None, rest will send data.
@@ -122,6 +122,8 @@ def _to_generator(side_effect: SIDE_EFFECT_TYPE
             for item in side_effect:
                 yield item
         return gen
+
+    assert callable(side_effect)
 
     @wraps(side_effect)  # type: ignore # Mypy GH-10002
     def gen(*args: Any, **kwargs: Any) -> _GENERAOTR_TYPE:
