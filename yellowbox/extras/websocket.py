@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class _WebsocketTemplate(WebSocket):
-    _callback: Optional[WeakMethod] = None
+    _get_generator: Optional[WeakMethod] = None
     _generator: Optional[_GENERAOTR_TYPE] = None
 
     def connected(self) -> None:
@@ -37,10 +37,10 @@ class _WebsocketTemplate(WebSocket):
                 logger.warning("Message received with no path")
                 return
 
-            assert self._callback
-            find_generator = self._callback()  # Resolve weakref
-            assert find_generator
-            generator_function = find_generator(path)
+            assert self._get_generator
+            get_generator = self._get_generator()  # Resolve weakref
+            assert get_generator
+            generator_function = get_generator(path)
 
             if generator_function is None:
                 logger.info(f"No handler assigned to {path}. "
@@ -163,7 +163,7 @@ class WebsocketService(YellowService):
         _stop_event = self._stop_event = threading.Event()
 
         class _WebsocketImpl(_WebsocketTemplate):
-            _callback = WeakMethod(self._get_callback)  # type: ignore
+            _get_generator = WeakMethod(self._get_generator)  # type: ignore
 
         server = self._server = WebSocketServer("0.0.0.0", 0, _WebsocketImpl)
 
@@ -203,7 +203,7 @@ class WebsocketService(YellowService):
         self._server.close()
         return super().stop()
 
-    def _get_callback(self, path: str) -> Union[_GEN_FUNCTION_TYPE, None]:
+    def _get_generator(self, path: str) -> Union[_GEN_FUNCTION_TYPE, None]:
         callback = self._routes.get(path)
         if callback:
             return callback
