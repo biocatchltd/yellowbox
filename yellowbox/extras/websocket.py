@@ -90,7 +90,7 @@ class _WebsocketTemplate(WebSocket):
             generator.throw(err)
         except Exception as exc:
             # Check if it's our exception. If it is, ignore it.
-            if isinstance(exc, ConnectionAbortedError) and exc is err:
+            if exc is err:
                 return
             logger.exception("Exception raised on connection close.")
             raise
