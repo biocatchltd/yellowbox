@@ -12,7 +12,7 @@ except ImportError:
 import threading
 from urllib.parse import urlparse
 import re
-from typing import (Any, Callable, Generator, Iterable, Iterator, Optional, Pattern,  Dict,
+from typing import (Any, Callable, Generator, Iterable, Iterator, List, Optional, Pattern,  Dict,
                     Union, no_type_check, TypeVar)
 from threading import RLock
 from simple_websocket_server import WebSocket, WebSocketServer
@@ -25,10 +25,26 @@ logger = logging.getLogger(__name__)
 
 
 class _WebsocketTemplate(WebSocket):
+    """Template websocket protocol.
+
+    Used in WebSocketServer, this class handles incoming connections and
+    communicates over a generator to send and receive data. See WebsocketService
+    for usage.
+    """
     _get_generator: Optional[WeakMethod] = None
+    """
+    A weakmethod to call WebsocketService._get_generator and find the
+    generator appropriate for the connected websocket path.
+    """
     _generator: Optional[_GENERAOTR_TYPE] = None
+    """An initialized generator for IO with the websocket"""
 
     def connected(self) -> None:
+        """Websocket connected callback.
+
+        Finds the correct generator for IO with this websocket and sets it
+        up.
+        """
         initialized = False
         try:
             path = urlparse(self.request.path).path
@@ -61,6 +77,7 @@ class _WebsocketTemplate(WebSocket):
 
     def _advance_generator(
             self, data: Union[bytearray, str, None]) -> None:
+        """Advance the IO generator. Send it data and wait for output."""
         try:
             try:
                 # First one will send None, rest will send data.
@@ -77,11 +94,15 @@ class _WebsocketTemplate(WebSocket):
             raise  # Handle_close will be called
 
     def handle(self) -> None:
+        """Incoming data callback."""
         self._advance_generator(self.data)
 
     def handle_close(self) -> None:
+        """Connection closed callback."""
         err = ConnectionAbortedError()
         generator = self._generator
+
+        # Closed before full initialization
         if generator is None:
             return
         del self._generator
@@ -99,9 +120,9 @@ class _WebsocketTemplate(WebSocket):
 
 
 @no_type_check
-def _to_generator(side_effect: SIDE_EFFECT_TYPE
-                  ) -> _GEN_FUNCTION_TYPE:
-    """Convert a side effect to a generator function.
+def _to_generator(
+        side_effect: SIDE_EFFECT_TYPE) -> _GEN_FUNCTION_TYPE:
+    """Convert a side effect to an IO generator function.
 
     Args:
         side_effect: See WebsocketService.route().
@@ -115,7 +136,7 @@ def _to_generator(side_effect: SIDE_EFFECT_TYPE
             return side_effect
             yield  # On purpose.
         return gen
-    
+
     # Side effect == list of strings
     if isinstance(side_effect, Iterable):
         def gen(*args, **kwargs) -> _GENERAOTR_TYPE:
@@ -148,7 +169,8 @@ _GENERAOTR_TYPE = Generator[_YIELDTYPES,
 _GEN_FUNCTION_TYPE = Callable[[WebSocket], _GENERAOTR_TYPE]
 
 SIDE_EFFECT_TYPE = Union[
-    _YIELDTYPES, Callable[[WebSocket], Optional[_YIELDTYPES]],
+    _YIELDTYPES, List[_YIELDTYPES],
+    Callable[[WebSocket], Optional[_YIELDTYPES]],
     _GEN_FUNCTION_TYPE
 ]
 
@@ -156,7 +178,40 @@ _T = TypeVar("_T")
 
 
 class WebsocketService(YellowService):
+    """Yellobox service to handle incoming websocket connections.
+    
+    Allows 2 sided communication using different kinds of side effects.
+    Non-blocking, all side effects are ran in a different thread.
+
+    Example:
+        >>> service = WebsocketService()
+        
+        Let's write "Hello!" to the websocket upon connection to the "/hello"
+        endpoint:
+        >>> service.add("Hello!", "/hello")
+        
+        We'll also make a simple echo endpoint:
+        >>> @service.route("/echo")
+        ... def echo(websocket):
+        ...     data = None
+        ...     while True:
+        ...         # Yield sends out the data, and waits for incoming data.
+        ...         data = yield data
+        ... 
+
+        And start our service!
+        >>> service.start()
+
+        Keep in mind it's non-blocking. The service will run in the background.
+
+        An local websocket should connect to `service.local_url` or
+        `service.container_url` if communicating with a hosted docker
+        container.
+
+    """
+
     def __init__(self) -> None:
+        """Initialize the service."""
         self._routes: Dict[str, Callable] = {}
         self._re_routes: Dict[Pattern[str], Callable] = {}
         self._lock = RLock()
@@ -177,33 +232,64 @@ class WebsocketService(YellowService):
 
     @cached_property
     def port(self) -> int:
+        """Service listening port."""
         return self._server.serversocket.getsockname()[1]
 
     @cached_property
     def local_url(self) -> str:
+        """Local URL for connecting on the same host.
+        
+        Suffix this with the path. For example, if you wish to connect locally
+        to the "/echo" endpoint, connect to `service.local_url + '/echo'`.
+        """
         return f'ws://127.0.0.1:{self.port}'
 
     @cached_property
     def container_url(self) -> str:
+        """URL for connecting over a locally hosted docker container.
+        
+        Suffix this with the path. For example, if you wish to connect to the
+        "/echo" endpoint from inside a container, connect
+        to `service.container_url + '/echo'`.
+        """
         return f'ws://{docker_host_name}:{self.port}'
 
     def is_alive(self) -> bool:
+        """Boolean stating if wesocket service is active."""
         return self._thread.is_alive()
 
     # Mypy doesn't support self generics yet without manual binding (bound=)
     # https://mypy.readthedocs.io/en/stable/generics.html#generic-methods-and-generic-self
     @no_type_check
     def start(self: _T) -> _T:
+        """Start the service.
+        
+        Non-blocking. Service runs in the background.
+        """
         self._thread.start()
         return super().start()
 
     def stop(self) -> None:
+        """Stop the service."""
         self._stop_event.set()
         self._thread.join(1)
+
+        # Shouldn't actually happen.
+        if self._thread.is_alive():
+            logger.error("Failed to stop the service gracefully. Timed out.")
+
         self._server.close()
         return super().stop()
 
     def _get_generator(self, path: str) -> Union[_GEN_FUNCTION_TYPE, None]:
+        """Get the IO generator function appropriate to the connected path.
+
+        Args:
+            path: Websocket path.
+
+        Returns:
+            Generator function, or None if not found.
+        """
         callback = self._routes.get(path)
         if callback:
             return callback
