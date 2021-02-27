@@ -134,3 +134,4 @@ dmypy.json
 # Poetry
 poetry.lock
 .pytype
+**/.DS_Store
