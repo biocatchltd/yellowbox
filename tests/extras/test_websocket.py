@@ -42,7 +42,6 @@ def _parametrize_side_effect_response(wrapped):
 
     def bytefunc(websocket):
         return b"respdata"
-    
 
     return mark.parametrize(
         "expected_response,side_effect",
@@ -56,7 +55,7 @@ def _parametrize_side_effect_response(wrapped):
 @_parametrize_side_effect_response
 @mark.parametrize("path,regex", [[TEST_PATH, None], [None, "/A?test"]])
 def test_websocket_route(websocket_service: WebsocketService,
-                         expected_response, side_effect, path,regex):
+                         expected_response, side_effect, path, regex):
     websocket_service.route(path, regex=regex)(side_effect)
     conn = _connect(websocket_service)
     assert conn.recv() == expected_response

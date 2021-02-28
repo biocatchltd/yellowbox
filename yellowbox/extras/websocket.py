@@ -180,17 +180,17 @@ _T = TypeVar("_T")
 
 class WebsocketService(YellowService):
     """Yellobox service to handle incoming websocket connections.
-    
+
     Allows 2 sided communication using different kinds of side effects.
     Non-blocking, all side effects are ran in a different thread.
 
     Example:
         >>> service = WebsocketService()
-        
+
         Let's write "Hello!" to the websocket upon connection to the "/hello"
         endpoint:
         >>> service.add("Hello!", "/hello")
-        
+
         We'll also make a simple echo endpoint:
         >>> @service.route("/echo")
         ... def echo(websocket):
@@ -238,7 +238,7 @@ class WebsocketService(YellowService):
     @cached_property
     def local_url(self) -> str:
         """Local URL for connecting on the same host.
-        
+
         Suffix this with the path. For example, if you wish to connect locally
         to the "/echo" endpoint, connect to `service.local_url + '/echo'`.
         """
@@ -247,7 +247,7 @@ class WebsocketService(YellowService):
     @cached_property
     def container_url(self) -> str:
         """URL for connecting over a locally hosted docker container.
-        
+
         Suffix this with the path. For example, if you wish to connect to the
         "/echo" endpoint from inside a container, connect
         to `service.container_url + '/echo'`.
@@ -263,7 +263,7 @@ class WebsocketService(YellowService):
     @no_type_check
     def start(self: _T) -> _T:
         """Start the service.
-        
+
         Non-blocking. Service runs in the background.
         """
         self._thread.start()
@@ -309,7 +309,7 @@ class WebsocketService(YellowService):
         Raises an exception if the route already exists.
 
         Example:
-            
+
             >>> @service.route("/echo")
             ... def echo(websocket):
             ...     data = None
@@ -321,7 +321,7 @@ class WebsocketService(YellowService):
         Args:
             path: path to accept connections on. Omit if using regex.
             regex: path regex to accept connections on. Omit if using path.
-        
+
         Returns:
             Decorator for adding a side effect as a route.
         """
@@ -406,7 +406,7 @@ class WebsocketService(YellowService):
     def remove(self, path: Optional[str] = None, *,
                regex: Optional[Union[Pattern[str], str]] = None) -> None:
         """Remove a route.
-        
+
         Args:
             path: Path that was previously inserted. Omit if using regex.
             regex: Regex that was previously inserted. Omit if using path.
