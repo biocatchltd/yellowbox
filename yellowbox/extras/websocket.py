@@ -198,7 +198,7 @@ class WebsocketService(YellowService):
         ...     while True:
         ...         # Yield sends out the data, and waits for incoming data.
         ...         data = yield data
-        ... 
+        ...
 
         And start our service!
         >>> service.start()
@@ -316,7 +316,7 @@ class WebsocketService(YellowService):
             ...     while True:
             ...         # Yield sends out the data, and waits for incoming data.
             ...         data = yield data
-            ... 
+            ...
 
         Args:
             path: path to accept connections on. Omit if using regex.
