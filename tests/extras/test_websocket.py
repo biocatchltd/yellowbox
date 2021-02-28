@@ -181,5 +181,5 @@ def test_websocket_nonexisting_route(websocket_service: WebsocketService):
     conn.send("asd")
 
     # Should be auto-closed.
-    with raises(ConnectionAbortedError):
+    with raises((ConnectionAbortedError, BrokenPipeError)):
         conn.send("asd")

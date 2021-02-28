@@ -209,6 +209,8 @@ class WebsocketService(YellowService):
         `service.container_url` if communicating with a hosted docker
         container.
     """
+    port: int
+    """Server listening port."""
 
     def __init__(self) -> None:
         """Initialize the service."""
@@ -221,6 +223,7 @@ class WebsocketService(YellowService):
             _get_generator = WeakMethod(self._get_generator)  # type: ignore
 
         server = self._server = WebSocketServer("0.0.0.0", 0, _WebsocketImpl)
+        self.port = server.serversocket.getsockname()[1]
 
         # serve_forever() doesn't let you close the server without throwing
         # an exception >.<
@@ -229,11 +232,6 @@ class WebsocketService(YellowService):
                 server.handle_request()
 
         self._thread = threading.Thread(target=loop, daemon=True)
-
-    @cached_property
-    def port(self) -> int:
-        """Service listening port."""
-        return self._server.serversocket.getsockname()[1]
 
     @cached_property
     def local_url(self) -> str:

@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## 0.5.1
+### Added
+* New WebSocketService to emulate Websocket servers.
 ## 0.5.0
 ### Added
 * HttpServer: added `path_params` method to parse path parameters of a request.
