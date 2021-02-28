@@ -4,7 +4,7 @@ from contextlib import contextmanager
 import logging
 
 try:
-    from functools import cached_property
+    from functools import cached_property  # type: ignore
 # Support 3.7
 except ImportError:
     cached_property = property  # type: ignore
