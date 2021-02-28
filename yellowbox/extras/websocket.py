@@ -36,7 +36,7 @@ class _WebsocketTemplate(WebSocket):
     A weakmethod to call WebsocketService._get_generator and find the
     generator appropriate for the connected websocket path.
     """
-    _generator: Optional[_GENERAOTR_TYPE] = None
+    _generator: "Optional[_GENERAOTR_TYPE]" = None
     """An initialized generator for IO with the websocket"""
 
     def connected(self) -> None:
@@ -83,8 +83,9 @@ class _WebsocketTemplate(WebSocket):
                 # First one will send None, rest will send data.
                 msg = self._generator.send(data)  # type: ignore
             except StopIteration as exc:
-                if exc.value:
-                    self.send_message(exc.value)  # May throw an exception.
+                if exc.value:  # type: ignore
+                    # Sending may throw an exception.
+                    self.send_message(exc.value)  # type: ignore
                 self.close()
             else:
                 if msg is not None:
