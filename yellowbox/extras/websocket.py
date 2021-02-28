@@ -207,7 +207,6 @@ class WebsocketService(YellowService):
         An local websocket should connect to `service.local_url` or
         `service.container_url` if communicating with a hosted docker
         container.
-
     """
 
     def __init__(self) -> None:
@@ -301,27 +300,40 @@ class WebsocketService(YellowService):
 
         return None
 
-    def route(self, uri: Optional[str] = None, *,
+    def route(self, path: Optional[str] = None, *,
               regex: Optional[Union[Pattern[str], str]] = None
               ) -> Callable[[SIDE_EFFECT_TYPE], None]:
-        """Add a route.
+        """Add a route using a decorator syntax.
 
         Raises an exception if the route already exists.
 
+        Example:
+            
+            >>> @service.route("/echo")
+            ... def echo(websocket):
+            ...     data = None
+            ...     while True:
+            ...         # Yield sends out the data, and waits for incoming data.
+            ...         data = yield data
+            ... 
+
         Args:
-            side_effect: Side effect can be either a string or a
-            generator function.
+            path: path to accept connections on. Omit if using regex.
+            regex: path regex to accept connections on. Omit if using path.
+        
+        Returns:
+            Decorator for adding a side effect as a route.
         """
-        if uri and regex:
-            raise ValueError("Only one of URI or regex can be specified.")
+        if path and regex:
+            raise ValueError("Only one of path or regex can be specified.")
 
-        if not (uri or regex):
-            raise ValueError("URI or regex must be specified.")
+        if not (path or regex):
+            raise ValueError("path or regex must be specified.")
 
-        return partial(self.add, uri=uri, regex=regex)
+        return partial(self.add, path=path, regex=regex)
 
     def add(self, side_effect: SIDE_EFFECT_TYPE,
-            uri: Optional[str] = None, *,
+            path: Optional[str] = None, *,
             regex: Optional[Union[Pattern[str], str]] = None,
             _overwrite: bool = False) -> None:
         """Add a route.
@@ -329,75 +341,83 @@ class WebsocketService(YellowService):
         Raises an exception if the route already exists.
 
         Args:
-            side_effect: Side effect can be either a string or a
-            generator function.
+            side_effect: Side effect can be either a string, bytes or bytearray
+            to return a single message; iterable of any combination of them to
+            return multiple messages; A regular function that returns any of them
+            that will be called upon receiving an incoming connection; or a
+            generator function that yields any of them and accepts data. For
+            more information see the examples above.
+            path: path to accept connections on. Omit if using regex.
+            regex: path regex to accept connections on. Omit if using path.
 
         Raises:
             RuntimeError: Trying to add a route while it already exists.
         """
-        if uri and regex:
-            raise ValueError("Only one of URI or regex can be specified.")
+        if path and regex:
+            raise ValueError("Only one of path or regex can be specified.")
 
-        if not (uri or regex):
-            raise ValueError("URI or regex must be specified.")
+        if not (path or regex):
+            raise ValueError("path or regex must be specified.")
 
         if regex:
             regex = re.compile(regex)
-        elif not isinstance(uri, str):
+        elif not isinstance(path, str):
             # Prevent variable order confusion.
-            raise TypeError("URI must be a string.")
+            raise TypeError("path must be a string.")
 
         gen = _to_generator(side_effect)
 
         # Check and place
         with self._lock:
-            if not _overwrite and (uri in self._routes or
+            if not _overwrite and (path in self._routes or
                                    regex in self._re_routes):
-                raise RuntimeError(f"Route {uri or regex} already exists!")
+                raise RuntimeError(f"Route {path or regex} already exists!")
 
-            if uri:
-                self._routes[uri] = gen
+            if path:
+                self._routes[path] = gen
             else:
                 self._re_routes[regex] = gen  # type: ignore
 
     @contextmanager
     def patch(self, side_effect: SIDE_EFFECT_TYPE,
-              uri: Optional[str] = None, *,
+              path: Optional[str] = None, *,
               regex: Optional[Union[Pattern[str], str]] = None) -> Iterator[None]:
         """Temporarily patch a route.
 
-        Raises an exception if the route already exists.
-
-        Args:
-            Same as add().
+        Like `.add()` but uses a context manager for easy removal.
         """
-        self.add(side_effect, uri, regex=regex)
+        self.add(side_effect, path, regex=regex)
         try:
             yield
         finally:
-            self.remove(uri, regex=regex)
+            self.remove(path, regex=regex)
 
     def set(self, side_effect: SIDE_EFFECT_TYPE,
-            uri: Optional[str] = None, *,
+            path: Optional[str] = None, *,
             regex: Optional[Union[Pattern[str], str]] = None) -> None:
         """Set a route.
 
         Like `add()` but overwrites existing routes.
         """
-        self.add(side_effect=side_effect, uri=uri,
+        self.add(side_effect=side_effect, path=path,
                  regex=regex, _overwrite=True)
 
-    def remove(self, uri: Optional[str] = None, *,
+    def remove(self, path: Optional[str] = None, *,
                regex: Optional[Union[Pattern[str], str]] = None) -> None:
-        """Remove a route."""
-        if uri and regex:
-            raise ValueError("Only one of URI or regex can be specified.")
+        """Remove a route.
+        
+        Args:
+            path: Path that was previously inserted. Omit if using regex.
+            regex: Regex that was previously inserted. Omit if using path.
+        """
+        if path and regex:
+            raise ValueError("Only one of path or regex can be specified.")
 
-        if not (uri or regex):
-            raise ValueError("URI or regex must be specified.")
+        if not (path or regex):
+            raise ValueError("path or regex must be specified.")
 
-        if uri:
-            del self._routes[uri]
+        if path:
+            del self._routes[path]
         else:
             assert regex  # For Mypy
             regex = re.compile(regex)
@@ -409,34 +429,3 @@ class WebsocketService(YellowService):
         with self._lock:
             self._routes.clear()
             self._re_routes.clear()
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-
-    # Create a simple echo websocket server
-    server = WebsocketService()
-
-    @server.route(regex=".*")
-    def echo(websocket):
-        data = None
-        while True:
-            data = yield data
-
-    print("Starting echo websocket server...")
-    server.start()
-    print(f"Server started at {server.local_url}. Press Ctrl+C to stop.")
-    import signal
-    try:
-        try:
-            signal.pause()
-        except AttributeError:
-            pass
-        import time
-        while True:
-            time.sleep(60)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        print("Stopping server...")
-        server.stop()
