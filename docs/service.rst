@@ -19,9 +19,7 @@ units.
 
     Abstract base class for defining external services.
 
-    YellowServices can be used as context managers. For example:
-
-    .. code-block::
+    YellowServices can be used as context managers. For example::
 
         with YellowService().start() as service:
             service.do_stuff()
