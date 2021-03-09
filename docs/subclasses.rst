@@ -32,7 +32,7 @@ required for running the service.
     .. method:: start(retry_spec=None)
         :abstractmethod:
 
-        Start the service by turning on all stopped containers. Wait for it to
+        Start the service by turning on all stopped containers. Block for it to
         be fully initialized by repeatedly running a certain "check" function,
         chosen by the subclass overriding this method.
 
@@ -90,6 +90,8 @@ required for running the service.
 
     Arguments are the same as :class:`ContainerService`.
 
+    Inherits from :class:`ContainerService`.
+
     The following methods are modified:
 
     .. method:: connect(network, **kwargs)
@@ -117,7 +119,7 @@ required for running the service.
     Inherits from :class:`SingleEndpointService`.
 
     *container* is a single docker ``Container`` that implements the service.
-    Both a started and a stopped container can be passed.
+    Accepts both a started and a stopped container.
 
     *remove* has the same meaning as in :class:`ContainerService`.
 
@@ -152,8 +154,7 @@ required for running the service.
         If *spinner* is true (default), shows an indicative text and a beautiful
         spinner in stdout while image is being pulled and service is starting.
 
-        If *retry_spec* is given, it's :class:`retry.RetrySpec` object given
-        to :meth:`~ContainerService.start`.
+        If *retry_spec* is provided, it must be a :class:`retry.RetrySpec`
+        object which is passed to :meth:`~ContainerService.start`.
 
-        *kwargs* are further arguments sent over to the class constructor.
-
+        *kwargs* are further arguments forwarded to the class constructor.
