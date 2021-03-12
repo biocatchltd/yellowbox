@@ -19,8 +19,8 @@ required for running the service.
     the containers to docker virtual networks using :meth:`connect` and
     :meth:`disconnect`.
 
-    *containers* argument is a sequence of docker ``Container`` objects, relevant for the
-    service. The containers can come both stopped and started.
+    *containers* argument is a sequence of docker ``Container`` objects, relevant
+    for the service. The containers can come both stopped and started.
 
     If *remove* is true (default) containers will be removed together with their
     respective volumes when the service is stopped. Same as the attribute
