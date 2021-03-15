@@ -1,7 +1,7 @@
 :mod:`retry` --- Retrying specification object
 =====================================================
 
-.. module:: subclasses
+.. module:: retry
     :synopsis: Specification object for retrying functions
 
 -------
@@ -35,7 +35,15 @@ it connects successfully.
         A timeout for all the attempts (including the interval) combined. If
         ``None``, function will never time out.
 
+    .. method:: retry(func, exceptions)
 
+        Retry the given function until it succeeds according to the
+        :class:`RetrySpec`.
 
+        *func* is a no-argument function that may fail with an exception, and
+        will be run multiple times according to the spec. If you wish to supply
+        arguments to the function, use :func:`functools.partial`.
 
+        *exceptions* is a single exception type or a :class:`tuple` of multiple
+        exception types, that will be caught when the function fails.
 
