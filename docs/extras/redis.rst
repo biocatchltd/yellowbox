@@ -28,4 +28,4 @@ Python client.
     fresh database.
 
     Inherits from :class:`~subclasses.SingleContainerService` and
-    :class:`subclasses.RunMixin`.
+    :class:`subclasses.RunMixin`. 
