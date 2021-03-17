@@ -28,4 +28,37 @@ Python client.
     fresh database.
 
     Inherits from :class:`~subclasses.SingleContainerService` and
-    :class:`subclasses.RunMixin`. 
+    :class:`subclasses.RunMixin`.
+
+    Has the following additional methods:
+
+    .. method:: client(*, client_cls = Redis, **kwargs)
+
+        Returns a connected Redis client.
+
+        By default, the client class is a ``redis.py`` Redis object. A callable
+        that implements the same interface as the ``redis.py`` Redis constructor
+        can be passed as *client_cls*.
+
+        *kwargs* are further keyword arguments that are passed to *client_cls*.
+    
+    .. method:: client_port()
+
+        Returns the port to be used when connecting to the Redis server.
+
+    .. method:: reset_state()
+
+        Flush the database.
+        
+        Equivalent to running ``flushall()`` on a redis client.
+    
+    .. method:: set_state(db_dict)
+
+        Set the database to a certain state.
+
+        *db_dict* is a dictionary mapping between string keys used as Redis keys,
+        and values. Values can be any of:
+
+        * Primitives - str, int, float, or bytes.
+        * Sequence of primitives, for Redis lists.
+        * Mapping of field names to primitives, for Redis hashmaps.
