@@ -7,7 +7,7 @@
 -------
 
 An HTTP :class:`~service.YellowService` used to easily mock and test HTTP
-connections.
+connections. 
 
 .. class:: RedisService(docker_client, image="redis:latest", redis_file=None)
 
