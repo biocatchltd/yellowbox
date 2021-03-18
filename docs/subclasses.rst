@@ -148,8 +148,9 @@ required for running the service.
         Upon context manager entry, creates the service and starts it. Upon
         exit, stops the service.
 
-        *docker_client* is used to pull the image from dockerhub if it does not
-        exist on the local machine, and for creating the container.
+        *docker_client* is a ``docker.py`` client used to pull the image from
+        dockerhub if it does not exist on the local machine, and for creating
+        the container.
 
         If *spinner* is true (default), shows an indicative text and a beautiful
         spinner in stdout while image is being pulled and service is starting.

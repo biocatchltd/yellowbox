@@ -7,57 +7,103 @@
 -------
 
 An HTTP :class:`~service.YellowService` used to easily mock and test HTTP
-connections. 
+connections.
 
-.. class:: RedisService(docker_client, image="redis:latest", redis_file=None)
+.. class:: HttpService(host="0.0.0.0", port=0, name=None)
 
-    A :class:`~subclasses.SingleContainerService` used to emulate the redis
-    database.
+    A Simple HTTP server wrapped as :class:`~service.YellowService`.
 
-    *docker_client* is a ``docker.py`` client used to pull the Redis image
-    and create the container during instance construction.
+    *host* is the listening host. Defaults to ``"0.0.0.0"`` to listen on all IPv4
+    interfaces.
 
-    *image* is the Redis database image to use. Defaults to the latest official
-    build.
+    *port* is the listening port. Defaults to ``0`` which signals a random empty
+    port. Use :attr:`server_port` to fetch the port.
 
-    *redis_file* is a :term:`file-like object` used to load an existing Redis
-    database. The file is an RDB file that was dumped earlier on. For more
-    information read the official
-    `redis manual <https://redis.io/topics/persistence>`_. Defaults to None for a
-    fresh database.
+    *name* is a string identifying this server and thread for logging purposes.
+    If ``None``, a default name with a running number is generated.
 
-    Inherits from :class:`~subclasses.SingleContainerService` and
-    :class:`subclasses.RunMixin`.
+    Inherits from :class:`~service.YellowService`.
+
+    Example usage::
+
+        >>> with HttpService().start() as service:
+        ...   @service.patch_route('GET', '/hello/world')
+        ...   def hello_world(handler: RouterHTTPRequestHandler):
+        ...      return "hi there"
+        ...   # hello_world is now a context manager
+        ...   with hello_world:
+        ...      # within this scope, the path "/hello/world" will return a 200 response with the body "hi there"
+        ...      assert requests.get(service.local_url+"/hello/world").text == "hi there"
+        ...   # routes can also be set without a function
+        ...   with service.patch_route('GET', '/meaning_of_life', '42'):
+        ...      assert requests.get(service.local_url+"/meaning_of_life").content == b'42'
 
     Has the following additional methods:
 
-    .. method:: client(*, client_cls = Redis, **kwargs)
+    .. method:: server_port
+        :property:
 
-        Returns a connected Redis client.
+        HTTP Server listening port.
 
-        By default, the client class is a ``redis.py`` Redis object. A callable
-        that implements the same interface as the ``redis.py`` Redis constructor
-        can be passed as *client_cls*.
+    .. method:: local_url
+        :property:
 
-        *kwargs* are further keyword arguments that are passed to *client_cls*.
-    
-    .. method:: client_port()
+        Full URL to access the HTTP Server from localhost (including port).
 
-        Returns the port to be used when connecting to the Redis server.
+    .. method:: container_url
+        :property:
 
-    .. method:: reset_state()
+        Full URL to access the HTTP Server from inside a locally-running
+        container (including port).
 
-        Flush the database.
-        
-        Equivalent to running ``flushall()`` on a redis client.
-    
-    .. method:: set_state(db_dict)
+    .. method:: patch_route(method, route, side_effect=..., name=None)
 
-        Set the database to a certain state.
+        Create a context manager that temporarily adds a route handler to the
+        service.
 
-        *db_dict* is a dictionary mapping between string keys used as Redis keys,
-        and values. Values can be any of:
+        *method* is the request method to add the route to.
 
-        * Primitives - str, int, float, or bytes.
-        * Sequence of primitives, for Redis lists.
-        * Mapping of field names to primitives, for Redis hashmaps.
+        *route* is the route to attach the side effect to. All routes must begin
+        with a slash "/".  Alternatively, The route may be a regex
+        :class:`Pattern <re.compile>`, in which case the request path must fully
+        match it. The match object is then stored in
+        :meth:`RouterHTTPRequestHandler.match`, to be used by a side-effect
+        callable.
+
+        *side_effect* is the callback or result to return for the route. Accepts
+        any of the following types:
+
+        * int: to return the value as the HTTP status code, without a body.
+        * bytes: to return 200, with the value as the response body.
+        * str: invalid if the value is non-ascii, return 200 with the value,
+        translated to bytes, as the response body.
+        * callable: Must accept a :class:`RouterHTTPRequestHandler`. May return
+        any of the above types, or None to handle the response directly with the
+        :class:`RouterHTTPRequestHandler`.
+
+        If *side_effect* is not specified, this method can be used as a
+        decorator.
+
+        Returns a context manager that will enable the route upon entry and
+        disable it upon exit.
+
+.. class:: RouterHTTPRequestHandler
+
+        Inherits from :class:`http.server.BaseHTTPRequestHandler` and adds the
+        following utility methods:
+
+    .. method:: body()
+
+        Return the body of the request as bytes, or ``None`` if it's empty.
+
+    .. method:: path_params(**kwargs)
+
+        Extract parameters from the query string.
+
+        *kwargs* are forwarded to :func:`~urllib.parse.parse_qs`.
+
+        Returns a mapping between parameter name and a list of the values
+        provided.
+
+
+
