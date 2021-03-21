@@ -23,6 +23,7 @@ Example usage::
     >>> ls.assert_logs("ERROR")
     >>> assert ls.records[0]["record"] == "value"
 
+
 .. class:: FakeLogstashService(port=0)
 
     Implements a fake logging service that closely resembles Logstash.
@@ -104,7 +105,7 @@ Example usage::
 
         *level* can be a string or an integer.
 
-        Raises :class:`AssertionError` if no logs above the given level were
+        Raises :exc:`AssertionError` if no logs above the given level were
         received.
 
     .. method:: assert_no_logs(level)
@@ -113,5 +114,5 @@ Example usage::
 
         *level* can be a string or an integer.
 
-        Raises :class:`AssertionError` if a log above the given level was
+        Raises :exc:`AssertionError` if a log above the given level was
         received.

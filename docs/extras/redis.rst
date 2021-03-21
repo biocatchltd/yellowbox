@@ -1,18 +1,25 @@
-:mod:`extras.redis` --- Redis Database Emulation
-=====================================================
+:mod:`extras.redis` --- Redis Database Service
+==============================================
 
 .. module:: extras.redis
-    :synopsis: Emulating Redis database.
+    :synopsis: Serving Redis database.
 
 -------
 
-A full-fledged Redis :class:`~service.YellowService` for emulating the famous
+A full-fledged Redis :class:`~service.YellowService` for running the famous
 database. Runs the official Redis docker image, with ``redis.py`` as the default
 Python client.
 
-.. class:: RedisService(docker_client, image="redis:latest", redis_file=None)
+.. note::
 
-    A :class:`~subclasses.SingleContainerService` used to emulate the redis
+    If you wish to use this package, please install Yellowbox with the ``redis``
+    extra. For more information, see our
+    :ref:`installation guide <installation>`.
+
+.. class:: RedisService(docker_client, image="redis:latest", redis_file=None,\
+                        **kwargs)
+
+    A :class:`~subclasses.SingleContainerService` used to run the redis
     database.
 
     *docker_client* is a ``docker.py`` client used to pull the Redis image
@@ -26,6 +33,8 @@ Python client.
     information read the official
     `redis manual <https://redis.io/topics/persistence>`_. Defaults to None for a
     fresh database.
+
+    Further `kwargs` are passed to the parent classes' constructor.
 
     Inherits from :class:`~subclasses.SingleContainerService` and
     :class:`subclasses.RunMixin`.

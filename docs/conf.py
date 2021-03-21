@@ -31,7 +31,8 @@ extensions = [
     "sphinx.ext.intersphinx"
 ]
 
-intersphinx_mapping = {'python':('http://docs.python.org/3/', None)}
+intersphinx_mapping = {'python':('http://docs.python.org/3/', None),
+                       'pika': ('https://pika.readthedocs.io/en/stable/', None)}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
