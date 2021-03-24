@@ -52,7 +52,8 @@ to the service.
 
     .. method:: container_connection_string()
 
-        Returns a connection string to connect across containers in the same network.
+        Returns a connection string to connect across containers in the same
+        network.
 
         The connection string is formatted according to Microsoft's
         `specification <https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string#connect-to-the-emulator-account-using-the-shortcut>`_.
@@ -71,4 +72,12 @@ to the service.
 
         Returns a credential dict to connect to the service.
 
-        The dict consists of an ``account_name`` and an ``account_key``.
+        The dict consists of 2 keys: ``account_name`` and ``account_key``.
+
+    .. attribute:: account_name
+
+        The account name, as registered in Azurite.
+
+    .. attribute:: account_key
+
+        The account password, as registered in Azurite.
