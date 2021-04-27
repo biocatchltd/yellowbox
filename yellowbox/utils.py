@@ -1,4 +1,4 @@
-from platform import *
+import platform
 from contextlib import AbstractContextManager, closing, contextmanager, nullcontext
 from socket import AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, socket
 from typing import Callable, TypeVar
@@ -34,7 +34,7 @@ def get_free_port():
         return s.getsockname()[1]
 
 
-if system() == "Linux" and ('Microsoft' not in uname().release):
+if platform.system() == "Linux" and ('Microsoft' not in platform.uname().release):
     docker_host_name = '172.17.0.1'
 else:
     docker_host_name = 'host.docker.internal'

@@ -1,4 +1,3 @@
-from contextlib import closing
 import platform
 from functools import wraps
 from typing import List
