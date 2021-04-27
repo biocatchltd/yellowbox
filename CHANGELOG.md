@@ -1,4 +1,12 @@
 # Yellowbox Changelog
+
+## Unreleased
+### Added
+* Option in RunMixin.run to accept network parameter
+### Fixed
+* Utility function to access docker client from WSL (docker_client in yellowbox.docker_utils)
+* docker_host_name broken within WSL
+
 ## 0.5.1
 ### Added
 * New WebSocketService to emulate Websocket servers.

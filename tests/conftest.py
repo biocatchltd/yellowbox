@@ -8,13 +8,21 @@ from docker.models.containers import Container
 from pytest import fixture
 
 from yellowbox.containers import create_and_pull as _create_and_pull
-from yellowbox.docker_utils import docker_client
 
 
 @fixture(scope="module")
 def docker_client() -> DockerClient:
-    with docker_client() as ret:
+    try:
+        ret = DockerClient.from_env()
+        ret.ping()
+    except Exception:
+        ret = DockerClient(base_url='tcp://localhost:2375')
+        ret.ping()
+
+    try:
         yield ret
+    finally:
+        ret.close()
 
 
 @fixture

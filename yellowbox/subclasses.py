@@ -1,13 +1,13 @@
 from abc import abstractmethod, ABC
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from typing import Sequence, TypeVar, Type, Generator, Optional
 
 from docker import DockerClient
 from docker.models.containers import Container
 from docker.models.networks import Network
 
+import yellowbox.networks as networks_mod
 from yellowbox.containers import is_alive, _DEFAULT_TIMEOUT, get_aliases
-from yellowbox.networks import connect
 from yellowbox.retry import RetrySpec
 from yellowbox.service import YellowService
 from yellowbox.utils import _get_spinner
@@ -131,13 +131,15 @@ class RunMixin:
         with spinner(f"Fetching {cls.service_name()} ..."):
             service = cls(docker_client, **kwargs)
 
-        with spinner(f"Waiting for {cls.service_name()} to start..."):
-            service.start(retry_spec=retry_spec)
+        if network:
+            cm = networks_mod.connect(network, service)
+        else:
+            cm = nullcontext()
 
-        with service:
-            if network:
-                with connect(network, service) as aliases:
-                    service.alias = aliases[0]
-            yield service
-        network.disconnect()
+        with cm as aliases:
+            if aliases:
+                service.alias = aliases[0]
+            with spinner(f"Waiting for {cls.service_name()} to start..."):
+                service.start(retry_spec=retry_spec)
+                yield service
 

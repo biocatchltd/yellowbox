@@ -6,7 +6,7 @@ from docker import DockerClient
 from docker.models.containers import Container
 from docker.models.networks import Network
 
-from yellowbox import ContainerService
+from yellowbox.subclasses import ContainerService
 from yellowbox.containers import get_aliases, is_removed
 
 __all__ = ['temp_network', 'anonymous_network', 'connect', 'disconnecting']
