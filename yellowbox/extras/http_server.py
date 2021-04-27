@@ -188,7 +188,7 @@ class HttpService(YellowService):
                 _respond(handler, cast(SideEffectResponse, side_effect))
         return callback
 
-    def patch_route(self, method, route: Union[str, Pattern[str]], side_effect: SideEffect = ...,
+    def patch_route(self, method, route: Union[str, Pattern[str]], side_effect: SideEffect = ...,  # type: ignore
                     name: Optional[str] = None):
         """
         Create a context manager that temporarily adds a route handler to the service.
