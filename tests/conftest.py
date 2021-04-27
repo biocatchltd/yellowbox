@@ -8,19 +8,18 @@ from docker.models.containers import Container
 from pytest import fixture
 
 from yellowbox.containers import create_and_pull as _create_and_pull
+from yellowbox.docker_utils import docker_client
 
 
 @fixture(scope="module")
 def docker_client() -> DockerClient:
-    client = DockerClient.from_env()
-    client.ping()  # Make sure we're actually connected.
-    with closing(client):
-        yield client
+    with docker_client() as ret:
+        yield ret
 
 
 @fixture
 def host_ip():
-    if platform.system() == "Linux":
+    if platform.system() == "Linux" and ('Microsoft' not in platform.uname().release):
         return '172.17.0.1'
     else:
         return 'host.docker.internal'

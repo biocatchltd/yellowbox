@@ -7,6 +7,7 @@ from docker.models.containers import Container
 from docker.models.networks import Network
 
 from yellowbox.containers import is_alive, _DEFAULT_TIMEOUT, get_aliases
+from yellowbox.networks import connect
 from yellowbox.retry import RetrySpec
 from yellowbox.service import YellowService
 from yellowbox.utils import _get_spinner
@@ -115,7 +116,7 @@ class RunMixin:
     @classmethod
     @contextmanager
     def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True,
-            retry_spec: Optional[RetrySpec] = None, **kwargs) -> Generator[_T, None, None]:
+            retry_spec: Optional[RetrySpec] = None, network: Optional[Network] = None, **kwargs) -> Generator[_T, None, None]:
         """
         Same as RunMixin.run, but allows to forward retry arguments to the blocking start method.
 
@@ -123,6 +124,7 @@ class RunMixin:
             docker_client: a DockerClient instance to use when creating the service
             spinner: whether or not to use a yaspin spinner
             retry_spec: forwarded to cls.start
+            network: connect service to network
             **kwargs: all keyword arguments are forwarded to the class's constructor
         """
         spinner = _get_spinner(spinner)
@@ -133,4 +135,9 @@ class RunMixin:
             service.start(retry_spec=retry_spec)
 
         with service:
+            if network:
+                with connect(network, service) as aliases:
+                    service.alias = aliases[0]
             yield service
+        network.disconnect()
+

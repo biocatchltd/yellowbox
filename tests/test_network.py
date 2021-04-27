@@ -33,3 +33,14 @@ def test_connect_shared_network(docker_client: DockerClient, create_and_pull):
                 container.start()
                 return_status = container.wait()
             assert return_status["StatusCode"] == 0
+
+
+def test_connect_with_run(docker_client: DockerClient, create_and_pull):
+    with temp_network(docker_client) as network:
+        with RedisService.run(docker_client, network=network) as service:
+            command = f'nc -z {service.alias} {REDIS_DEFAULT_PORT}'
+            container: Container = create_and_pull(docker_client, 'bash:latest', command)
+            with connect(network, container):
+                container.start()
+                return_status = container.wait()
+            assert return_status["StatusCode"] == 0
