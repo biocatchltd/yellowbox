@@ -17,6 +17,7 @@ from docker.models.containers import Container
 from docker.models.networks import Network
 from requests import HTTPError
 
+
 __all__ = ['get_ports', 'get_aliases', 'is_alive', 'is_removed', 'killing', 'create_and_pull',
            'download_file', 'upload_file', 'SafeContainerCreator']
 
@@ -66,7 +67,7 @@ def get_ports(container: Container) -> Dict[int, int]:
     return ports
 
 
-def get_aliases(container: Container, network: Union[str, Network]) -> Sequence[str]:
+def get_aliases(container: Union[Container, ], network: Union[str, Network]) -> Sequence[str]:
     if not isinstance(network, str):
         network = network.name
     return container.attrs["NetworkSettings"]["Networks"][network]["Aliases"]

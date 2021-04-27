@@ -11,18 +11,17 @@ from yellowbox.docker_utils import docker_client
 from yellowbox.extras import RedisService
 
 def test_black_box():
-    with docker_client() as docker_client:
-      with RedisService.run(docker_client) as redis:
-          redis_port = redis.client_port()  # this the host port the redis
-          ...  # run your black box test here
+    with docker_client() as docker_client, RedisService.run(docker_client) as redis:
+        redis_port = redis.client_port()  # this the host port the redis
+        ...  # run your black box test here
       # yellowbox will automatically close the service when exiting the scope
 
 def test_black_box_with_initial_data():
     # you can use the service's built-in utility functions to
     # easily interoperate the service
-    with docker_client() as docker_client:    
-      with RedisService.run(docker_client) as redis:
-        with redis.client() as client:
+    with docker_client() as docker_client, \
+      RedisService.run(docker_client) as redis, \
+      redis.client() as client:
             client.set("foo","bar")
         ...
 ```
@@ -44,8 +43,8 @@ from yellowbox import temp_network, connect
 from yellowbox.extras import RabbitMQService
 
 def test_network():
-    with docker_client() as docker_client:
-      with RabbitMQService.run(docker_client) as rabbit, \
+    with docker_client() as docker_client, \
+          RabbitMQService.run(docker_client) as rabbit, \
           temp_network(docker_client) as network, \
           connect(network, rabbit) as alias:
           # yellow's "connect" function connects between a network and a

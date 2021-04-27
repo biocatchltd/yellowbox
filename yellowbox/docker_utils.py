@@ -1,4 +1,4 @@
-from contextlib import contextmanager
+from contextlib import contextmanager, closing
 
 from docker import DockerClient
 
@@ -6,7 +6,7 @@ from docker import DockerClient
 @contextmanager
 def docker_client():
     """
-    Starts docker client, while being WSL-aware
+    Starts docker client from the environment, with a fallback to default HTTP port (for running from within virtual machines)
     """
     try:
         ret = DockerClient.from_env()
@@ -14,8 +14,5 @@ def docker_client():
     except Exception:
         ret = DockerClient(base_url='tcp://localhost:2375')
         ret.ping()
-
-    try:
+    with closing(ret):
         yield ret
-    finally:
-        ret.close()

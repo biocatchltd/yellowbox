@@ -7,6 +7,7 @@ from azure.storage.blob import BlobServiceClient
 from yellowbox.extras.azure_storage import BLOB_STORAGE_DEFAULT_PORT, DEFAULT_ACCOUNT_KEY, DEFAULT_ACCOUNT_NAME, \
     BlobStorageService
 from yellowbox.networks import temp_network, connect
+from yellowbox.utils import docker_host_name as host_ip
 
 
 @mark.parametrize('spinner', [True, False])
@@ -41,7 +42,7 @@ def test_connection_works_sibling_network(docker_client, create_and_pull):
                 assert return_status["StatusCode"] == 0
 
 
-def test_connection_works_sibling(docker_client, host_ip, create_and_pull):
+def test_connection_works_sibling(docker_client, create_and_pull):
     with BlobStorageService.run(docker_client) as blob:
         port = blob.client_port()
         url = f"http://{host_ip}:{port}"

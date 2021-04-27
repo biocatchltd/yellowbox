@@ -27,8 +27,7 @@ def temp_network(client: DockerClient, name=None, *args, **kwargs):
     Network will be automatically removed upon context manager completion.
 
     Example:
-        >>> with docker_client() as ret:
-        ...  with temp_network(client) as network:
+        >>> with docker_client() as ret, temp_network(client) as network:
         ...   print(network.name)
         ...
         yellowbox-...

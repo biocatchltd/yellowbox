@@ -137,9 +137,6 @@ class RunMixin:
         else:
             cm = nullcontext()
 
-        with cm as aliases:
-            if aliases:
-                service.alias = aliases[0]
-            with spinner(f"Waiting for {cls.service_name()} to start..."):
-                service.start(retry_spec=retry_spec)
-                yield service
+        with cm, spinner(f"Waiting for {cls.service_name()} to start..."):
+            service.start(retry_spec=retry_spec)
+            yield service
