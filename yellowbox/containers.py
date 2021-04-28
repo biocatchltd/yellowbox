@@ -67,7 +67,7 @@ def get_ports(container: Container) -> Dict[int, int]:
     return ports
 
 
-def get_aliases(container: Union[Container, ], network: Union[str, Network]) -> Sequence[str]:
+def get_aliases(container: Container, network: Union[str, Network]) -> Sequence[str]:
     if not isinstance(network, str):
         network = network.name
     return container.attrs["NetworkSettings"]["Networks"][network]["Aliases"]

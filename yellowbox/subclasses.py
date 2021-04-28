@@ -7,7 +7,7 @@ from docker.models.containers import Container
 from docker.models.networks import Network
 
 import yellowbox.networks as networks_mod
-from yellowbox.containers import is_alive, _DEFAULT_TIMEOUT, get_aliases
+from yellowbox.containers import is_alive, _DEFAULT_TIMEOUT, get_aliases, is_removed
 from yellowbox.retry import RetrySpec
 from yellowbox.service import YellowService
 from yellowbox.utils import _get_spinner
@@ -63,14 +63,23 @@ class ContainerService(YellowService):
         return self.containers
 
     def connect(self, network: Network):
+        """
+        Add the service to an external docker network.
+        """
         for ec in self._endpoint_containers:
             network.connect(ec)
             ec.reload()
 
     def disconnect(self, network: Network, **kwargs):
+        """
+        Remove the service from an external docker network.
+
+        Note: Implementors should take care not to disconnect removed containers.
+        """
         for ec in reversed(self._endpoint_containers):
-            network.disconnect(ec, **kwargs)
-            ec.reload()
+            if not is_removed(ec):
+                network.disconnect(ec, **kwargs)
+                ec.reload()
 
 
 class SingleEndpointService(ContainerService):
@@ -88,8 +97,9 @@ class SingleEndpointService(ContainerService):
         return get_aliases(self._single_endpoint, network)
 
     def disconnect(self, network: Network, **kwargs):
-        network.disconnect(self._single_endpoint, **kwargs)
-        self._single_endpoint.reload()
+        if not is_removed(self._single_endpoint):
+            network.disconnect(self._single_endpoint, **kwargs)
+            self._single_endpoint.reload()
 
 
 class SingleContainerService(SingleEndpointService, ABC):
@@ -137,6 +147,8 @@ class RunMixin:
         else:
             cm = nullcontext()
 
-        with cm, spinner(f"Waiting for {cls.service_name()} to start..."):
-            service.start(retry_spec=retry_spec)
-            yield service
+        with cm:
+            with spinner(f"Waiting for {cls.service_name()} to start..."):
+                service.start(retry_spec=retry_spec)
+            with service:
+                yield service

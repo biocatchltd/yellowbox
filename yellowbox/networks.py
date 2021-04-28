@@ -95,6 +95,7 @@ def disconnecting(network: _NT, *, remove: bool = False) -> Generator[_NT, None,
     try:
         yield network
     finally:
+        network.reload()
         for container in network.containers:
             network.disconnect(container)
         if remove:
