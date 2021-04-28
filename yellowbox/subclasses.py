@@ -143,11 +143,11 @@ class RunMixin:
             service = cls(docker_client, **kwargs)
 
         if network:
-            cm = networks_mod.connect(network, service)
+            connect_network = networks_mod.connect(network, service)
         else:
-            cm = nullcontext()
+            connect_network = nullcontext()
 
-        with cm:
+        with connect_network:
             with spinner(f"Waiting for {cls.service_name()} to start..."):
                 service.start(retry_spec=retry_spec)
             with service:

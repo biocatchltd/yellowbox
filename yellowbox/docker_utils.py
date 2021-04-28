@@ -12,7 +12,7 @@ def docker_client():
     try:
         ret = DockerClient.from_env()
         ret.ping()
-    except Exception:
+    except Exception:  # pragma: no cover
         ret = DockerClient(base_url='tcp://localhost:2375')
         ret.ping()
     with closing(ret):

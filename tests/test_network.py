@@ -4,7 +4,7 @@ from docker.models.containers import Container
 from yellowbox import temp_network, connect
 from yellowbox.containers import get_aliases
 from yellowbox.extras.redis import RedisService, REDIS_DEFAULT_PORT
-from yellowbox.utils import docker_host_name as host_ip
+from yellowbox.utils import docker_host_name
 
 
 def test_no_connect(docker_client: DockerClient, create_and_pull):
@@ -18,7 +18,7 @@ def test_no_connect(docker_client: DockerClient, create_and_pull):
 
 def test_connect_parent(docker_client: DockerClient, create_and_pull):
     with RedisService.run(docker_client) as redis:
-        command = f'nc -z {host_ip} {redis.client_port()}'
+        command = f'nc -z {docker_host_name} {redis.client_port()}'
         container: Container = create_and_pull(docker_client, 'bash:latest', command)
         container.start()
         return_status = container.wait()

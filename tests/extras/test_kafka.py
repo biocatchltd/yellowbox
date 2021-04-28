@@ -3,7 +3,7 @@ from pytest import mark
 from yellowbox.containers import get_aliases
 from yellowbox.extras.kafka import KafkaService
 from yellowbox.networks import temp_network, connect
-from yellowbox.utils import docker_host_name as host_ip
+from yellowbox.utils import docker_host_name
 
 
 @mark.parametrize('spinner', [True, False])
@@ -59,7 +59,7 @@ def test_kafka_sibling(docker_client, create_and_pull):
     with KafkaService.run(docker_client, spinner=False) as service:
         container = create_and_pull(docker_client,
                                     "confluentinc/cp-kafkacat:latest",
-                                    f"kafkacat -b {host_ip}:{service.outer_port} -L")
+                                    f"kafkacat -b {docker_host_name}:{service.outer_port} -L")
         container.start()
         return_status = container.wait()
         assert return_status["StatusCode"] == 0

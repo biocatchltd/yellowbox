@@ -3,7 +3,7 @@ from pytest import mark
 
 from yellowbox import temp_network, connect
 from yellowbox.containers import upload_file
-from yellowbox.utils import docker_host_name as host_ip
+from yellowbox.utils import docker_host_name
 from yellowbox.extras.postgresql import PostgreSQLService, POSTGRES_INTERNAL_PORT
 
 
@@ -45,7 +45,7 @@ def test_sibling(docker_client, create_and_pull):
         container = create_and_pull(
             docker_client,
             "postgres:latest",
-            f'psql -h {host_ip} -p {service.external_port()} -U {service.user} -d {service.default_db}'
+            f'psql -h {docker_host_name} -p {service.external_port()} -U {service.user} -d {service.default_db}'
             " -c 'DELETE FROM foo WHERE x < 3'",
             environment={'PGPASSWORD': service.password},
             detach=True,
