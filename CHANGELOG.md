@@ -5,7 +5,7 @@
 * Option in RunMixin.run to accept network parameter
 ### Fixed
 * Utility function to access docker client from WSL (docker_client in yellowbox.docker_utils)
-* docker_host_name broken within WSL
+* docker_host_name was broken within WSL
 * Services can now be disconnected after they are stopped
 
 ## 0.5.1
