@@ -1,5 +1,3 @@
-from contextlib import closing
-import platform
 from functools import wraps
 from typing import List
 
@@ -8,22 +6,13 @@ from docker.models.containers import Container
 from pytest import fixture
 
 from yellowbox.containers import create_and_pull as _create_and_pull
+from yellowbox.clients import docker_client as _docker_client
 
 
 @fixture(scope="module")
 def docker_client() -> DockerClient:
-    client = DockerClient.from_env()
-    client.ping()  # Make sure we're actually connected.
-    with closing(client):
+    with _docker_client() as client:
         yield client
-
-
-@fixture
-def host_ip():
-    if platform.system() == "Linux":
-        return '172.17.0.1'
-    else:
-        return 'host.docker.internal'
 
 
 @fixture

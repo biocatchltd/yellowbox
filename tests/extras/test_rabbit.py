@@ -8,6 +8,7 @@ from pytest import mark, raises
 from yellowbox.containers import get_ports
 from yellowbox.extras.rabbit_mq import RabbitMQService, RABBIT_HTTP_API_PORT
 from yellowbox.networks import temp_network, connect
+from yellowbox.utils import docker_host_name
 
 
 @mark.parametrize('spinner', [True, False])
@@ -50,11 +51,11 @@ def test_connection_works_sibling_network(docker_client, vhost, create_and_pull)
 
 
 @mark.parametrize('vhost', ["/", "guest-vhost"])
-def test_connection_works_sibling(docker_client, host_ip, vhost, create_and_pull):
+def test_connection_works_sibling(docker_client, vhost, create_and_pull):
     with RabbitMQService.run(docker_client, image="rabbitmq:management-alpine", virtual_host=vhost) \
             as rabbit:
         api_port = get_ports(rabbit.container)[RABBIT_HTTP_API_PORT]
-        url = f"http://{host_ip}:{api_port}/api/vhosts"
+        url = f"http://{docker_host_name}:{api_port}/api/vhosts"
         container = create_and_pull(
             docker_client,
             "byrnedo/alpine-curl:latest", f'-u guest:guest -vvv -I "{url}" --http0.9',

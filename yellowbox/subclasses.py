@@ -1,12 +1,13 @@
 from abc import abstractmethod, ABC
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from typing import Sequence, TypeVar, Type, Generator, Optional
 
 from docker import DockerClient
 from docker.models.containers import Container
 from docker.models.networks import Network
 
-from yellowbox.containers import is_alive, _DEFAULT_TIMEOUT, get_aliases
+import yellowbox.networks as networks_mod
+from yellowbox.containers import is_alive, _DEFAULT_TIMEOUT, get_aliases, is_removed
 from yellowbox.retry import RetrySpec
 from yellowbox.service import YellowService
 from yellowbox.utils import _get_spinner
@@ -62,14 +63,23 @@ class ContainerService(YellowService):
         return self.containers
 
     def connect(self, network: Network):
+        """
+        Add the service to an external docker network.
+        """
         for ec in self._endpoint_containers:
             network.connect(ec)
             ec.reload()
 
     def disconnect(self, network: Network, **kwargs):
+        """
+        Remove the service from an external docker network.
+
+        Note: Implementors should take care not to disconnect removed containers.
+        """
         for ec in reversed(self._endpoint_containers):
-            network.disconnect(ec, **kwargs)
-            ec.reload()
+            if not is_removed(ec):
+                network.disconnect(ec, **kwargs)
+                ec.reload()
 
 
 class SingleEndpointService(ContainerService):
@@ -87,8 +97,9 @@ class SingleEndpointService(ContainerService):
         return get_aliases(self._single_endpoint, network)
 
     def disconnect(self, network: Network, **kwargs):
-        network.disconnect(self._single_endpoint, **kwargs)
-        self._single_endpoint.reload()
+        if not is_removed(self._single_endpoint):
+            network.disconnect(self._single_endpoint, **kwargs)
+            self._single_endpoint.reload()
 
 
 class SingleContainerService(SingleEndpointService, ABC):
@@ -115,7 +126,8 @@ class RunMixin:
     @classmethod
     @contextmanager
     def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True,
-            retry_spec: Optional[RetrySpec] = None, **kwargs) -> Generator[_T, None, None]:
+            retry_spec: Optional[RetrySpec] = None,
+            network: Optional[Network] = None, **kwargs) -> Generator[_T, None, None]:
         """
         Same as RunMixin.run, but allows to forward retry arguments to the blocking start method.
 
@@ -123,14 +135,20 @@ class RunMixin:
             docker_client: a DockerClient instance to use when creating the service
             spinner: whether or not to use a yaspin spinner
             retry_spec: forwarded to cls.start
+            network: connect service to network
             **kwargs: all keyword arguments are forwarded to the class's constructor
         """
         spinner = _get_spinner(spinner)
         with spinner(f"Fetching {cls.service_name()} ..."):
             service = cls(docker_client, **kwargs)
 
-        with spinner(f"Waiting for {cls.service_name()} to start..."):
-            service.start(retry_spec=retry_spec)
+        if network:
+            connect_network = networks_mod.connect(network, service)
+        else:
+            connect_network = nullcontext()
 
-        with service:
-            yield service
+        with connect_network:
+            with spinner(f"Waiting for {cls.service_name()} to start..."):
+                service.start(retry_spec=retry_spec)
+            with service:
+                yield service
