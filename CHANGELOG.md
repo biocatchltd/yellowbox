@@ -1,5 +1,8 @@
 # Yellowbox Changelog
 
+### 0.6.1
+### Added
+* HttpServer: the request handler can now be returned by callbacks to handle the request manually
 ## 0.6.0
 ### Added
 * Option in RunMixin.run to accept network parameter
