@@ -129,3 +129,18 @@ def test_get_params():
             response = requests.get(service.local_url + '/square', params={'n': '12'})
         response.raise_for_status()
         assert response.content.strip() == b'144'
+
+
+def test_handle_request_manually(monkeypatch):
+    with HttpService().start() as service:
+
+        @service.patch_route('GET', '/square')
+        def square(request_handler: RouterHTTPRequestHandler):
+            request_handler.send_response(200)
+            request_handler.send_header("test", "1")
+            request_handler.end_headers()
+            return request_handler
+
+        with square:
+            response = requests.get(service.local_url + '/square')
+        assert response.headers["test"] == "1"
