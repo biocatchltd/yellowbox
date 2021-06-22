@@ -178,7 +178,8 @@ class HttpService(YellowService):
             handler.end_headers()
             if isinstance(response, str):
                 response = bytes(response, 'ascii')
-            handler.wfile.write(response)
+            if isinstance(response, bytes):
+                handler.wfile.write(response)
 
         def callback(handler: RouterHTTPRequestHandler):
             if callable(side_effect):
