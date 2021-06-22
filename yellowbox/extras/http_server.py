@@ -17,7 +17,7 @@ from yellowbox.service import YellowService
 from yellowbox.utils import docker_host_name
 
 __all__ = ['HttpService', 'RouterHTTPRequestHandler']
-SideEffectResponse = Union[bytes, str, int]
+SideEffectResponse = Union[bytes, str, int, 'RouterHTTPRequestHandler']
 SideEffect = Union[Callable[['RouterHTTPRequestHandler'], None],
                    Callable[['RouterHTTPRequestHandler'], SideEffectResponse],
                    SideEffectResponse]
@@ -168,6 +168,8 @@ class HttpService(YellowService):
     @staticmethod
     def _to_callback(side_effect: SideEffect):
         def _respond(handler: RouterHTTPRequestHandler, response: SideEffectResponse):
+            if response is handler:
+                return  # Assuming the user already handled the response
             if isinstance(response, int):
                 handler.send_error(response)
                 handler.end_headers()
@@ -203,8 +205,8 @@ class HttpService(YellowService):
                 * bytes: to return 200, with the value as the response body.
                 * str: invalid if the value is non-ascii, return 200 with the value, translated to bytes, as
                  the response body.
-                * callable: Must accept a RouterHTTPRequestHandler. May return any of the above types, or None
-                 to handle the response directly with the RouterHTTPRequestHandler.
+                * callable: Must accept a RouterHTTPRequestHandler. May return any of the above types, or
+                  RouterHTTPRequestHandler to handle the response directly with the RouterHTTPRequestHandler.
             name:
                 An optional name for the routed handler, to be used while logging. If missing, a suitable name is
                 extracted from the side effect or route.
