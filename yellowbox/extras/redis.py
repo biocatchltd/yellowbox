@@ -1,10 +1,10 @@
-from typing import TypeVar, Callable, Mapping, Union, Sequence, IO, Optional
+from typing import IO, Callable, ContextManager, Mapping, Optional, Sequence, TypeVar, Union
 
 from docker import DockerClient
 from redis import ConnectionError as RedisConnectionError, Redis
 
 from yellowbox import RunMixin
-from yellowbox.containers import get_ports, create_and_pull, upload_file
+from yellowbox.containers import create_and_pull, get_ports, upload_file
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import SingleContainerService
 
@@ -13,7 +13,7 @@ __all__ = ['RedisService', 'REDIS_DEFAULT_PORT', 'DEFAULT_RDB_PATH', 'append_sta
 REDIS_DEFAULT_PORT = 6379
 DEFAULT_RDB_PATH = "/data/dump.rdb"
 
-_T = TypeVar("_T")
+_T = TypeVar("_T", bound=ContextManager)
 RedisPrimitive = Union[str, int, float, bytes]
 RedisState = Mapping[str, Union[RedisPrimitive, Mapping[str, RedisPrimitive], Sequence[RedisPrimitive]]]
 
@@ -46,13 +46,14 @@ class RedisService(SingleContainerService, RunMixin):
     def client_port(self):
         return get_ports(self.container)[REDIS_DEFAULT_PORT]
 
-    def client(self, *, client_cls: Callable[..., _T] = Redis, **kwargs) -> _T:
+    def client(self, *, client_cls: Callable[..., _T] = Redis, **kwargs) -> _T:  # type: ignore
         port = self.client_port()
         return client_cls(host='localhost', port=port, **kwargs)
 
     def start(self, retry_spec: Optional[RetrySpec] = None):
         super().start()
-        with self.client() as client:
+        client_cm: ContextManager[Redis] = self.client()
+        with client_cm as client:
             retry_spec = retry_spec or RetrySpec(attempts=10)
             retry_spec.retry(client.ping, RedisConnectionError)
         self.started = True
@@ -64,7 +65,7 @@ class RedisService(SingleContainerService, RunMixin):
             client.flushall()
 
     def set_state(self, db_dict: RedisState):
-        client: Redis
-        with self.client() as client:
+        client_cm: ContextManager[Redis] = self.client()
+        with client_cm as client:
             client.flushall()
             append_state(client, db_dict)

@@ -1,15 +1,15 @@
 from contextlib import closing
-from typing import ContextManager, cast, Union, Tuple, Optional
+from typing import ContextManager, Optional, Tuple, Union, cast
 from uuid import uuid1
 
 from docker import DockerClient
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import KafkaError
 
-from yellowbox.containers import get_ports, SafeContainerCreator
+from yellowbox.containers import SafeContainerCreator, get_ports
 from yellowbox.networks import anonymous_network
 from yellowbox.retry import RetrySpec
-from yellowbox.subclasses import SingleEndpointService, RunMixin
+from yellowbox.subclasses import RunMixin, SingleEndpointService
 from yellowbox.utils import get_free_port
 
 __all__ = ['KafkaService']

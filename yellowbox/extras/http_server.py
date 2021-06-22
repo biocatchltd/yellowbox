@@ -6,9 +6,8 @@ from functools import partial
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Lock, Thread
 from types import new_class
-from typing import Callable, ClassVar, DefaultDict, NamedTuple, Optional, Pattern, Set, Type, Union, \
-    cast, Mapping, List
-from urllib.parse import ParseResult, urlparse, parse_qs
+from typing import Callable, ClassVar, DefaultDict, List, Mapping, NamedTuple, Optional, Pattern, Set, Type, Union, cast
+from urllib.parse import ParseResult, parse_qs, urlparse
 
 import requests
 from requests import ConnectionError, HTTPError
@@ -179,20 +178,18 @@ class HttpService(YellowService):
                 response = bytes(response, 'ascii')
             handler.wfile.write(response)
 
-        if callable(side_effect):
-            def callback(handler: RouterHTTPRequestHandler):
+        def callback(handler: RouterHTTPRequestHandler):
+            if callable(side_effect):
                 result = side_effect(handler)
                 _respond(handler, result)
-        else:
-            def callback(handler: RouterHTTPRequestHandler):
+            else:
                 _respond(handler, cast(SideEffectResponse, side_effect))
+
         return callback
 
-    # pytype: disable=annotation-type-mismatch
     def patch_route(self, method, route: Union[str, Pattern[str]],
-                    side_effect: SideEffect = ...,
+                    side_effect: SideEffect = ...,  # type: ignore[assignment]
                     name: Optional[str] = None):
-        # pytype: enable=annotation-type-mismatch
         """
         Create a context manager that temporarily adds a route handler to the service.
 

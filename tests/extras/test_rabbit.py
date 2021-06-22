@@ -1,13 +1,13 @@
 from time import sleep
 
 import pytest
-from pika import BlockingConnection
 import requests
+from pika import BlockingConnection
 from pytest import mark, raises
 
 from yellowbox.containers import get_ports
-from yellowbox.extras.rabbit_mq import RabbitMQService, RABBIT_HTTP_API_PORT
-from yellowbox.networks import temp_network, connect
+from yellowbox.extras.rabbit_mq import RABBIT_HTTP_API_PORT, RabbitMQService
+from yellowbox.networks import connect, temp_network
 from yellowbox.utils import docker_host_name
 
 

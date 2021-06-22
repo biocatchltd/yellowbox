@@ -40,8 +40,6 @@ class PostgreSQLService(SingleContainerService, RunMixin):
             }
         ), **kwargs)
 
-        self._engine = None
-
     def external_port(self):
         return get_ports(self.container)[POSTGRES_INTERNAL_PORT]
 
@@ -81,10 +79,8 @@ class PostgreSQLService(SingleContainerService, RunMixin):
         """
         Create an sqlalchemy Engine connected to the service's default db.
         """
-        if not self._engine:
-            cs = self.local_connection_string()
-            self._engine = create_engine(cs, **kwargs)
-        return self._engine
+        cs = self.local_connection_string()
+        return create_engine(cs, **kwargs)
 
     def connection(self, **kwargs):
         """

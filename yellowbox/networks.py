@@ -6,8 +6,8 @@ from docker import DockerClient
 from docker.models.containers import Container
 from docker.models.networks import Network
 
-from yellowbox.subclasses import ContainerService
 from yellowbox.containers import get_aliases, is_removed
+from yellowbox.subclasses import ContainerService
 
 __all__ = ['temp_network', 'anonymous_network', 'connect', 'disconnecting']
 
@@ -61,7 +61,7 @@ def connect(network: Network, obj: Union[Container, ContainerService], **kwargs)
         Context manager for handling the connection.
     """
     if isinstance(obj, ContainerService):
-        ret = obj.connect(network, **kwargs)
+        ret = obj.connect(network, **kwargs)  # type: ignore[call-arg]
     else:
         network.connect(obj, **kwargs)
         obj.reload()

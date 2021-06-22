@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from itertools import count
 from time import perf_counter, sleep
-from typing import Optional, Callable, Type, Union, TypeVar, Tuple
+from typing import Callable, Iterable, Optional, Tuple, Type, TypeVar, Union
 
 _T = TypeVar('_T')
 
@@ -49,6 +49,7 @@ class RetrySpec:
             wasn't specified in exceptions list.
 
         """
+        attempt_iterator: Iterable
         if self.attempts is None:
             attempt_iterator = count()
         elif self.attempts < 1:

@@ -7,6 +7,10 @@
 * Utility function to access docker client from WSL (docker_client in yellowbox.docker_utils)
 * docker_host_name was broken within WSL
 * Services can now be disconnected after they are stopped
+### Changed
+* Cached engine was deleted for postgresql engine
+### Internal
+* Changed linters to mypy and isort
 
 ## 0.5.1
 ### Added
