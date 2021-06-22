@@ -1,5 +1,5 @@
 # Yellowbox Changelog
-## Unreleased
+## 0.6.2
 ### Changed
 * Cached engine was deleted for postgresql engine
 ### Internal
