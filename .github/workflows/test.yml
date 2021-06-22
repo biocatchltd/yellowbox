@@ -33,12 +33,12 @@ jobs:
         sh scripts/install.sh
     - name: Lint
       run: |
-        poetry sh scripts/lint.sh
+        poetry run sh scripts/lint.sh
     - name: setup-docker
       uses: docker-practice/actions-setup-docker@0.0.1
     - name: Tests
       run: |
-        poetry sh scripts/unittest.sh
+        poetry run sh scripts/unittest.sh
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
       with:
