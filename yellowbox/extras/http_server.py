@@ -180,6 +180,9 @@ class HttpService(YellowService):
                 response = bytes(response, 'ascii')
             if isinstance(response, bytes):
                 handler.wfile.write(response)
+            else:
+                raise TypeError(f"got response of type {type(response)}, type must be RouterHTTPRequestHandler, "
+                                f"int, str or bytes")
 
         def callback(handler: RouterHTTPRequestHandler):
             if callable(side_effect):
