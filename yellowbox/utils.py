@@ -1,6 +1,6 @@
 import platform
 from contextlib import AbstractContextManager, closing, contextmanager, nullcontext
-from socket import AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, socket
+from socket import AF_INET, SO_REUSEADDR, SOCK_STREAM, SOL_SOCKET, socket
 from typing import Callable, TypeVar
 
 from yaspin import yaspin

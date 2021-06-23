@@ -1,9 +1,9 @@
 from docker import DockerClient
 from docker.models.containers import Container
 
-from yellowbox import temp_network, connect
+from yellowbox import connect, temp_network
 from yellowbox.containers import get_aliases
-from yellowbox.extras.redis import RedisService, REDIS_DEFAULT_PORT
+from yellowbox.extras.redis import REDIS_DEFAULT_PORT, RedisService
 from yellowbox.utils import docker_host_name
 
 

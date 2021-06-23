@@ -1,6 +1,10 @@
 # Yellowbox Changelog
-
-### 0.6.1
+## 0.6.2
+### Changed
+* Cached engine was deleted for postgresql engine
+### Internal
+* Changed linters to mypy and isort
+## 0.6.1
 ### Added
 * HttpServer: the request handler can now be returned by callbacks to handle the request manually
 ## 0.6.0

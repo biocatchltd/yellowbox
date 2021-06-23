@@ -32,7 +32,10 @@ pytest = "^6.0.0"
 pytest-cov = "^2.10"
 requests = "^2"
 flake8 = "*"
-pytype = { version = ">=2020.06.01", python = ">=3.7, <3.9"}
+isort = "^5.9.1"
+mypy = "^0.902"
+types-requests = "^2.25.0"
+types-redis = "^3.5.4"
 pytest-xdist = "^2.1.0"
 
 [tool.poetry.extras]

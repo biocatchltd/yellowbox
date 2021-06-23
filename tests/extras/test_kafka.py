@@ -2,7 +2,7 @@ from pytest import mark
 
 from yellowbox.containers import get_aliases
 from yellowbox.extras.kafka import KafkaService
-from yellowbox.networks import temp_network, connect
+from yellowbox.networks import connect, temp_network
 from yellowbox.utils import docker_host_name
 
 
