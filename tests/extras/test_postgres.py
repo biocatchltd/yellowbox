@@ -1,10 +1,10 @@
-from sqlalchemy import Table, Column, Integer, String, select, MetaData
 from pytest import mark
+from sqlalchemy import Column, Integer, MetaData, String, Table, select
 
-from yellowbox import temp_network, connect
+from yellowbox import connect, temp_network
 from yellowbox.containers import upload_file
+from yellowbox.extras.postgresql import POSTGRES_INTERNAL_PORT, PostgreSQLService
 from yellowbox.utils import docker_host_name
-from yellowbox.extras.postgresql import PostgreSQLService, POSTGRES_INTERNAL_PORT
 
 
 @mark.parametrize('spinner', [True, False])

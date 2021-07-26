@@ -1,13 +1,13 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 from contextlib import contextmanager, nullcontext
-from typing import Sequence, TypeVar, Type, Generator, Optional
+from typing import ContextManager, Iterator, Optional, Sequence, Type, TypeVar
 
 from docker import DockerClient
 from docker.models.containers import Container
 from docker.models.networks import Network
 
 import yellowbox.networks as networks_mod
-from yellowbox.containers import is_alive, _DEFAULT_TIMEOUT, get_aliases, is_removed
+from yellowbox.containers import _DEFAULT_TIMEOUT, get_aliases, is_alive, is_removed
 from yellowbox.retry import RetrySpec
 from yellowbox.service import YellowService
 from yellowbox.utils import _get_spinner
@@ -125,9 +125,9 @@ class RunMixin:
 
     @classmethod
     @contextmanager
-    def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True,
+    def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True,  # type: ignore
             retry_spec: Optional[RetrySpec] = None,
-            network: Optional[Network] = None, **kwargs) -> Generator[_T, None, None]:
+            network: Optional[Network] = None, **kwargs) -> Iterator[_T]:
         """
         Same as RunMixin.run, but allows to forward retry arguments to the blocking start method.
 
@@ -138,17 +138,18 @@ class RunMixin:
             network: connect service to network
             **kwargs: all keyword arguments are forwarded to the class's constructor
         """
-        spinner = _get_spinner(spinner)
-        with spinner(f"Fetching {cls.service_name()} ..."):
+        yaspin_spinner = _get_spinner(spinner)
+        with yaspin_spinner(f"Fetching {cls.service_name()} ..."):  # type: ignore[attr-defined]
             service = cls(docker_client, **kwargs)
 
+        connect_network: ContextManager[None]
         if network:
             connect_network = networks_mod.connect(network, service)
         else:
             connect_network = nullcontext()
 
         with connect_network:
-            with spinner(f"Waiting for {cls.service_name()} to start..."):
+            with yaspin_spinner(f"Waiting for {cls.service_name()} to start..."):  # type: ignore[attr-defined]
                 service.start(retry_spec=retry_spec)
             with service:
                 yield service

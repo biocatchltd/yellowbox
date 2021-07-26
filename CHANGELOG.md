@@ -1,6 +1,14 @@
 # Yellowbox Changelog
-
-### 0.6.1
+## 0.6.3
+### Fixed
+* A bug in newer docker desktop versions that prevented RabbitMQ from starting up. Fixed.
+* improved WSL detection to detect WSL2 releases
+### Changed
+* Cached engine was deleted for postgresql engine
+* the "all" extra was renamed to "_all" to discourage non-development usages
+### Internal
+* Changed linters to mypy and isort
+## 0.6.1
 ### Added
 * HttpServer: the request handler can now be returned by callbacks to handle the request manually
 ## 0.6.0

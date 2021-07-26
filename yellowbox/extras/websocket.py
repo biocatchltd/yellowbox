@@ -1,7 +1,7 @@
 from __future__ import annotations
-from contextlib import contextmanager
 
 import logging
+from contextlib import contextmanager
 
 try:
     from functools import cached_property  # type: ignore
@@ -9,15 +9,18 @@ try:
 except ImportError:
     cached_property = property  # type: ignore
 
-import threading
-from urllib.parse import urlparse
 import re
-from typing import (Any, Callable, Generator, Iterable, Iterator, List, Optional, Pattern,  Dict,
-                    Union, no_type_check, TypeVar)
-from threading import RLock
-from simple_websocket_server import WebSocket, WebSocketServer
+import threading
 from functools import partial, wraps
+from threading import RLock
+from typing import (
+    Any, Callable, Dict, Generator, Iterable, Iterator, List, Optional, Pattern, TypeVar, Union, no_type_check
+)
+from urllib.parse import urlparse
 from weakref import WeakMethod
+
+from simple_websocket_server import WebSocket, WebSocketServer
+
 from yellowbox.service import YellowService
 from yellowbox.utils import docker_host_name
 

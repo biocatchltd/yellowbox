@@ -1,8 +1,10 @@
 import socket
 import threading
-import websocket
-from pytest import mark, fixture, raises
+from time import sleep
 from urllib.parse import urljoin
+
+import websocket
+from pytest import fixture, mark, raises
 
 from yellowbox.extras.websocket import WebsocketService
 
@@ -182,4 +184,5 @@ def test_websocket_nonexisting_route(websocket_service: WebsocketService):
 
     # Should be auto-closed.
     with raises((ConnectionAbortedError, BrokenPipeError)):
+        sleep(0.1)
         conn.send("asd")

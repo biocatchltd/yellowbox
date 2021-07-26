@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Optional
+from typing import ContextManager, Optional
 from urllib.parse import quote
 
 import requests
@@ -30,7 +30,7 @@ class RabbitMQService(SingleContainerService, RunMixin):
                 'RABBITMQ_DEFAULT_PASS': password,
                 'RABBITMQ_DEFAULT_VHOST': virtual_host
             },
-            ports={RABBIT_HTTP_API_PORT: None},  # Forward management port by default.
+            ports={RABBIT_HTTP_API_PORT: 0},  # Forward management port by default.
         ), **kwargs)
 
     def connection_port(self):
@@ -91,7 +91,7 @@ class RabbitMQService(SingleContainerService, RunMixin):
     @classmethod
     @contextmanager
     def run(cls, docker_client: DockerClient, *, enable_management=False, **kwargs):
-        cmg: RabbitMQService = super().run(docker_client, **kwargs)
+        cmg: ContextManager[RabbitMQService] = super().run(docker_client, **kwargs)
         with cmg as ret:
             if enable_management:
                 ret.enable_management()

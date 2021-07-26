@@ -8,7 +8,7 @@ import tarfile
 from contextlib import contextmanager
 from os import PathLike
 from tempfile import TemporaryFile
-from typing import Dict, Generator, IO, TypeVar, Union, Sequence, cast
+from typing import IO, Dict, Generator, List, Sequence, TypeVar, Union, cast
 
 import docker
 from docker import DockerClient
@@ -16,7 +16,6 @@ from docker.errors import ImageNotFound
 from docker.models.containers import Container
 from docker.models.networks import Network
 from requests import HTTPError
-
 
 __all__ = ['get_ports', 'get_aliases', 'is_alive', 'is_removed', 'killing', 'create_and_pull',
            'download_file', 'upload_file', 'SafeContainerCreator']
@@ -170,6 +169,7 @@ def download_file(container: Container, path: Union[str, PathLike[str]]
         IsADirectoryError: Path is not a regular file.
     """
     realpath = os.fspath(path)
+    exc: Exception
     try:
         iterator, stats = container.get_archive(realpath, chunk_size=None)  # noqa
     except docker.errors.NotFound:
@@ -257,7 +257,7 @@ class SafeContainerCreator:
     """
     def __init__(self, client: DockerClient):
         self.client = client
-        self.created = []
+        self.created: List[Container] = []
 
     def create_and_pull(self, image, command=None, **kwargs):
         try:

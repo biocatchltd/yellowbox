@@ -1,12 +1,13 @@
 """
 Tests for Azure Storage module
 """
+from azure.storage.blob import BlobServiceClient
 from pytest import mark
 
-from azure.storage.blob import BlobServiceClient
-from yellowbox.extras.azure_storage import BLOB_STORAGE_DEFAULT_PORT, DEFAULT_ACCOUNT_KEY, DEFAULT_ACCOUNT_NAME, \
-    BlobStorageService
-from yellowbox.networks import temp_network, connect
+from yellowbox.extras.azure_storage import (
+    BLOB_STORAGE_DEFAULT_PORT, DEFAULT_ACCOUNT_KEY, DEFAULT_ACCOUNT_NAME, BlobStorageService
+)
+from yellowbox.networks import connect, temp_network
 from yellowbox.utils import docker_host_name
 
 
