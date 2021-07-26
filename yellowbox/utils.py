@@ -34,7 +34,7 @@ def get_free_port():
         return s.getsockname()[1]
 
 
-if platform.system() == "Linux" and ('Microsoft' not in platform.uname().release):  # catch WSL
+if platform.system() == "Linux" and ('microsoft' not in platform.uname().release.lower()):  # catch WSL
     docker_host_name = '172.17.0.1'
 else:
     docker_host_name = 'host.docker.internal'
