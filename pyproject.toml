@@ -46,7 +46,8 @@ azure = ["azure-storage-blob", "cffi"]
 postgresql = ["sqlalchemy", "psycopg2"]
 websocket = ["simple_websocket_server", "websocket_client"]
 
-all = ["redis", "pika", "kafka-python", "azure-storage-blob", "cffi", "sqlalchemy", "psycopg2", "simple_websocket_server", "websocket_client"]
+_all = ["redis", "pika", "kafka-python", "azure-storage-blob", "cffi", "sqlalchemy", "psycopg2",
+        "simple_websocket_server", "websocket_client"]
 
 [build-system]
 requires = ["poetry>=1.0.0"]
