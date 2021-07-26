@@ -1,7 +1,10 @@
 # Yellowbox Changelog
 ## 0.6.2
+### Fixed
+* A bug in newer docker desktop versions that prevented RabbitMQ from starting up. Fixed.
 ### Changed
 * Cached engine was deleted for postgresql engine
+* the "all" extra was renamed to "_all" to discourage non-development usages
 ### Internal
 * Changed linters to mypy and isort
 ## 0.6.1

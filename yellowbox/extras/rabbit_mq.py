@@ -13,6 +13,8 @@ from yellowbox.subclasses import RunMixin, SingleContainerService
 
 __all__ = ['RabbitMQService', 'RABBIT_DEFAULT_PORT', 'RABBIT_HTTP_API_PORT']
 
+from yellowbox.utils import get_free_port
+
 RABBIT_DEFAULT_PORT = 5672
 RABBIT_HTTP_API_PORT = 15672
 
@@ -30,7 +32,7 @@ class RabbitMQService(SingleContainerService, RunMixin):
                 'RABBITMQ_DEFAULT_PASS': password,
                 'RABBITMQ_DEFAULT_VHOST': virtual_host
             },
-            ports={RABBIT_HTTP_API_PORT: None},  # Forward management port by default.
+            ports={RABBIT_HTTP_API_PORT: 0},  # Forward management port by default.
         ), **kwargs)
 
     def connection_port(self):
