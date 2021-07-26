@@ -110,8 +110,8 @@ def test_session_const():
     with HttpService().start() as service:
         with service.patch_route('GET', '/hi', b'he\0llo'), \
                 requests.Session() as session:
-            assert session.get(service.local_url + '/hi').text == 'he\0llo'
-            assert session.get(service.local_url + '/hi').text == 'he\0llo'
+            assert session.get(service.local_url + '/hi').content == b'he\0llo'
+            assert session.get(service.local_url + '/hi').content == b'he\0llo'
 
 
 def test_get_params():
