@@ -1,7 +1,8 @@
 # Yellowbox Changelog
-## 0.6.2
+## 0.6.3
 ### Fixed
 * A bug in newer docker desktop versions that prevented RabbitMQ from starting up. Fixed.
+* improved WSL detection to detect WSL2 releases
 ### Changed
 * Cached engine was deleted for postgresql engine
 * the "all" extra was renamed to "_all" to discourage non-development usages
