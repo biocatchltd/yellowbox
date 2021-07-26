@@ -13,8 +13,6 @@ from yellowbox.subclasses import RunMixin, SingleContainerService
 
 __all__ = ['RabbitMQService', 'RABBIT_DEFAULT_PORT', 'RABBIT_HTTP_API_PORT']
 
-from yellowbox.utils import get_free_port
-
 RABBIT_DEFAULT_PORT = 5672
 RABBIT_HTTP_API_PORT = 15672
 
