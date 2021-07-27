@@ -18,7 +18,7 @@ RABBIT_HTTP_API_PORT = 15672
 
 
 class RabbitMQService(SingleContainerService, RunMixin):
-    def __init__(self, docker_client: DockerClient, image='rabbitmq:latest', *, user="rabbit", password="guest",
+    def __init__(self, docker_client: DockerClient, image='rabbitmq:latest', *, user="guest", password="guest",
                  virtual_host="/", **kwargs):
         self.user = user
         self.password = password
@@ -33,6 +33,7 @@ class RabbitMQService(SingleContainerService, RunMixin):
                     default_pass = {password}
                     default_user = {user}
                     default_vhost = {virtual_host}
+                    loopback_users = none
                     '''.encode())
 
     def connection_port(self):
