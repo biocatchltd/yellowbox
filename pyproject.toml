@@ -49,7 +49,7 @@ websocket = ["simple_websocket_server", "websocket_client"]
 webserver = ["Flask"]
 
 _all = ["redis", "pika", "kafka-python", "azure-storage-blob", "cffi", "sqlalchemy", "psycopg2",
-        "simple_websocket_server", "websocket_client"]
+        "simple_websocket_server", "websocket_client", "Flask"]
 
 [build-system]
 requires = ["poetry>=1.0.0"]
