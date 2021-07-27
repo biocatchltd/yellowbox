@@ -7,7 +7,7 @@ from docker import DockerClient
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.exceptions import AMQPConnectionError
 
-from yellowbox.containers import create_and_pull, get_ports
+from yellowbox.containers import create_and_pull, get_ports, upload_file
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import RunMixin, SingleContainerService
 
@@ -18,20 +18,23 @@ RABBIT_HTTP_API_PORT = 15672
 
 
 class RabbitMQService(SingleContainerService, RunMixin):
-    def __init__(self, docker_client: DockerClient, image='rabbitmq:latest', *, user="guest",
-                 password="guest",
+    def __init__(self, docker_client: DockerClient, image='rabbitmq:latest', *, user="guest", password="guest",
                  virtual_host="/", **kwargs):
         self.user = user
         self.password = password
         self.virtual_host = virtual_host
         super().__init__(create_and_pull(
-            docker_client, image, publish_all_ports=True, detach=True, environment={
-                'RABBITMQ_DEFAULT_USER': user,
-                'RABBITMQ_DEFAULT_PASS': password,
-                'RABBITMQ_DEFAULT_VHOST': virtual_host
-            },
+            docker_client, image, publish_all_ports=True, detach=True,
             ports={RABBIT_HTTP_API_PORT: 0},  # Forward management port by default.
         ), **kwargs)
+
+        upload_file(self.container, '/etc/rabbitmq/rabbitmq.conf',
+                    f'''
+                    default_pass = {password}
+                    default_user = {user}
+                    default_vhost = {virtual_host}
+                    loopback_users = none
+                    '''.encode())
 
     def connection_port(self):
         return get_ports(self.container)[RABBIT_DEFAULT_PORT]
