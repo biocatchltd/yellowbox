@@ -1,9 +1,10 @@
-from sqlalchemy import Table, Column, Integer, String, select, MetaData
 from pytest import mark
+from sqlalchemy import Column, Integer, MetaData, String, Table, select
 
-from yellowbox import temp_network, connect
+from yellowbox import connect, temp_network
 from yellowbox.containers import upload_file
-from yellowbox.extras.postgresql import PostgreSQLService, POSTGRES_INTERNAL_PORT
+from yellowbox.extras.postgresql import POSTGRES_INTERNAL_PORT, PostgreSQLService
+from yellowbox.utils import docker_host_name
 
 
 @mark.parametrize('spinner', [True, False])
@@ -32,7 +33,7 @@ def test_local_connection(docker_client):
             assert vals == [2, 3]
 
 
-def test_sibling(docker_client, create_and_pull, host_ip):
+def test_sibling(docker_client, create_and_pull):
     service: PostgreSQLService
     with PostgreSQLService.run(docker_client) as service:
         with service.connection() as connection:
@@ -44,7 +45,7 @@ def test_sibling(docker_client, create_and_pull, host_ip):
         container = create_and_pull(
             docker_client,
             "postgres:latest",
-            f'psql -h {host_ip} -p {service.external_port()} -U {service.user} -d {service.default_db}'
+            f'psql -h {docker_host_name} -p {service.external_port()} -U {service.user} -d {service.default_db}'
             " -c 'DELETE FROM foo WHERE x < 3'",
             environment={'PGPASSWORD': service.password},
             detach=True,
@@ -60,7 +61,7 @@ def test_sibling(docker_client, create_and_pull, host_ip):
         assert vals == ['three', 'ten']
 
 
-def test_sibling_network(docker_client, create_and_pull, host_ip):
+def test_sibling_network(docker_client, create_and_pull):
     service: PostgreSQLService
 
     with temp_network(docker_client) as network, \

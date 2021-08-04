@@ -1,6 +1,6 @@
 import platform
 from contextlib import AbstractContextManager, closing, contextmanager, nullcontext
-from socket import AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR, socket
+from socket import AF_INET, SO_REUSEADDR, SOCK_STREAM, SOL_SOCKET, socket
 from typing import Callable, TypeVar
 
 from yaspin import yaspin
@@ -34,7 +34,7 @@ def get_free_port():
         return s.getsockname()[1]
 
 
-if platform.system() == "Linux":
+if platform.system() == "Linux" and ('microsoft' not in platform.uname().release.lower()):  # catch WSL
     docker_host_name = '172.17.0.1'
 else:
     docker_host_name = 'host.docker.internal'

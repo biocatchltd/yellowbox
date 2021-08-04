@@ -6,9 +6,8 @@ from functools import partial
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Lock, Thread
 from types import new_class
-from typing import Callable, ClassVar, DefaultDict, NamedTuple, Optional, Pattern, Set, Type, Union, \
-    cast, Mapping, List
-from urllib.parse import ParseResult, urlparse, parse_qs
+from typing import Callable, ClassVar, DefaultDict, List, Mapping, NamedTuple, Optional, Pattern, Set, Type, Union, cast
+from urllib.parse import ParseResult, parse_qs, urlparse
 
 import requests
 from requests import ConnectionError, HTTPError
@@ -18,7 +17,7 @@ from yellowbox.service import YellowService
 from yellowbox.utils import docker_host_name
 
 __all__ = ['HttpService', 'RouterHTTPRequestHandler']
-SideEffectResponse = Union[bytes, str, int]
+SideEffectResponse = Union[bytes, str, int, 'RouterHTTPRequestHandler']
 SideEffect = Union[Callable[['RouterHTTPRequestHandler'], None],
                    Callable[['RouterHTTPRequestHandler'], SideEffectResponse],
                    SideEffectResponse]
@@ -169,6 +168,8 @@ class HttpService(YellowService):
     @staticmethod
     def _to_callback(side_effect: SideEffect):
         def _respond(handler: RouterHTTPRequestHandler, response: SideEffectResponse):
+            if response is handler:
+                return  # Assuming the user already handled the response
             if isinstance(response, int):
                 handler.send_error(response)
                 handler.end_headers()
@@ -177,18 +178,23 @@ class HttpService(YellowService):
             handler.end_headers()
             if isinstance(response, str):
                 response = bytes(response, 'ascii')
-            handler.wfile.write(response)
+            if isinstance(response, bytes):
+                handler.wfile.write(response)
+            else:
+                raise TypeError(f"got response of type {type(response)}, type must be RouterHTTPRequestHandler, "
+                                f"int, str or bytes")
 
-        if callable(side_effect):
-            def callback(handler: RouterHTTPRequestHandler):
+        def callback(handler: RouterHTTPRequestHandler):
+            if callable(side_effect):
                 result = side_effect(handler)
                 _respond(handler, result)
-        else:
-            def callback(handler: RouterHTTPRequestHandler):
+            else:
                 _respond(handler, cast(SideEffectResponse, side_effect))
+
         return callback
 
-    def patch_route(self, method, route: Union[str, Pattern[str]], side_effect: SideEffect = ...,
+    def patch_route(self, method, route: Union[str, Pattern[str]],
+                    side_effect: SideEffect = ...,  # type: ignore[assignment]
                     name: Optional[str] = None):
         """
         Create a context manager that temporarily adds a route handler to the service.
@@ -203,8 +209,8 @@ class HttpService(YellowService):
                 * bytes: to return 200, with the value as the response body.
                 * str: invalid if the value is non-ascii, return 200 with the value, translated to bytes, as
                  the response body.
-                * callable: Must accept a RouterHTTPRequestHandler. May return any of the above types, or None
-                 to handle the response directly with the RouterHTTPRequestHandler.
+                * callable: Must accept a RouterHTTPRequestHandler. May return any of the above types, or
+                  RouterHTTPRequestHandler to handle the response directly with the RouterHTTPRequestHandler.
             name:
                 An optional name for the routed handler, to be used while logging. If missing, a suitable name is
                 extracted from the side effect or route.

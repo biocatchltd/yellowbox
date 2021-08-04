@@ -10,7 +10,7 @@ from docker.models.networks import Network
 
 from yellowbox.containers import create_and_pull, get_ports, short_id
 from yellowbox.retry import RetrySpec
-from yellowbox.subclasses import SingleContainerService, RunMixin
+from yellowbox.subclasses import RunMixin, SingleContainerService
 
 __all__ = ['BlobStorageService']
 

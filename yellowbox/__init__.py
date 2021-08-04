@@ -1,13 +1,14 @@
-from yellowbox.service import YellowService
-from yellowbox.subclasses import ContainerService, SingleEndpointService, SingleContainerService, RunMixin
-from yellowbox.networks import temp_network, connect
-from yellowbox.retry import RetrySpec
 from yellowbox._version import __version__
+from yellowbox.networks import connect, temp_network
+from yellowbox.retry import RetrySpec
+from yellowbox.service import YellowService
+from yellowbox.subclasses import ContainerService, RunMixin, SingleContainerService, SingleEndpointService
 
 __all__ = [
-    'YellowService',
-    'ContainerService', 'SingleEndpointService', 'SingleContainerService', 'RunMixin',
-    'temp_network', 'connect',
+    '__version__',
+    'connect', 'temp_network',
     'RetrySpec',
-    '__version__'
+    'YellowService',
+    'ContainerService', 'RunMixin', 'SingleContainerService', 'SingleEndpointService',
+
 ]
