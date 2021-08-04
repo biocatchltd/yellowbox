@@ -114,10 +114,11 @@ class WebServer(YellowService):
                     )
                     return response
 
-    def add_http_endpoint(self, endpoint: HTTPEndPoint):
+    def add_http_endpoint(self, endpoint: HTTPEndPoint) -> HTTPEndPoint:
         with self._route_lock:
             self._flask.add_url_rule(endpoint.rule_string, view_func=endpoint)
             endpoint.owner = self
+            return endpoint
 
     def remove_endpoint(self, endpoint: HTTPEndPoint):
         with self._route_lock:
@@ -151,13 +152,17 @@ class WebServer(YellowService):
         self.remove_endpoint(endpoint)
         HandlerError.raise_from_pending(self._pending_exception)
 
-    def local_url(self, schema='http'):
+    def local_url(self, schema: Optional[str]='http'):
+        if schema is None:
+            return f'localhost:{self.port}'
         return f'{schema}://localhost:{self.port}'
 
     def container_url(self, schema='http'):
+        if schema is None:
+            return f'{docker_host_name}:{self.port}'
         return f'{schema}://{docker_host_name}:{self.port}'
 
-    def start(self, retry_spec: Optional[RetrySpec] = None):
+    def start(self, retry_spec: Optional[RetrySpec] = None) -> WebServer:
         if self._serve_thread.is_alive():
             raise RuntimeError('thread cannot be started twice')
         self._serve_thread.start()
