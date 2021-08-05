@@ -12,38 +12,31 @@ required for running the service.
 
 .. class:: ContainerService(containers, remove=True)
 
-    Abstract base class for services using any number of docker containers.
+    Abstract base class for services using one or more docker containers.
+
+    Inherits from :class:`~service.YellowService`.
 
     Provides basic functionality of turning on the containers on :meth:`start`,
     shutting down and removing the containers on :meth:`stop`, and connecting
     the containers to docker virtual networks using :meth:`connect` and
     :meth:`disconnect`.
 
-    *containers* argument is a sequence of docker ``Container`` objects, relevant
-    for the service. The containers can come both stopped and started.
+    :param containers: A sequence of docker ``Container`` objects, relevant
+     for the service. The containers can come both stopped and started.
+    :type containers: Sequence[:class:`docker.Container<docker.models.containers.Container>`]
 
-    If *remove* is true (default) containers will be removed together with their
-    respective volumes when the service is stopped. Same as the attribute
-    :attr:`remove`.
-
-    Inherits from :class:`~service.YellowService`.
+    :param bool remove: Set :attr:`remove`
 
 
     .. method:: start(retry_spec=None)
         :abstractmethod:
 
-        Start the service by turning on all stopped containers. Block for it to
-        be fully initialized by repeatedly running a certain "check" function,
-        chosen by the subclass overriding this method.
+        Start the service by turning on all stopped containers. Containers are started sequentially in the order provided.
 
-        For most services, the chosen function attempts to connect to the
-        underlying container until the service is fully started and connection
-        is accepted.
+        :param RetrySpec retry_spec: specifies the internal retry semantics for the chosen "check" function. It allows
+         specifying a timeout or maximum number of attempts before startup counts as a failure. Subclasses should block
+         until the service is responsive using this :class:RetrySpec:.
 
-        *retry_spec* is a :class:`retry.RetrySpec` instance, specifying the
-        internal retry semantics for the chosen "check" function. It allows
-        specifying a timeout or maximum number of attempts before startup
-        counts as a failure.
 
     .. method:: stop(signal='SIGTERM')
 
@@ -58,28 +51,30 @@ required for running the service.
 
     .. attribute:: remove
 
-        If *remove* is true (default) containers will be removed together with
+        If *remove* is true (default) containers will be removed alongside with
         their respective volumes when the service is stopped. Can also be set
         through the constructor.
 
     .. method:: is_alive()
 
-        Returns whether the service is currently running.
+        Returns whether all containers are currently running.
 
     .. method:: connect(network)
 
-        Connect the service to the given docker *network*.
+        Connect all containers to the given docker network.
 
-        *network* is a docker.py ``Network`` object.
+        :param network: The network to connect to.
+        :type network: :class:`docker.Network<docker.models.networks.Network>`
 
     .. method:: disconnect(network, **kwargs)
 
-        Disconnect the service from the given *network*.
+        Disconnect the service from the given network.
 
-        *network* is a docker.py `Network` object.
+        :param network: The network to disconnect from.
+        :type network: :class:`docker.Network<docker.models.networks.Network>`
 
-        *kwargs* are extra arguments sent to `Network.disconnect()` of each
-        container in the service.
+        :param kwargs: Forwarded to :func:`Network.disconnect<docker.models.networks.Network.disconnect>`
+         of each container in the service.
 
 .. class:: SingleEndpointService(containers, remove=True)
 
@@ -96,32 +91,34 @@ required for running the service.
 
     .. method:: connect(network, **kwargs)
 
-        Connects the endpoint to given *network*.
+        Connects the endpoint container to given *network*.
 
-        *network* is a docker.py ``Network`` object.
+        :param network: The network to connect to.
+        :type network: :class:`docker.Network<docker.models.networks.Network>`
 
-        *kwargs* are extra arguments passed to the underlying
-        `network.connect()`.
+        :param kwargs: Forwarded to the underlying :func:`Network.connect<docker.models.networks.Network.connect>`.
 
     .. method:: disconnect(network, **kargs)
 
-        Disconnect the endpoint from the given *network*.
+        Disconnect the endpoint container from the given network.
 
-        *network* is a docker.py ``Network`` object.
+        :param network: The network to disconnect from.
+        :type network: :class:`docker.Network<docker.models.networks.Network>`
 
-        *kwargs* are extra arguments sent to the underlying
-        `network.disconnect()`.
+        :param kwargs: Forwarded to :func:`Network.disconnect<docker.models.networks.Network.disconnect>`
+        of each container in the service.
 
 .. class:: SingleContainerService(container, remove=True)
 
-    Abstract Base Class for services that are based on a single docker container.
+    Abstract Base Class for services that use a single docker container.
 
     Inherits from :class:`SingleEndpointService`.
 
-    *container* is a single docker ``Container`` that implements the service.
-    Accepts both a started and a stopped container.
+    :param container: A single docker Container that implements the service.
+     Accepts both a started and a stopped container.
+    :type container: :class:`docker.Container<docker.models.containers.Container>`
 
-    *remove* has the same meaning as in :class:`ContainerService`.
+    :param bool remove: Same as in :class:`ContainerService`.
 
     .. method:: container
         :property:

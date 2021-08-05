@@ -6,11 +6,11 @@
 
 -------
 
-Yellowbox's main feature is it's :class:`~service.YellowService`, which allows
-you to virtualize other services, such as
+Yellowbox's main feature is its :class:`~service.YellowService`, which allows
+virtualization of other services, such as
 :class:`RabbitMQ <extras.rabbit_mq.RabbitMQService>`,
 :class:`Redis <extras.redis.RedisService>`,
-:class:`Kafka <extras.kafka.KafkaService>` and more. Each service has it's own
+:class:`Kafka <extras.kafka.KafkaService>` and more. Each service has its own
 set of operations, might run in a docker container or locally, but they all
 inherit from :class:`~service.YellowService` and are treated as containerized
 units.

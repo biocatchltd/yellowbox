@@ -28,11 +28,14 @@ author = 'Biocatch'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.intersphinx"
+    "sphinx.ext.intersphinx", 'python_docs_theme'
 ]
 
-intersphinx_mapping = {'python':('http://docs.python.org/3/', None),
-                       'pika': ('https://pika.readthedocs.io/en/stable/', None)}
+intersphinx_mapping = {
+    'python':('http://docs.python.org/3/', None),
+    'pika': ('https://pika.readthedocs.io/en/stable/', None),
+    'docker': ('https://docker-py.readthedocs.io/en/stable/', None),
+    }
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
