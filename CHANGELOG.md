@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## Next
+### Changed
+* It is now possible to use redis extra without importing the dependencies (using BaseRedisService abstract class)
 ## 0.6.4
 ### Fixed
 * Changed rabbitmq configuration to use config files instead of env vars. Allowing usage of rabbitmq 3.9.0 and upwards.
