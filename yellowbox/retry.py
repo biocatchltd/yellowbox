@@ -32,8 +32,7 @@ class RetrySpec:
         if self.attempts is self.timeout is None:
             raise ValueError('RetrySpec must have either a timeout or attempts')
 
-    def retry(self, func: Callable[[], _T],
-              exceptions: Catchable) -> _T:
+    def retry(self, func: Callable[[], _T], exceptions: Catchable) -> _T:
         """
         Retry running func until it succeeds
 

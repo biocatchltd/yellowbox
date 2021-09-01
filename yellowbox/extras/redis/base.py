@@ -1,13 +1,12 @@
 from abc import abstractmethod
-from typing import IO, Optional, ClassVar
+from typing import IO, ClassVar, Optional
 
 from docker import DockerClient
 
 from yellowbox import RunMixin
 from yellowbox.containers import create_and_pull, get_ports, upload_file
-from yellowbox.retry import RetrySpec, Catchable
+from yellowbox.retry import Catchable, RetrySpec
 from yellowbox.subclasses import SingleContainerService
-
 
 REDIS_DEFAULT_PORT = 6379
 DEFAULT_RDB_PATH = "/data/dump.rdb"
@@ -15,7 +14,8 @@ DEFAULT_RDB_PATH = "/data/dump.rdb"
 
 class BaseRedisService(SingleContainerService, RunMixin):
 
-    health_exceptions: ClassVar[Catchable] = Exception
+    health_exceptions: ClassVar[Catchable] = tuple()
+    ''' exceptions that if raised, will lead to connection retries; should be overridden '''
 
     def __init__(self, docker_client: DockerClient, image='redis:latest',
                  redis_file: Optional[IO[bytes]] = None, **kwargs):
