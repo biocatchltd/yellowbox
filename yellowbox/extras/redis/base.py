@@ -1,11 +1,11 @@
 from abc import abstractmethod
-from typing import IO, Optional
+from typing import IO, Optional, ClassVar
 
 from docker import DockerClient
 
 from yellowbox import RunMixin
 from yellowbox.containers import create_and_pull, get_ports, upload_file
-from yellowbox.retry import RetrySpec
+from yellowbox.retry import RetrySpec, Catchable
 from yellowbox.subclasses import SingleContainerService
 
 
@@ -14,6 +14,9 @@ DEFAULT_RDB_PATH = "/data/dump.rdb"
 
 
 class BaseRedisService(SingleContainerService, RunMixin):
+
+    health_exceptions: ClassVar[Catchable] = Exception
+
     def __init__(self, docker_client: DockerClient, image='redis:latest',
                  redis_file: Optional[IO[bytes]] = None, **kwargs):
         container = create_and_pull(docker_client, image, publish_all_ports=True, detach=True)
@@ -24,7 +27,7 @@ class BaseRedisService(SingleContainerService, RunMixin):
             self.set_rdb(redis_file)
 
     @abstractmethod
-    def health(self):
+    def health(self, retry_spec: Optional[RetrySpec] = None):
         pass
 
     def set_rdb(self, redis_file: IO[bytes]):
@@ -37,6 +40,7 @@ class BaseRedisService(SingleContainerService, RunMixin):
 
     def start(self, retry_spec: Optional[RetrySpec] = None):
         super().start()
-        self.health()
+        retry_spec = retry_spec or RetrySpec(attempts=10)
+        retry_spec.retry(self.health, self.health_exceptions)
         self.started = True
         return self

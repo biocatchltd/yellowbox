@@ -6,6 +6,7 @@ from time import perf_counter, sleep
 from typing import Callable, Iterable, Optional, Tuple, Type, TypeVar, Union
 
 _T = TypeVar('_T')
+Catchable = Union[Type[Exception], Tuple[Type[Exception], ...]]
 
 
 @dataclass
@@ -32,7 +33,7 @@ class RetrySpec:
             raise ValueError('RetrySpec must have either a timeout or attempts')
 
     def retry(self, func: Callable[[], _T],
-              exceptions: Union[Type[Exception], Tuple[Type[Exception], ...]]) -> _T:
+              exceptions: Catchable) -> _T:
         """
         Retry running func until it succeeds
 

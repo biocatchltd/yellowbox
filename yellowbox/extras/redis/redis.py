@@ -1,16 +1,13 @@
-from typing import ContextManager, Mapping, Optional, Sequence, Union, TypeVar
+from typing import ContextManager, Mapping, Optional, Sequence, Union, TypeVar, ClassVar
 
 from redis import ConnectionError as RedisConnectionError, Redis
-from redis.client import Redis as Redis_Client
 
-from yellowbox.retry import RetrySpec
+from yellowbox.retry import RetrySpec, Catchable
 from yellowbox.extras.redis.base import BaseRedisService
 
 
 RedisPrimitive = Union[str, int, float, bytes]
 RedisState = Mapping[str, Union[RedisPrimitive, Mapping[str, RedisPrimitive], Sequence[RedisPrimitive]]]
-
-_T = TypeVar("_T", bound=ContextManager)
 
 
 def append_state(client: Redis, db_state: RedisState):
@@ -25,11 +22,12 @@ def append_state(client: Redis, db_state: RedisState):
 
 class RedisService(BaseRedisService):
 
+    health_exceptions: ClassVar[Catchable] = RedisConnectionError
+
     def health(self, retry_spec: Optional[RetrySpec] = None):
         client_cm: ContextManager[Redis] = self.client()
         with client_cm as client:
-            retry_spec = retry_spec or RetrySpec(attempts=10)
-            retry_spec.retry(client.ping, RedisConnectionError)
+            client.ping()
 
     def reset_state(self):
         client: Redis
@@ -46,6 +44,6 @@ class RedisService(BaseRedisService):
         return redis_client(self)
 
 
-def redis_client(service: RedisService, **kwargs) -> _T:  # type: ignore
+def redis_client(service: RedisService, **kwargs) -> Redis:  # type: ignore
     port = service.client_port()
-    return Redis_Client(host='localhost', port=port, **kwargs)
+    return Redis(host='localhost', port=port, **kwargs)
