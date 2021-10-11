@@ -5,7 +5,7 @@ from docker import DockerClient
 from docker.models.containers import Container
 from pytest import fixture
 
-from yellowbox.clients import docker_client as _docker_client
+from yellowbox import docker_client as _docker_client
 from yellowbox.containers import create_and_pull as _create_and_pull
 
 
