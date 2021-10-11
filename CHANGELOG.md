@@ -1,4 +1,9 @@
 # Yellowbox Changelog
+## Next
+### Added
+* image_build ContextManager, to create an image from dockerfile
+### Changed
+* docker_client can be imported directly from yellowbox package
 ## 0.6.4
 ### Fixed
 * Changed rabbitmq configuration to use config files instead of env vars. Allowing usage of rabbitmq 3.9.0 and upwards.
