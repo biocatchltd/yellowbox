@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## 0.6.4
+### Fixed
+* Changed rabbitmq configuration to use config files instead of env vars. Allowing usage of rabbitmq 3.9.0 and upwards.
 ## 0.6.3
 ### Fixed
 * A bug in newer docker desktop versions that prevented RabbitMQ from starting up. Fixed.
