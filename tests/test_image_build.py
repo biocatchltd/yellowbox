@@ -21,7 +21,7 @@ def test_invalid_parse_image_build(docker_client):
         with build_image(docker_client, "yellowbox", path=".",
                          dockerfile="tests/resources/invalid_parse_dockerfile/Dockerfile"):
             pass
-    assert "ARG requires at least one argument" in execinfo.value.args[0]
+    assert execinfo.value.args[0] == 'dockerfile parse error line 5: ARG requires at least one argument'
 
 
 def test_invalid_run_image_build(docker_client):
