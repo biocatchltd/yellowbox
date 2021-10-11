@@ -17,14 +17,14 @@ def test_valid_image_build(docker_client):
 
 
 def test_invalid_parse_image_build(docker_client):
-    with raises(DockerException) as execinfo:
+    with raises(DockerException):
         with build_image(docker_client, "yellowbox", path=".",
                          dockerfile="tests/resources/invalid_parse_dockerfile/Dockerfile"):
             pass
 
 
 def test_invalid_run_image_build(docker_client):
-    with raises(DockerException) as execinfo:
+    with raises(DockerException):
         with build_image(docker_client, "yellowbox", path=".",
                          dockerfile="tests/resources/invalid_run_dockerfile/Dockerfile"):
             pass
