@@ -3,7 +3,7 @@ import os
 import sys
 from contextlib import contextmanager
 from json import JSONDecodeError
-from typing import Any, Dict, Union, TextIO, Optional
+from typing import Any, Dict, Optional, TextIO, Union
 
 from docker import DockerClient
 from docker.errors import ImageNotFound
