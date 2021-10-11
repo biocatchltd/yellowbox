@@ -1,8 +1,7 @@
 # Yellowbox Changelog
 ## Next
 ### Added
-* image_build ContextManager, to create an image from dockerfile
-### Changed
+* build_image ContextManager, to create an image from dockerfile
 * docker_client can be imported directly from yellowbox package
 ## 0.6.4
 ### Fixed
