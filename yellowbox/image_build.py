@@ -3,25 +3,15 @@ import os
 import sys
 from contextlib import contextmanager
 from json import JSONDecodeError
-from typing import Any, Dict, Optional, TextIO, Union
+from typing import Optional, TextIO
 
 from docker import DockerClient
-from docker.errors import ImageNotFound
+from docker.errors import BuildError, DockerException, ImageNotFound
 
 from yellowbox.utils import _get_spinner
 
 
-class DockerBuildException(Exception):
-    def __init__(self, message: Union[str, Dict[str, Any]]) -> None:
-        super().__init__(message)
-        self.message = message
-
-
-class DockerfileParseException(DockerBuildException):
-    pass
-
-
-class DockerBuildFailure(DockerBuildException):
+class DockerfileParseException(BuildError):
     pass
 
 
@@ -51,7 +41,7 @@ def build_image(docker_client: DockerClient, image_name: str, remove_image: bool
                 try:
                     parse_msg = json.loads(msg)
                 except JSONDecodeError:
-                    raise DockerBuildException('error at build logs')
+                    raise DockerException('error at build logs')
                 s = parse_msg.get('stream')
                 if s:
                     print(s, end='', flush=True, file=file)
@@ -65,15 +55,15 @@ def build_image(docker_client: DockerClient, image_name: str, remove_image: bool
                     # end of process, will contain the ID of the temporary container created at the end
                     aux = parse_msg.get('aux')
                     if error_detail is not None:
-                        raise DockerBuildFailure(error_detail)
+                        raise BuildError(reason=error_detail, build_log=None)
                     elif error_msg is not None:
-                        raise DockerfileParseException(error_msg)
+                        raise DockerfileParseException(reason=error_msg, build_log=None)
                     elif status is not None:
                         print(status, end='', flush=True, file=file)
                     elif aux is not None:
                         print(aux, end='', flush=True, file=file)
                     else:
-                        raise DockerBuildException(parse_msg)
+                        raise DockerException(parse_msg)
         yield
         if remove_image:
             try:

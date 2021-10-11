@@ -1,8 +1,7 @@
-from docker.errors import ImageNotFound
+from docker.errors import DockerException, ImageNotFound
 from pytest import raises
 
 from yellowbox import build_image
-from yellowbox.image_build import DockerBuildFailure, DockerfileParseException
 
 
 def test_valid_image_build(docker_client):
@@ -17,16 +16,16 @@ def test_valid_image_build(docker_client):
 
 
 def test_invalid_parse_image_build(docker_client):
-    with raises(DockerfileParseException) as execinfo:
+    with raises(DockerException) as execinfo:
         with build_image(docker_client, "yellowbox", path=".",
                          dockerfile="tests/resources/invalid_parse_dockerfile/Dockerfile"):
             pass
-    assert "ARG requires at least one argument" in execinfo.value.message
+    assert "ARG requires at least one argument" in execinfo.value.msg
 
 
 def test_invalid_run_image_build(docker_client):
-    with raises(DockerBuildFailure) as execinfo:
+    with raises(DockerException) as execinfo:
         with build_image(docker_client, "yellowbox", path=".",
                          dockerfile="tests/resources/invalid_run_dockerfile/Dockerfile"):
             pass
-    assert execinfo.value.message['code'] == 127
+    assert execinfo.value.msg['code'] == 127
