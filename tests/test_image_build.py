@@ -5,8 +5,9 @@ from yellowbox import build_image
 
 
 def test_valid_image_build(docker_client):
-    with build_image(docker_client, "yellowbox", path=".", dockerfile="tests/resources/valid_dockerfile/Dockerfile"):
-        container = docker_client.containers.create('yellowbox:test')
+    with build_image(docker_client, "yellowbox", path=".", dockerfile="tests/resources/valid_dockerfile/Dockerfile") \
+            as image:
+        container = docker_client.containers.create(image)
         container.start()
         container.wait()  # wait for the container to end and close
         container.remove()
@@ -20,7 +21,7 @@ def test_invalid_parse_image_build(docker_client):
         with build_image(docker_client, "yellowbox", path=".",
                          dockerfile="tests/resources/invalid_parse_dockerfile/Dockerfile"):
             pass
-    assert "ARG requires at least one argument" in execinfo.value.msg
+    assert "ARG requires at least one argument" in execinfo.value.args[0]
 
 
 def test_invalid_run_image_build(docker_client):
@@ -28,4 +29,4 @@ def test_invalid_run_image_build(docker_client):
         with build_image(docker_client, "yellowbox", path=".",
                          dockerfile="tests/resources/invalid_run_dockerfile/Dockerfile"):
             pass
-    assert execinfo.value.msg['code'] == 127
+    assert execinfo.value.args[0]['code'] == 127

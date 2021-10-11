@@ -64,7 +64,7 @@ def build_image(docker_client: DockerClient, image_name: str, remove_image: bool
                         print(aux, end='', flush=True, file=file)
                     else:
                         raise DockerException(parse_msg)
-        yield
+        yield image_tag
         if remove_image:
             try:
                 docker_client.api.remove_image(image_tag)
