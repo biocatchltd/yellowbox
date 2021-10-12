@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import islice
-from typing import Pattern, List, Iterable, Iterator, Collection
-
+from typing import Pattern, List, Collection, Optional, Dict, Any, Union, TypeVar, Mapping, Callable, Tuple, Sequence
 import re
 
 from flask import Request
+from igraph import Graph
 
-from yellowbox.extras.webserver.util import WhyNot, SequenceView
+from yellowbox.extras.webserver.util import WhyNot
 
 try:
     import orjson as json_
@@ -18,8 +18,6 @@ except ImportError:
     except ImportError:
         import json as json_
 
-from igraph import Graph
-from typing import Optional, Dict, Any, Union, TypeVar, Mapping, Callable, Tuple, Sequence
 
 _missing = object()
 K = TypeVar('K')
@@ -230,7 +228,7 @@ class CapturedRequests(List[Request]):
         if not match:
             raise AssertionError(str(match))
 
-    def assert_requested_once_with(self, expected: ExpectedRequest, **kwargs):
+    def assert_requested_once_with(self, expected: Optional[ExpectedRequest] = None, **kwargs):
         if expected and kwargs:
             raise TypeError('method can be called with either expected or keyword args, but not both')
         if not expected:
@@ -266,44 +264,18 @@ class CapturedRequests(List[Request]):
         raise AssertionError(f'expected request {expected}, but no requests match:',
                              ''.join(f'\n\t {existing}- {whynot}' for (existing, whynot) in whynots))
 
-    def assert_has_requests_any_order(self, *expected_requests: ExpectedRequest, any_prefix=True, any_postfix=True,
-                                      any_infix=False):
-        return _assert_has_requests_any_order_inner(self, expected_requests, any_prefix, any_postfix, any_infix)
+    def assert_has_requests_any_order(self, *expected_requests: ExpectedRequest):
+        return _assert_has_requests_any_order_inner(self, expected_requests)
 
-    def assert_has_requests(self, *expected_requests: ExpectedRequest, any_order: bool = False, any_prefix=True,
-                            any_postfix=True, any_infix=False):
+    def assert_has_requests(self, *expected_requests: ExpectedRequest, any_order: bool = False):
         if any_order:
-            return self.assert_has_requests_any_order(*expected_requests, any_prefix=any_prefix,
-                                                      any_postfix=any_postfix, any_infix=any_infix)
+            return self.assert_has_requests_any_order(*expected_requests)
+        return _assert_match_subsequence(self, expected_requests)
 
 
-def _assert_has_requests_any_order_inner(requests: Sequence[Request], expected_requests: Sequence[ExpectedRequest],
-                                         any_prefix: bool, any_postfix: bool, any_infix: bool):
+def _assert_has_requests_any_order_inner(requests: Sequence[Request], expected_requests: Sequence[ExpectedRequest]):
     if len(requests) < len(expected_requests):
         raise AssertionError(f"expected sequential requests {expected_requests}, but found {requests}")
-
-    if not any_infix:
-        # not any_infix means that all the chosen requests must be sequential, we check this be check each potential
-        # subsequence until we find a match
-        if not any_prefix and not any_postfix:
-            if len(expected_requests) != len(requests):
-                raise AssertionError(f'expected exactly {len(expected_requests)}, but {len(requests)} found')
-        elif not any_prefix:
-            # the sequence must match the first X requests
-            return _assert_has_requests_any_order_inner(requests[:len(expected_requests)], expected_requests, True,
-                                                        True, True)
-        elif not any_postfix:
-            return _assert_has_requests_any_order_inner(requests[-len(expected_requests):], expected_requests, True,
-                                                        True, True)
-        else:
-            for start_ind in range(0, len(requests) - len(expected_requests) + 1):
-                try:
-                    return _assert_has_requests_any_order_inner(
-                        SequenceView(requests, range(start_ind, start_ind + len(expected_requests))),
-                        expected_requests, True, True, True)
-                except AssertionError:
-                    pass
-            raise AssertionError(f"expected sequential requests {expected_requests}, but found {requests}")
 
     edges = []
     why_nots: Dict[ExpectedRequest, Dict[requests, WhyNot]] = {expected: {} for expected in expected_requests}
@@ -315,15 +287,6 @@ def _assert_has_requests_any_order_inner(requests: Sequence[Request], expected_r
             else:
                 why_nots[expected][request] = match
     graph = Graph.Bipartite([0] * len(expected_requests) + [1] * len(requests), edges)
-    graph.es['weight'] = 1
-    if not any_prefix or not any_postfix:
-        max_weight = len(requests) + 1
-        # in order to force the matching algorithm to prefer connecting to the first and last requests, we increase the
-        # weights connecting there
-        for edge in graph.es:
-            if ((edge.target == len(expected_requests) and not any_prefix)
-                    or (edge.target == len(expected_requests) + len(requests) - 1 and not any_postfix)):
-                edge['weight'] = max_weight
 
     max_matching = graph.maximum_bipartite_matching(weights='weight')
     for i, expected in enumerate(expected_requests):
@@ -335,14 +298,23 @@ def _assert_has_requests_any_order_inner(requests: Sequence[Request], expected_r
                                                  + str(expected_requests[max_matching.match_of(node_index)]))
                                            for node_index, req in enumerate(requests, len(expected_requests))))
 
-    if not any_prefix and not max_matching.is_matched(len(expected_requests)):
-        raise AssertionError(f'no match for first request {ExistingRequest.from_request(requests[0])},'
-                             f' expected {expected_requests}')
 
-    if not any_postfix and not max_matching.is_matched(len(expected_requests) + len(requests) - 1):
-        raise AssertionError(f'no match for last request {ExistingRequest.from_request(requests[-1])},'
-                             f' expected {expected_requests}')
-
-
-def _match_subsequence(requests: Sequence[Request], expected_requests: Sequence[ExpectedRequest], any_prefix: bool,
-                       any_postfix: bool, any_infix: bool)
+def _assert_match_subsequence(requests: Sequence[Request], expected_requests: Sequence[ExpectedRequest]):
+    if not expected_requests:
+        return True
+    if len(requests) < len(expected_requests):
+        raise AssertionError(f"could not find request to match {expected_requests[0]}")
+    # match greedily
+    expected_iter = iter(expected_requests)
+    try:
+        next_expected = next(expected_iter)
+    except StopIteration:
+        return True
+    for request in requests:
+        match = next_expected.match(request)
+        if match:
+            try:
+                next_expected = next(expected_iter)
+            except StopIteration:
+                return True
+    raise AssertionError(f"could not find request to match {next_expected}")

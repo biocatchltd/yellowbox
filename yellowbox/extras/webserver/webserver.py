@@ -57,20 +57,28 @@ class HTTPEndPoint(ABC):
     def __call__(self, *args, **kwargs):
         if not self.owner:
             raise RuntimeError('endpoint must be assigned to a webserver')
-        with self.owner._route_lock:
-            if self.owner._pending_exception:
-                return f'an exception in the webserver had previously occurred: {self.owner._pending_exception!r}', 500
-            try:
-                ret = self.handle(**kwargs)
-            except Exception as ex:
-                self.owner._pending_exception = ex
-                return f'handler raised an exception: {ex!r}'
-            else:
-                self._calls.append(request)
-            return ret
+        if self.owner._pending_exception:
+            return f'an exception in the webserver had previously occurred: {self.owner._pending_exception!r}', 500
+        try:
+            ret = self.handle(**kwargs)
+        except Exception as ex:
+            self.owner._pending_exception = ex
+            return f'handler raised an exception: {ex!r}', 500
+        else:
+            self._calls.append(request)
+        return ret
 
 
 class MockHTTPEndpoint(HTTPEndPoint):
+    class Patch:
+        def __init__(self, endpoint: MockHTTPEndpoint,
+                     restore_side_effect: Union[ResponseReturnValue, Callable[..., ResponseReturnValue]]):
+            self.endpoint = endpoint
+            self.restore_side_effect = restore_side_effect
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self.endpoint.side_effect = self.restore_side_effect
+
     def __init__(self, *args, side_effect: Union[ResponseReturnValue, Callable[..., ResponseReturnValue]], **kwargs):
         super().__init__(*args, **kwargs)
         self.side_effect = side_effect
@@ -84,8 +92,7 @@ class MockHTTPEndpoint(HTTPEndPoint):
     def patch(self, side_effect: Union[ResponseReturnValue, Callable[..., ResponseReturnValue]]):
         previous_side_effect = self.side_effect
         self.side_effect = side_effect
-        yield
-        self.side_effect = previous_side_effect
+        return self.Patch(self, previous_side_effect)
 
 
 class WebServer(YellowService):
@@ -152,7 +159,7 @@ class WebServer(YellowService):
         self.remove_endpoint(endpoint)
         HandlerError.raise_from_pending(self._pending_exception)
 
-    def local_url(self, schema: Optional[str]='http'):
+    def local_url(self, schema: Optional[str] = 'http'):
         if schema is None:
             return f'localhost:{self.port}'
         return f'{schema}://localhost:{self.port}'

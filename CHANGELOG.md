@@ -1,5 +1,7 @@
 # Yellowbox Changelog
 ## 0.6.4
+### Added
+* PostgreSQLService: added method host_connection_string to connect to the database from another container.
 ### Fixed
 * Changed rabbitmq configuration to use config files instead of env vars. Allowing usage of rabbitmq 3.9.0 and upwards.
 ## 0.6.3
