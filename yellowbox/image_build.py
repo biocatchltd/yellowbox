@@ -30,6 +30,8 @@ def build_image(docker_client: DockerClient, image_name: str, remove_image: bool
     """
     if file is None:
         file = open(os.devnull, 'w')
+    else:
+        spinner = False  # spinner splits into multiple lines in case stream is printed the same time
     image_tag = f'{image_name}:test'
     yaspin_spinner = _get_spinner(spinner)
     with yaspin_spinner(f'Creating image {image_tag}...'):
