@@ -26,10 +26,13 @@ def build_image(docker_client: DockerClient, image_name: str, remove_image: bool
         image_name: Name of the image to be created
         remove_image: boolean, whether or not to delete the image at the end, default as True
         file: a file-like object (stream); defaults to the current sys.stderr. if set to None, will disable printing
-        spinner: boolean, whether or not to use spinner (default as True)
+        spinner: boolean, whether or not to use spinner (default as True), note that this param is set to False in
+        case `file` param is not None
     """
     if file is None:
         file = open(os.devnull, 'w')
+    else:
+        spinner = False  # spinner splits into multiple lines in case stream is being printed at the same time
     image_tag = f'{image_name}:test'
     yaspin_spinner = _get_spinner(spinner)
     with yaspin_spinner(f'Creating image {image_tag}...'):
