@@ -1,4 +1,9 @@
 # Yellowbox Changelog
+## Next
+### Deprecated
+### Added
+### Fixed
+* `websocket-client` has been downgraded to a dev dependency
 ## 0.6.4
 ### Added
 * PostgreSQLService: added method host_connection_string to connect to the database from another container.

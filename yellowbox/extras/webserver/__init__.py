@@ -1,1 +1,1 @@
-from webserver import WebServer, HTTPEndPoint, MockHTTPEndpoint
+from yellowbox.extras.webserver.webserver import WebServer, ws_endpoint, http_endpoint
