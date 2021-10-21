@@ -1,75 +1,23 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
-from logging import getLogger, Filter
-from typing import Dict, TypeVar, Mapping, AbstractSet, Iterable
-
-_missing = object()
-K = TypeVar('K')
-V = TypeVar('V')
+from logging import Filter, getLogger
 
 
-class AtLeast(Dict[K, V]):
-    def __eq__(self, other):
-        if not isinstance(other, Mapping):
-            return NotImplemented
-        for k, v in self.items():
-            other_v = other.get(k, _missing)
-            if other_v != v:
-                return False
-        return True
+class MismatchReason(str):
+    """
+    A falsish object, signifying a failure to match, with a reason.
+    """
 
-    def __ne__(self, other):
-        if not isinstance(other, Mapping):
-            return NotImplemented
-        for k, v in self.items():
-            other_v = other.get(k, _missing)
-            if other_v != v:
-                return True
-        return False
-
-    def __str__(self):
-        if not self:
-            return '{**_}'
-        return '{' + ', '.join(f'{k!r}: {v!r}' for k, v in self.items()) + ', **_}'
-
-    def __repr__(self):
-        return f'AtLeast({super().__repr__()})'
-
-
-class AtLeastMulti(Dict[K, AbstractSet[V]]):
-    def __eq__(self, other):
-        if not isinstance(other, Mapping):
-            return NotImplemented
-        for k, v in self.items():
-            other_v = other.get(k, _missing)
-            if other_v is _missing or not isinstance(other_v, Iterable) or not (v <= frozenset(other_v)):
-                return NotImplemented
-        return True
-
-    def __ne__(self, other):
-        if not isinstance(other, Mapping):
-            return NotImplemented
-        for k, v in self.items():
-            other_v = other.get(k, _missing)
-            if other_v is _missing or not isinstance(other_v, Iterable) or not (frozenset(v) <= frozenset(other_v)):
-                return True
-        return False
-
-    def __str__(self):
-        if not self:
-            return '{**_}'
-        return ('{'
-                + ', '.join(f'{k!r}: '
-                            + ('{' + ', '.join(repr(e) for e in v) + ', *_}' if v else '{*_}')
-                            for k, v in self.items())
-                + ', **_}')
-
-    def __repr__(self):
-        return f'AtLeastMulti({super().__repr__()})'
-
-
-class WhyNot(str):
     @classmethod
-    def is_ne(cls, field: str, expected, got):
+    def is_ne(cls, field: str, expected, got) -> MismatchReason:
+        """
+        Create a mismatch reason that is caused by two values being unequal
+        Args:
+            field: the name of the mismatched field
+            expected: the expected value
+            got: the actual value
+        """
         return cls(f'{field} mismatch: expected {expected}, got {got}')
 
     def __bool__(self):
@@ -77,12 +25,19 @@ class WhyNot(str):
 
 
 class MuteFilter(Filter):
+    """
+    A simple filter that silences all logs
+    """
+
     def filter(self, record) -> bool:
         return False
 
 
 @contextmanager
 def mute_uvicorn_log():
+    """
+    A context manager to silence all log messages from the uvicorn.error logger while in its scope
+    """
     logger = getLogger('uvicorn.error')
     filter_ = MuteFilter()
     logger.addFilter(filter_)

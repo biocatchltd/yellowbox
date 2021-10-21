@@ -1,22 +1,29 @@
 from __future__ import annotations
 
 from enum import Enum, auto
-from starlette.requests import HTTPConnection
-from typing import List, Union, Pattern, Tuple, Sequence, Optional, Any, Mapping, Collection
+from typing import Any, Collection, Dict, Iterable, List, Mapping, Optional, Pattern, Sequence, Tuple, Union
 
+from starlette.requests import HTTPConnection
 from starlette.websockets import WebSocket
 
 from yellowbox.extras.webserver.request_capture import ScopeExpectation
-from yellowbox.extras.webserver.util import WhyNot
+from yellowbox.extras.webserver.util import MismatchReason
 
 
 class WebSocketRecorder(WebSocket):
     """
-    An subclass of websocket that records the conversation
+    A subclass of starlette.Websocket that records the conversation in a transcript
     messages are parsed as per https://asgi.readthedocs.io/en/latest/specs/www.html#websocket
     """
 
     def __init__(self, scope, receive, send, sinks: Sequence[RecordedWSTranscripts]):
+        """
+        Args:
+            scope: forwarded to Websocket
+            receive: forwarded to Websocket
+            send: forwarded to Websocket
+            sinks: a list of transcripts to add the transcript to
+        """
         super().__init__(scope, receive, send)
         self.transcript: RecordedWSTranscript = RecordedWSTranscript(
             connection=self,
@@ -44,17 +51,37 @@ class WebSocketRecorder(WebSocket):
         await super().send(message)
 
 
-async def recorder_websocket_endpoint(scope, receive, send, *, func, sinks: Sequence[RecordedWSTranscripts]):
+async def recorder_websocket_endpoint(scope, receive, send, *, function, sinks: Sequence[RecordedWSTranscripts]):
+    """
+    An entrypoint app that records websocket conversations
+    Args:
+        scope: the http scope of the conversation
+        receive: forwarded to the Websocket
+        send: forwarded to the Websocket
+        function: the function to call the endpoint with
+        sinks: a list of transcripts that the record should be added to
+    """
+    # a partial version of this function will be the app endpoint of all our mock websocket routes
     ws = WebSocketRecorder(scope, receive, send, sinks=sinks)
-    return await func(ws)
+    return await function(ws)
 
 
 class Sender(Enum):
+    """
+    A sender who can send messages in a transcript. A sender can be called to create an expected message.
+
+    Examples:
+        >>> import re
+        ... expected_message = Sender.Server(re.compile('[a-z][a-z][0-9]'))
+        ... message = RecordedWSMessage('tk1', Sender.Server)
+        ... assert expected_message.matches(message)
+    """
     Server = auto()
     Client = auto()
 
-    def __call__(self, data: Union[str, bytes]):
-        return RecordedWSMessage(data, self)
+    def __call__(self, data: Union[Pattern[str], Pattern[bytes], str, bytes, ellipsis]) \
+            -> ExpectedWSMessage:  # noqa: F821
+        return ExpectedWSMessage(data, self)
 
 
 class RecordedWSMessage:
@@ -72,59 +99,65 @@ class RecordedWSMessage:
 class RecordedWSTranscript(List[RecordedWSMessage]):
     def __init__(self, *args, connection: HTTPConnection):
         super().__init__(*args)
-        self.headers = {}
-        for k, v in connection.headers.raw:
-            lst = self.headers.get(k)
-            if lst is None:
-                self.headers[k] = [v]
+        self.headers: Dict[bytes, List[bytes]] = {}
+        for h_k, h_v in connection.headers.raw:
+            h_lst = self.headers.get(h_k)
+            if h_lst is None:
+                self.headers[h_k] = [h_v]
             else:
-                lst.append(v)
+                h_lst.append(h_v)
         self.path = connection.url.path
         self.path_params = connection.path_params
-        self.query_params = {}
-        connection.query_params.multi_items()
-        for k, v in connection.query_params.multi_items():
-            lst = self.query_params.get(k)
-            if lst is None:
-                self.query_params[k] = [v]
+        self.query_params: Dict[str, List[str]] = {}
+        for q_k, q_v in connection.query_params.multi_items():
+            q_lst = self.query_params.get(q_k)
+            if q_lst is None:
+                self.query_params[q_k] = [q_v]
             else:
-                lst.append(v)
+                q_lst.append(q_v)
         self.accepted: bool = False
         self.close: Optional[Tuple[Sender, int]] = None
 
 
 class ExpectedWSMessage:
-    def __init__(self, data: Union[Pattern[str], Pattern[bytes], str, bytes, type(...)], sender: Sender):
+    def __init__(self, data: Union[Pattern[str], Pattern[bytes], str, bytes, ellipsis], sender: Sender):  # noqa: F821
         self.data = data
         self.sender = sender
 
-    def matches(self, message: RecordedWSMessage) -> Union[bool, WhyNot]:
+    def matches(self, message: RecordedWSMessage) -> Union[bool, MismatchReason]:
         if self.sender != message.sender:
-            return WhyNot.is_ne('sender', self.sender, message.sender)
+            return MismatchReason.is_ne('sender', self.sender, message.sender)
 
         if self.data is ...:
             return True
         elif isinstance(self.data, Pattern):
             try:
-                match = self.data.fullmatch(message.data)
+                match = self.data.fullmatch(message.data)  # type:ignore[arg-type]
             except TypeError:  # this would happen when we try to use byte patterns on strs or vice-versa
                 match = None
             if not match:
-                return WhyNot(f'expected data to match pattern {self.data.pattern}, got {message.data}')
+                return MismatchReason(f'expected data to match pattern {self.data.pattern!r}, got {message.data!r}')
             return True
         else:
             if self.data != message.data:
-                return WhyNot.is_ne('data', self.data, message.data)
+                return MismatchReason.is_ne('data', self.data, message.data)
+        return True
+
+    def __str__(self):
+        return f'{self.sender.name}({self.data})'
 
 
 class ExpectedWSTranscript(ScopeExpectation):
-    def __init__(self, *expected_messages: Union[ellipsis, ExpectedWSMessage],
-                 close: Optional[Tuple[Sender, int]] = None, accepted: Optional[bool] = True,
-                 headers: Optional[Mapping[str, Collection[str]]] = None,
-                 path: Optional[Union[str, Pattern]] = None,
-                 path_args: Optional[Mapping[str, Any]] = None,
-                 query_args: Optional[Mapping[str, Collection[str]]] = None):
-        super().__init__(headers, path, path_args, query_args)
+    def __init__(self, *expected_messages: Union[ellipsis, ExpectedWSMessage],  # noqa: F821
+                 headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
+                 headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
+                 path: Optional[Union[str, Pattern[str]]] = None, path_params: Optional[Mapping[str, Any]] = None,
+                 path_params_submap: Optional[Mapping[str, Any]] = None,
+                 query_params: Optional[Mapping[str, Collection[str]]] = None,
+                 query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+                 close: Optional[Tuple[Sender, int]] = None, accepted: Optional[bool] = True, ):
+        super().__init__(headers, headers_submap, path, path_params, path_params_submap, query_params,
+                         query_params_submap)
         if expected_messages and expected_messages[0] is ...:
             expected_messages = expected_messages[1:]
             self.any_start = True
@@ -140,7 +173,7 @@ class ExpectedWSTranscript(ScopeExpectation):
         if any(m is ... for m in expected_messages):
             raise TypeError('ExpectedWSTranscript can only contain ellipsis at the start and at the end')
 
-        self.expected_messages = expected_messages
+        self.expected_messages: Tuple[ExpectedWSMessage] = expected_messages  # type:ignore[assignment]
         self.accepted = accepted
         self.close = close
 
@@ -150,38 +183,46 @@ class ExpectedWSTranscript(ScopeExpectation):
             return scope_match
 
         if recorded.close is None:
-            return WhyNot('the transcript is not yet done')
+            raise RuntimeError('the transcript is not yet done')
         if self.close is not None and recorded.close != self.close:
-            return WhyNot.is_ne('close_code', self.close, recorded.close)
+            return MismatchReason.is_ne('close_code', self.close, recorded.close)
         if self.accepted is not None and recorded.accepted != self.accepted:
-            return WhyNot.is_ne('accepted', self.accepted, recorded.accepted)
+            return MismatchReason.is_ne('accepted', self.accepted, recorded.accepted)
 
         if not self.any_start and not self.any_end and len(recorded) != len(self.expected_messages):
-            return WhyNot(f'expected exactly {len(self.expected_messages)} messages, found {len(recorded)}')
+            return MismatchReason(f'expected exactly {len(self.expected_messages)} messages, found {len(recorded)}')
         if len(recorded) < len(self.expected_messages):
-            return WhyNot(f'expected at least {len(self.expected_messages)} messages, found only {len(recorded)}')
+            return MismatchReason(f'expected at least {len(self.expected_messages)} messages,'
+                                  f' found only {len(recorded)}')
         # in order to account for any_start, any_end, we check every subsequence of the recorded transcript
         # we store a list of candidate indices for the subsequence start
         if not self.any_start:
             # the case of (not any_start and not any_end) is covered by the first condition
-            indices = (0,)
+            indices: Iterable[int] = (0,)
         elif not self.any_end:
             indices = (len(recorded) - len(self.expected_messages),)
         else:
-            indices = range(0, len(recorded) - len(self.expected_messages))
+            indices = range(0, len(recorded) - len(self.expected_messages) + 1)
 
+        whynots = []
         for start_index in indices:
             for i, expected_message in enumerate(self.expected_messages):
                 rec = recorded[start_index + i]
-                if not expected_message.matches(rec):
+                match = expected_message.matches(rec)
+                if not match:
+                    whynots.append(f'{rec} did not match {expected_message}: {match}')
                     break
             else:
                 return True
 
-        return WhyNot('could not find expected calls')
+        return MismatchReason('could not find expected calls' + ''.join('\n\t' + wn for wn in whynots))
 
 
 class RecordedWSTranscripts(List[RecordedWSTranscript]):
+    def assert_not_requested(self):
+        if self:
+            raise AssertionError(f'{len(self)} requests were made')
+
     def assert_requested(self):
         if not self:
             raise AssertionError('No requests were made')
@@ -213,4 +254,4 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
             raise AssertionError('No requests were made')
         if any(expected.matches(req) for req in self):
             return
-        raise AssertionError(f'No transcripts match')
+        raise AssertionError('No transcripts match')

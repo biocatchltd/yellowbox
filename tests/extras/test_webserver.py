@@ -1,19 +1,22 @@
 import json
+from time import sleep
 from typing import Callable
 
-from pytest import raises, fixture
 from httpx import Client, HTTPError
+from pytest import fixture, raises
 from starlette.datastructures import QueryParams
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse, JSONResponse
+from starlette.responses import JSONResponse, PlainTextResponse
+from starlette.status import (
+    HTTP_200_OK, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR, WS_1000_NORMAL_CLOSURE,
+    WS_1008_POLICY_VIOLATION
+)
 from starlette.websockets import WebSocket
-from starlette.status import WS_1008_POLICY_VIOLATION, WS_1000_NORMAL_CLOSURE, HTTP_500_INTERNAL_SERVER_ERROR, \
-    HTTP_200_OK, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
-from websocket import create_connection as create_ws_connection, WebSocket as WSClient, WebSocketBadStatusException
-from yellowbox.extras.webserver.webserver import HandlerError
+from websocket import WebSocket as WSClient, WebSocketBadStatusException, create_connection as create_ws_connection
 
 from yellowbox.extras.webserver import WebServer, http_endpoint, ws_endpoint
-from yellowbox.extras.webserver.ws_request_capture import Sender
+from yellowbox.extras.webserver.webserver import HandlerError
+from yellowbox.extras.webserver.ws_request_capture import RecordedWSMessage, Sender
 
 
 def assert_ws_closed(ws_client: WSClient, code: int = 1000):
@@ -52,7 +55,7 @@ def test_capture(server, client):
 
         with endpoint.capture_calls() as calls1:
             assert calls1 == []
-            resp = client.get('/api/foo')
+            resp = client.get('/api/foo?a=15&a=17')
             assert resp.status_code == 200
             assert resp.text == 'hewwo'
 
@@ -60,7 +63,7 @@ def test_capture(server, client):
         assert c1.method == 'GET'
         assert c1.path == "/api/foo"
         assert c1.path_params == {}
-        assert c1.query_params == {}
+        assert c1.query_params == {'a': ['15', '17']}
 
         resp = client.get('/api/foo')
         assert resp.status_code == 200
@@ -195,7 +198,7 @@ def test_methods(server, client):
 
 
 def test_methods_with_head(server, client):
-    server.add_http_endpoint(('POST', 'GET'), '/foo', PlainTextResponse('voodoo'), forbid_head_verb=False)
+    server.add_http_endpoint(('POST', 'GET'), '/foo', PlainTextResponse('voodoo'), forbid_implicit_head_verb=False)
     resp = client.post('/foo')
     resp.raise_for_status()
     assert resp.text == 'voodoo'
@@ -391,12 +394,12 @@ def test_ws_calc_capture_calls(server, ws_client_factory, ws_calc):
 
     transcript, = transcripts
     assert list(transcript) == [
-        Sender.Server('12'),
-        Sender.Client('{"op":"add", "value": 3}'),
-        Sender.Server('15'),
-        Sender.Client('{"op":"mul", "value": 10}'),
-        Sender.Server('150'),
-        Sender.Client('{"op":"done"}'),
+        RecordedWSMessage('12', Sender.Server),
+        RecordedWSMessage('{"op":"add", "value": 3}', Sender.Client),
+        RecordedWSMessage('15', Sender.Server),
+        RecordedWSMessage('{"op":"mul", "value": 10}', Sender.Client),
+        RecordedWSMessage('150', Sender.Server),
+        RecordedWSMessage('{"op":"done"}', Sender.Client),
     ]
     assert transcript.accepted
     assert transcript.close == (Sender.Server, 1000)
@@ -462,3 +465,56 @@ def test_from_container(server, docker_client, create_and_pull):
     assert container.attrs['State']["ExitCode"] == 0
 
 
+def test_ws_capture_client_close(server, ws_client_factory):
+    @server.add_ws_endpoint
+    @ws_endpoint('/bar')
+    async def bar(websocket: WebSocket):
+        await websocket.accept()
+        await websocket.send_text('do you like warhammer?')
+        msg = await websocket.receive()
+        assert msg['type'] == 'websocket.disconnect'
+
+    with bar.capture_calls() as transcripts:
+        ws_client = ws_client_factory('/bar')
+        assert ws_client.recv() == 'do you like warhammer?'
+        ws_client.close()
+
+    sleep(0.1)  # give the server time to record the closing
+    transcript, = transcripts
+    assert list(transcript) == [
+        RecordedWSMessage('do you like warhammer?', Sender.Server),
+    ]
+    assert transcript.accepted
+    assert transcript.close == (Sender.Client, 1000)
+
+
+def test_ws_patch(server, ws_calc, ws_client_factory):
+    ws_client = ws_client_factory('/12/calc')
+    assert json.loads(ws_client.recv()) == 12
+    ws_client.send('{"op":"add", "value": 3}')
+    assert json.loads(ws_client.recv()) == 15
+    ws_client.send('{"op":"mul", "value": 10}')
+    assert json.loads(ws_client.recv()) == 150
+    ws_client.send('{"op":"done"}')
+    assert_ws_closed(ws_client)
+
+    async def new_side_effect(ws: WebSocket):
+        await ws.accept()
+        await ws.receive()
+        await ws.send_text('no')
+        return WS_1000_NORMAL_CLOSURE
+
+    with ws_calc.patch(new_side_effect):
+        ws_client = ws_client_factory('/12/calc')
+        ws_client.send('{"op":"add", "value": 3}')
+        assert ws_client.recv() == 'no'
+        assert_ws_closed(ws_client)
+
+    ws_client = ws_client_factory('/12/calc')
+    assert json.loads(ws_client.recv()) == 12
+    ws_client.send('{"op":"add", "value": 3}')
+    assert json.loads(ws_client.recv()) == 15
+    ws_client.send('{"op":"mul", "value": 10}')
+    assert json.loads(ws_client.recv()) == 150
+    ws_client.send('{"op":"done"}')
+    assert_ws_closed(ws_client)
