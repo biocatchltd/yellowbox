@@ -5,6 +5,7 @@
 * `WebsocketService` is now deprecated in favor of `WebService`
 ### Added
 * `WebService`, a new service to mock http and websocket server
+* PostgreSQLService: added method host_connection_string to connect to the database from another container.
 ### Fixed
 * `websocket-client` has been downgraded to a dev dependency
 ## 0.6.5
@@ -12,8 +13,6 @@
 * build_image ContextManager, to create an image from dockerfile
 * docker_client can be imported directly from yellowbox package
 ## 0.6.4
-### Added
-* PostgreSQLService: added method host_connection_string to connect to the database from another container.
 ### Fixed
 * Changed rabbitmq configuration to use config files instead of env vars. Allowing usage of rabbitmq 3.9.0 and upwards.
 ## 0.6.3
