@@ -54,7 +54,7 @@ websocket = ["simple_websocket_server", "websocket_client"]
 webserver = ["starlette", "python-igraph", "uvicorn", "websockets"]
 
 _all = ["redis", "pika", "kafka-python", "azure-storage-blob", "cffi", "sqlalchemy", "psycopg2",
-    "simple_websocket_server", "websocket_client", "starlette", "python-igraph", "uvicorn"]
+    "simple_websocket_server", "websocket_client", "starlette", "python-igraph", "uvicorn", "websockets"]
 
 [build-system]
 requires = ["poetry>=1.0.0"]
