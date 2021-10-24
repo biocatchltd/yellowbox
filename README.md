@@ -14,8 +14,8 @@ from yellowbox.extras import RedisService
 
 def test_black_box():
   with docker_client() as docker_client, RedisService.run(docker_client) as redis:
-      redis_port = redis.client_port()  # this the host port the redis
-      ...  # run your black box test here
+    redis_port = redis.client_port()  # this the host port the redis
+    ...  # run your black box test here
   # yellowbox will automatically close the service when exiting the scope
 
 
@@ -24,8 +24,8 @@ def test_black_box_with_initial_data():
   # easily interoperate the service
   with docker_client() as docker_client,
       RedisService.run(docker_client) as redis,
-      redis.Client() as client:
-  client.set("foo", "bar")
+      redis.client() as client:
+    client.set("foo", "bar")
   ...
 ```
 ## Supported Extras
