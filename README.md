@@ -23,8 +23,8 @@ def test_black_box_with_initial_data():
   # you can use the service's built-in utility functions to
   # easily interoperate the service
   with docker_client() as docker_client,
-        RedisService.run(docker_client) as redis,
-        redis.client() as client:
+          RedisService.run(docker_client) as redis,
+          redis.client() as client:
     client.set("foo", "bar")
   ...
 ```
