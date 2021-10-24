@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from json import loads as json_loads
-from typing import Any, Callable, Collection, Dict, List, Mapping, Optional, Pattern, Sequence, Tuple, Union
+from typing import Any, Callable, Collection, Dict, List, Mapping, Optional, Pattern, Sequence, Tuple, Union, overload
 
 from igraph import Graph
 from starlette.requests import Request
@@ -173,7 +173,7 @@ class RecordedHTTPRequest:
 
 class RecordedHTTPRequests(List[RecordedHTTPRequest]):
     """
-    A list of recorded HTTP request, in the order they were received
+    A list of recorded HTTP requests, in the order they were received
     """
 
     def assert_not_requested(self):
@@ -200,6 +200,24 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
             raise AssertionError('Multiple requests were made:'
                                  + ''.join(f'\n\t{existing}' for existing in self))
 
+    @overload
+    def assert_requested_with(self, expected: ExpectedHTTPRequest):
+        ...
+
+    @overload
+    def assert_requested_with(self, *, headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
+                              headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
+                              path: Optional[Union[str, Pattern[str]]] = None,
+                              path_params: Optional[Mapping[str, Any]] = None,
+                              path_params_submap: Optional[Mapping[str, Any]] = None,
+                              query_params: Optional[Mapping[str, Collection[str]]] = None,
+                              query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+                              method: Optional[str] = None, body: Optional[bytes] = None,
+                              text: Optional[str] = None, json: Any = _missing,
+                              content_predicate:
+                              Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None):
+        ...
+
     def assert_requested_with(self, expected: Optional[ExpectedHTTPRequest] = None, **kwargs):
         """
         Asserts that the latest request recorded matches an expected request
@@ -221,9 +239,27 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         if not match:
             raise AssertionError(str(match))
 
+    @overload
+    def assert_requested_once_with(self, expected: ExpectedHTTPRequest):
+        ...
+
+    @overload
+    def assert_requested_once_with(self, *, headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
+                                   headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
+                                   path: Optional[Union[str, Pattern[str]]] = None,
+                                   path_params: Optional[Mapping[str, Any]] = None,
+                                   path_params_submap: Optional[Mapping[str, Any]] = None,
+                                   query_params: Optional[Mapping[str, Collection[str]]] = None,
+                                   query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+                                   method: Optional[str] = None, body: Optional[bytes] = None,
+                                   text: Optional[str] = None, json: Any = _missing,
+                                   content_predicate:
+                                   Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None):
+        ...
+
     def assert_requested_once_with(self, expected: Optional[ExpectedHTTPRequest] = None, **kwargs):
         """
-        Asserts that there is only one request, nad that it matches an expected request
+        Asserts that there is only one request, and that it matches an expected request
         Args:
             expected: an expected request.
             **kwargs: if an expected request is not provided, then a new expected request is constructed by forwarding
@@ -244,6 +280,24 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         match = expected.matches(self[0])
         if not match:
             raise AssertionError(str(match))
+
+    @overload
+    def assert_any_request(self, expected: ExpectedHTTPRequest):
+        ...
+
+    @overload
+    def assert_any_request(self, *, headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
+                           headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
+                           path: Optional[Union[str, Pattern[str]]] = None,
+                           path_params: Optional[Mapping[str, Any]] = None,
+                           path_params_submap: Optional[Mapping[str, Any]] = None,
+                           query_params: Optional[Mapping[str, Collection[str]]] = None,
+                           query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+                           method: Optional[str] = None, body: Optional[bytes] = None,
+                           text: Optional[str] = None, json: Any = _missing,
+                           content_predicate:
+                           Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None):
+        ...
 
     def assert_any_request(self, expected: Optional[ExpectedHTTPRequest] = None, **kwargs):
         """

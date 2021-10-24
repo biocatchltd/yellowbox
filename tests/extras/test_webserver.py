@@ -518,3 +518,20 @@ def test_ws_patch(server, ws_calc, ws_client_factory):
     assert json.loads(ws_client.recv()) == 150
     ws_client.send('{"op":"done"}')
     assert_ws_closed(ws_client)
+
+
+def test_ws_capture_no_accept(server, ws_client_factory):
+    @server.add_ws_endpoint
+    @ws_endpoint('/bar')
+    async def bar(websocket: WebSocket):
+        await websocket.close(WS_1008_POLICY_VIOLATION)
+
+    with bar.capture_calls() as transcripts:
+        with raises(WebSocketBadStatusException):
+            ws_client_factory('/bar')
+
+    sleep(0.1)  # give the server time to record the closing
+    transcript, = transcripts
+    assert list(transcript) == []
+    assert not transcript.accepted
+    assert transcript.close == (Sender.Server, 1008)

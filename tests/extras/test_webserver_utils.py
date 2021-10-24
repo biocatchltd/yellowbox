@@ -313,12 +313,13 @@ def connection():
 
 
 def test_repr_transcript(connection):
-    transcript = RecordedWSTranscript([
+    transcript = RecordedWSTranscript.from_connection(connection)
+    transcript.extend([
         RecordedWSMessage('sir if I may be so bold?', Sender.Server),
         RecordedWSMessage('go ahead Jeeves', Sender.Client),
         RecordedWSMessage(b'crunch', Sender.Server),
         RecordedWSMessage('Jeeves! That is bold', Sender.Client),
-    ], connection=connection)
+    ])
     assert repr(transcript) \
            == '''[Server('sir if I may be so bold?'), Client('go ahead Jeeves'), Server(b'crunch'),''' \
               ''' Client('Jeeves! That is bold')]'''
@@ -337,51 +338,52 @@ def test_repr_transcript(connection):
     (False, False),
 ])
 def test_transcript_matches(close, expected_close, accepted, expected_accepted, connection):
-    transcript = RecordedWSTranscript([
+    transcript = RecordedWSTranscript.from_connection(connection)
+    transcript.extend([
         RecordedWSMessage('sir if I may be so bold?', Sender.Server),
         RecordedWSMessage('go ahead Jeeves', Sender.Client),
         RecordedWSMessage(b'crunch', Sender.Server),
         RecordedWSMessage('Jeeves! That is bold', Sender.Client),
-    ], connection=connection)
+    ])
     transcript.accepted = accepted
     transcript.close = close
 
-    expected = ExpectedWSTranscript(
+    expected = ExpectedWSTranscript([
         ...,
         Sender.Client('go ahead Jeeves'),
         Sender.Server(re.compile(b'crun[ct]h')),
-        ...,
+        ...],
         close=expected_close,
         accepted=expected_accepted
     )
     assert expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        Sender.Server(...),
-        Sender.Client('go ahead Jeeves'),
-        ...,
+        [Sender.Server(...),
+         Sender.Client('go ahead Jeeves'),
+         ...],
         close=expected_close,
         accepted=expected_accepted
     )
     assert expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        ...,
-        Sender.Server(re.compile(b'crun[ct]h')),
-        Sender.Client('Jeeves! That is bold'),
+        [...,
+         Sender.Server(re.compile(b'crun[ct]h')),
+         Sender.Client('Jeeves! That is bold')],
         close=expected_close,
         accepted=expected_accepted
     )
     assert expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        Sender.Server(...),
-        Sender.Client('go ahead Jeeves'),
-        Sender.Server(re.compile(b'crun[ct]h')),
-        Sender.Client('Jeeves! That is bold'),
+        [Sender.Server(...),
+         Sender.Client('go ahead Jeeves'),
+         Sender.Server(re.compile(b'crun[ct]h')),
+         Sender.Client('Jeeves! That is bold')],
         close=expected_close,
         accepted=expected_accepted
     )
     assert expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        ...,
+        [...],
         close=expected_close,
         accepted=expected_accepted
     )
@@ -399,45 +401,46 @@ def test_transcript_matches(close, expected_close, accepted, expected_accepted, 
     ((Sender.Server, 1000), None, False, True),
 ])
 def test_transcript_mismatches(close, expected_close, accepted, expected_accepted, connection):
-    transcript = RecordedWSTranscript([
+    transcript = RecordedWSTranscript.from_connection(connection)
+    transcript.extend([
         RecordedWSMessage('sir if I may be so bold?', Sender.Server),
         RecordedWSMessage('go ahead Jeeves', Sender.Client),
         RecordedWSMessage(b'crunch', Sender.Server),
         RecordedWSMessage('Jeeves! That is bold', Sender.Client),
-    ], connection=connection)
+    ])
     transcript.accepted = accepted
     transcript.close = close
 
     expected = ExpectedWSTranscript(
-        ...,
-        Sender.Client('go ahead Jeeves'),
-        Sender.Server(re.compile(b'crun[ct]h')),
-        ...,
+        [...,
+         Sender.Client('go ahead Jeeves'),
+         Sender.Server(re.compile(b'crun[ct]h')),
+         ...],
         close=expected_close,
         accepted=expected_accepted
     )
     assert not expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        Sender.Server(...),
-        Sender.Client('go ahead Jeeves'),
-        ...,
+        [Sender.Server(...),
+         Sender.Client('go ahead Jeeves'),
+         ...],
         close=expected_close,
         accepted=expected_accepted
     )
     assert not expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        ...,
-        Sender.Server(re.compile(b'crun[ct]h')),
-        Sender.Client('Jeeves! That is bold'),
+        [...,
+         Sender.Server(re.compile(b'crun[ct]h')),
+         Sender.Client('Jeeves! That is bold')],
         close=expected_close,
         accepted=expected_accepted
     )
     assert not expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        Sender.Server(...),
-        Sender.Client('go ahead Jeeves'),
-        Sender.Server(re.compile(b'crun[ct]h')),
-        Sender.Client('Jeeves! That is bold'),
+        [Sender.Server(...),
+         Sender.Client('go ahead Jeeves'),
+         Sender.Server(re.compile(b'crun[ct]h')),
+         Sender.Client('Jeeves! That is bold')],
         close=expected_close,
         accepted=expected_accepted
     )
@@ -449,48 +452,49 @@ def test_transcript_mismatches_body(connection):
     connection.url.path = '/foobar'
     connection.path_params = {'x': 15}
     connection.query_params.multi_items.return_value = [('s', '1'), ('r', '1'), ('s', '2')]
-    transcript = RecordedWSTranscript([
+    transcript = RecordedWSTranscript.from_connection(connection)
+    transcript.extend([
         RecordedWSMessage('sir if I may be so bold?', Sender.Server),
         RecordedWSMessage('go ahead Jeeves', Sender.Client),
         RecordedWSMessage(b'crunch', Sender.Server),
         RecordedWSMessage('Jeeves! That is bold', Sender.Client),
-    ], connection=connection)
+    ])
     transcript.close = True
     transcript.accepted = True
 
     expected = ExpectedWSTranscript(
-        ...,
-        Sender.Server(re.compile(b'crun[ct]e')),
-        ...,
+        [...,
+         Sender.Server(re.compile(b'crun[ct]e')),
+         ...],
     )
     assert not expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        ...,
-        Sender.Server(...),
-        Sender.Client('go ahead Jeeves'),
+        [...,
+         Sender.Server(...),
+         Sender.Client('go ahead Jeeves')],
     )
     assert not expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        Sender.Server(re.compile(b'crun[ct]h')),
-        Sender.Client('Jeeves! That is bold'),
-        ...,
+        [Sender.Server(re.compile(b'crun[ct]h')),
+         Sender.Client('Jeeves! That is bold'),
+         ...],
     )
     assert not expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        Sender.Client('go ahead Jeeves'),
-        Sender.Server(re.compile(b'crun[ct]h')),
-        Sender.Client('Jeeves! That is bold'),
+        [Sender.Client('go ahead Jeeves'),
+         Sender.Server(re.compile(b'crun[ct]h')),
+         Sender.Client('Jeeves! That is bold')],
     )
     assert not expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        ...,
-        Sender.Server(...),
-        Sender.Client(...),
-        Sender.Server(...),
-        Sender.Client(...),
-        Sender.Server(...),
-        Sender.Client(...),
-        ...,
+        [...,
+         Sender.Server(...),
+         Sender.Client(...),
+         Sender.Server(...),
+         Sender.Client(...),
+         Sender.Server(...),
+         Sender.Client(...),
+         ...],
     )
     assert not expected.matches(transcript)
 
@@ -500,36 +504,37 @@ def test_transcript_mismatches_scope(connection):
     connection.url.path = '/foobar'
     connection.path_params = {'x': 15}
     connection.query_params.multi_items.return_value = [('s', '1'), ('r', '1'), ('s', '2')]
-    transcript = RecordedWSTranscript([
+    transcript = RecordedWSTranscript.from_connection(connection)
+    transcript.extend([
         RecordedWSMessage('sir if I may be so bold?', Sender.Server),
         RecordedWSMessage('go ahead Jeeves', Sender.Client),
         RecordedWSMessage(b'crunch', Sender.Server),
         RecordedWSMessage('Jeeves! That is bold', Sender.Client),
-    ], connection=connection)
+    ])
     transcript.close = True
     transcript.accepted = True
 
     expected = ExpectedWSTranscript(
-        ...,
+        [...],
         headers_submap=dict(a={'1', '3'})
     )
     assert not expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        ...,
-        Sender.Server(...),
-        Sender.Client('go ahead Jeeves'),
+        [...,
+         Sender.Server(...),
+         Sender.Client('go ahead Jeeves')],
     )
     assert not expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        Sender.Server(re.compile(b'crun[ct]h')),
-        Sender.Client('Jeeves! That is bold'),
-        ...,
+        [Sender.Server(re.compile(b'crun[ct]h')),
+         Sender.Client('Jeeves! That is bold'),
+         ...],
     )
     assert not expected.matches(transcript)
     expected = ExpectedWSTranscript(
-        Sender.Client('go ahead Jeeves'),
-        Sender.Server(re.compile(b'crun[ct]h')),
-        Sender.Client('Jeeves! That is bold'),
+        [Sender.Client('go ahead Jeeves'),
+         Sender.Server(re.compile(b'crun[ct]h')),
+         Sender.Client('Jeeves! That is bold')],
     )
     assert not expected.matches(transcript)
 
@@ -542,22 +547,18 @@ def test_transcripts_empty():
     with raises(AssertionError):
         transcripts.assert_requested_once()
     with raises(AssertionError):
-        transcripts.assert_requested_with(ExpectedWSTranscript(...))
+        transcripts.assert_requested_with(ExpectedWSTranscript([...]))
     with raises(AssertionError):
-        transcripts.assert_requested_once_with(ExpectedWSTranscript(...))
+        transcripts.assert_requested_once_with(ExpectedWSTranscript([...]))
     with raises(AssertionError):
-        transcripts.assert_any_request(ExpectedWSTranscript(...))
+        transcripts.assert_any_request(ExpectedWSTranscript([...]))
 
 
 def test_transcripts_multi(connection):
-    t0 = RecordedWSTranscript(
-        [RecordedWSMessage('hi', Sender.Server)],
-        connection=connection
-    )
-    t1 = RecordedWSTranscript(
-        [RecordedWSMessage('ho', Sender.Server)],
-        connection=connection
-    )
+    t0 = RecordedWSTranscript.from_connection(connection)
+    t0.append(RecordedWSMessage('hi', Sender.Server))
+    t1 = RecordedWSTranscript.from_connection(connection)
+    t1.append(RecordedWSMessage('ho', Sender.Server))
     t0.close = t1.close = (Sender.Server, 1000)
     t0.accepted = t1.accepted = True
     transcripts = RecordedWSTranscripts([t0, t1])
@@ -566,22 +567,20 @@ def test_transcripts_multi(connection):
     transcripts.assert_requested()
     with raises(AssertionError):
         transcripts.assert_requested_once()
-    transcripts.assert_requested_with(ExpectedWSTranscript(..., Sender.Server('ho')))
+    transcripts.assert_requested_with(ExpectedWSTranscript([..., Sender.Server('ho')]))
     with raises(AssertionError):
-        transcripts.assert_requested_with(ExpectedWSTranscript(..., Sender.Server('hi')))
+        transcripts.assert_requested_with(ExpectedWSTranscript([..., Sender.Server('hi')]))
     with raises(AssertionError):
-        transcripts.assert_requested_once_with(ExpectedWSTranscript(...))
-    transcripts.assert_any_request(ExpectedWSTranscript(..., Sender.Server('hi')))
-    transcripts.assert_any_request(ExpectedWSTranscript(..., Sender.Server('ho')))
+        transcripts.assert_requested_once_with(ExpectedWSTranscript([...]))
+    transcripts.assert_any_request(ExpectedWSTranscript([..., Sender.Server('hi')]))
+    transcripts.assert_any_request(ExpectedWSTranscript([..., Sender.Server('ho')]))
     with raises(AssertionError):
-        transcripts.assert_any_request(ExpectedWSTranscript(..., Sender.Server('hee')))
+        transcripts.assert_any_request(ExpectedWSTranscript([..., Sender.Server('hee')]))
 
 
 def test_transcripts_single(connection):
-    t0 = RecordedWSTranscript(
-        [RecordedWSMessage('hi', Sender.Server)],
-        connection=connection
-    )
+    t0 = RecordedWSTranscript.from_connection(connection)
+    t0.append(RecordedWSMessage('hi', Sender.Server))
     t0.close = (Sender.Server, 1000)
     t0.accepted = True
     transcripts = RecordedWSTranscripts([t0])
@@ -589,12 +588,12 @@ def test_transcripts_single(connection):
         transcripts.assert_not_requested()
     transcripts.assert_requested()
     transcripts.assert_requested_once()
-    transcripts.assert_requested_with(ExpectedWSTranscript(..., Sender.Server('hi')))
+    transcripts.assert_requested_with(ExpectedWSTranscript([..., Sender.Server('hi')]))
     with raises(AssertionError):
-        transcripts.assert_requested_with(ExpectedWSTranscript(..., Sender.Server('ho')))
-    transcripts.assert_requested_once_with(ExpectedWSTranscript(..., Sender.Server('hi')))
+        transcripts.assert_requested_with(ExpectedWSTranscript([..., Sender.Server('ho')]))
+    transcripts.assert_requested_once_with(ExpectedWSTranscript([..., Sender.Server('hi')]))
     with raises(AssertionError):
-        transcripts.assert_requested_once_with(ExpectedWSTranscript(..., Sender.Server('ho')))
-    transcripts.assert_any_request(ExpectedWSTranscript(..., Sender.Server('hi')))
+        transcripts.assert_requested_once_with(ExpectedWSTranscript([..., Sender.Server('ho')]))
+    transcripts.assert_any_request(ExpectedWSTranscript([..., Sender.Server('hi')]))
     with raises(AssertionError):
-        transcripts.assert_any_request(ExpectedWSTranscript(..., Sender.Server('ho')))
+        transcripts.assert_any_request(ExpectedWSTranscript([..., Sender.Server('ho')]))
