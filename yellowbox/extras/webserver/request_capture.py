@@ -35,17 +35,17 @@ def _is_submap_of(submap: Mapping[K, V], supermap: Mapping[K, V]):
 
 def _is_submultimap_of(submultimap: Mapping[K, Collection[V]], supermultimap: Mapping[K, Collection[V]]):
     """
-        checks whether a map is a submultimap of another map
-        Args:
-            submultimap: the submultimap to check
-            supermultimap: the supermultimap to check
+    checks whether a map is a submultimap of another map
+    Args:
+        submultimap: the submultimap to check
+        supermultimap: the supermultimap to check
 
-        Returns:
-            True if the condition exists, or a MismatchReason otherwise.
+    Returns:
+        True if the condition exists, or a MismatchReason otherwise.
 
-        Notes:
-            Mapping A is a submap of Mapping B iff for every key k in A, Counter(B[k]) >= Counter(A[k])
-        """
+    Notes:
+        Mapping A is a submap of Mapping B iff for every key k in A, Counter(B[k]) >= Counter(A[k])
+    """
     for k, v in submultimap.items():
         other_v = supermultimap.get(k, _missing)
         if other_v is _missing:
@@ -113,15 +113,15 @@ def _matches_expected_map(name: str, expected: Optional[Tuple[Mapping[K, V], boo
 def _matches_expected_multimap(name: str, expected: Optional[Tuple[Mapping[K, Collection[V]], bool]],
                                recorded: Mapping[K, Collection[V]]) -> Union[bool, MismatchReason]:
     """
-        Matches a multimap against the return value of _to_expected_map
-        Args:
-            name: the name of the field being matched
-            expected: the expected value, as returned by _to_expected_map
-            recorded: the recorded value to match
+    Matches a multimap against the return value of _to_expected_map
+    Args:
+        name: the name of the field being matched
+        expected: the expected value, as returned by _to_expected_map
+        recorded: the recorded value to match
 
-        Returns:
-            True if the condition exists, or a MismatchReason otherwise.
-        """
+    Returns:
+        True if the condition exists, or a MismatchReason otherwise.
+    """
     if expected is None:
         return True
     expected_value, is_subset = expected
