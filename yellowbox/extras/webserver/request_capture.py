@@ -1,6 +1,6 @@
 import re
 from collections import Counter
-from typing import Any, Collection, Iterable, Mapping, Optional, Pattern, Tuple, TypeVar, Union, Iterator
+from typing import Any, Collection, Iterable, Iterator, Mapping, Optional, Pattern, Tuple, TypeVar, Union
 
 from yellowbox.extras.webserver.util import MismatchReason, reason_is_ne
 

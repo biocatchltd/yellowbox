@@ -51,7 +51,12 @@ class WebSocketRecorder(WebSocket):
         elif message_type == "websocket.close":
             self.transcript.close = (Sender.Server, message.get('code', 1000))
         elif message_type == "websocket.send":
-            self.transcript.append(RecordedWSMessage(message.get('text') or message.get('bytes'), Sender.Server))
+            # by asgi uvicorn implementation (def asgi_receive), a message will always contain exactly one of
+            #  'text' or 'data'
+            data = message.get('text')
+            if data is None:
+                data = message.get('bytes')
+            self.transcript.append(RecordedWSMessage(data, Sender.Server))
         await super().send(message)
 
 
@@ -101,9 +106,6 @@ class RecordedWSMessage:
     """
     data: Union[bytes, str]
     sender: Sender
-
-    def __repr__(self):
-        return f'{self.sender.name}({self.data!r})'
 
 
 class RecordedWSTranscript(List[RecordedWSMessage]):
@@ -280,7 +282,7 @@ class ExpectedWSTranscript(ScopeExpectation):
         if len(recorded) < len(self.expected_messages):
             reasons.append(f'expected at least {len(self.expected_messages)} messages, found only {len(recorded)}')
         if reasons:
-            return MismatchReason(f', '.join(reasons))
+            return MismatchReason(', '.join(reasons))
         # in order to account for any_start, any_end, we check every subsequence of the recorded transcript
         # we store a list of candidate indices for the subsequence start
         if not self.any_start:
@@ -290,7 +292,6 @@ class ExpectedWSTranscript(ScopeExpectation):
             indices = (len(recorded) - len(self.expected_messages),)
         else:
             indices = range(0, len(recorded) - len(self.expected_messages) + 1)
-
 
         whynots = []
         for start_index in indices:

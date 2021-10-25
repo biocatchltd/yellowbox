@@ -535,3 +535,42 @@ def test_ws_capture_no_accept(server, ws_client_factory):
     assert list(transcript) == []
     assert not transcript.accepted
     assert transcript.close == (Sender.Server, 1008)
+
+
+def test_ws_capture_empties(server, ws_client_factory):
+    @server.add_ws_endpoint
+    @ws_endpoint('/bar')
+    async def bar(websocket: WebSocket):
+        await websocket.accept()
+        while True:
+            msg = await websocket.receive()
+            if msg['type'] == 'websocket.disconnect':
+                return
+            if 'text' in msg:
+                await websocket.send_text(msg['text'])
+            else:
+                await websocket.send_bytes(msg['bytes'])
+
+    with bar.capture_calls() as transcripts:
+        ws_client = ws_client_factory('/bar')
+        ws_client.send_binary(b'a')
+        assert ws_client.recv() == b'a'
+        ws_client.send_binary(b'')
+        assert ws_client.recv() == b''
+        ws_client.send('')
+        assert ws_client.recv() == ''
+        ws_client.send('a')
+        assert ws_client.recv() == 'a'
+        ws_client.close()
+
+    t, = transcripts
+    assert list(t) == [
+        RecordedWSMessage(b'a', Sender.Client),
+        RecordedWSMessage(b'a', Sender.Server),
+        RecordedWSMessage(b'', Sender.Client),
+        RecordedWSMessage(b'', Sender.Server),
+        RecordedWSMessage('', Sender.Client),
+        RecordedWSMessage('', Sender.Server),
+        RecordedWSMessage('a', Sender.Client),
+        RecordedWSMessage('a', Sender.Server),
+    ]
