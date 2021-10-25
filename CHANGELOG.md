@@ -1,4 +1,14 @@
 # Yellowbox Changelog
+## Next
+### Deprecated
+* `HttpService` is now deprecated in favor of `WebService`
+* `WebsocketService` is now deprecated in favor of `WebService`
+### Added
+* `WebService`, a new service to mock http and websocket server
+* PostgreSQLService: added method host_connection_string to connect to the database from another container.
+* Added tests for python 3.10
+### Fixed
+* `websocket-client` has been downgraded to a dev dependency
 ## 0.6.5
 ### Added
 * build_image ContextManager, to create an image from dockerfile

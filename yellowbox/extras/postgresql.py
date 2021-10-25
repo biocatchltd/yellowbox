@@ -10,6 +10,8 @@ from yellowbox.subclasses import SingleContainerService
 
 __all__ = ['PostgreSQLService', 'POSTGRES_INTERNAL_PORT']
 
+from yellowbox.utils import docker_host_name
+
 POSTGRES_INTERNAL_PORT = 5432
 
 
@@ -61,7 +63,8 @@ class PostgreSQLService(SingleContainerService, RunMixin):
     def container_connection_string(self, hostname: str, dialect: str = 'postgresql', driver: str = None,
                                     database: str = None):
         """
-        Generate an sqlalchemy-style connection string to the database in the service from the docker host.
+        Generate an sqlalchemy-style connection string to the database in the service from another container on a
+         common network.
         Args:
             hostname: the alias of the container.
             dialect: The dialect of the sql server.
@@ -74,6 +77,21 @@ class PostgreSQLService(SingleContainerService, RunMixin):
             dialect += '+' + driver
 
         return f'{dialect}://{self.user}:{self.password}@{hostname}:{POSTGRES_INTERNAL_PORT}/{database}'
+
+    def host_connection_string(self, dialect: str = 'postgresql', driver: str = None, database: str = None):
+        """
+        Generate an sqlalchemy-style connection string to the database in the service from another container.
+        Args:
+            dialect: The dialect of the sql server.
+            driver: additional driver for sqlalchemy to use.
+            database: the name of the database to connect to. Defaults to the service's default database.
+        """
+        database = database or self.default_db
+
+        if driver is not None:
+            dialect += '+' + driver
+
+        return f'{dialect}://{self.user}:{self.password}@{docker_host_name}:{self.external_port()}/{database}'
 
     def engine(self, **kwargs):
         """
