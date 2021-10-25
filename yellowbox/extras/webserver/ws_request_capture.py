@@ -107,6 +107,9 @@ class RecordedWSMessage:
     data: Union[bytes, str]
     sender: Sender
 
+    def __repr__(self):
+        return f'RecordedWSMessage({self.data!r}, Sender.{self.sender.name})'
+
 
 class RecordedWSTranscript(List[RecordedWSMessage]):
     """

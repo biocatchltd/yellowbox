@@ -321,8 +321,10 @@ def test_repr_transcript(connection):
         RecordedWSMessage('Jeeves! That is bold', Sender.Client),
     ])
     assert repr(transcript) \
-           == '''[Server('sir if I may be so bold?'), Client('go ahead Jeeves'), Server(b'crunch'),''' \
-              ''' Client('Jeeves! That is bold')]'''
+           == "[RecordedWSMessage('sir if I may be so bold?', Sender.Server)," \
+              " RecordedWSMessage('go ahead Jeeves', Sender.Client)," \
+              " RecordedWSMessage(b'crunch', Sender.Server)," \
+              " RecordedWSMessage('Jeeves! That is bold', Sender.Client)]"
 
 
 @mark.parametrize('close, expected_close', [
