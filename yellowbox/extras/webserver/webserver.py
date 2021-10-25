@@ -317,6 +317,8 @@ class WebServer(YellowService):
     """
     An easy-to-modify HTTP and websocket server, wrapping a starlette application
     """
+    PORT_ACCESS_MAX_RETRIES = 100  # the maximum number of attempts to make when accessing a binding port. Each attempt
+    # has an interval of 0.01 seconds
 
     def __init__(self, name: str, port: Optional[int] = None, log_config=DEFAULT_LOG_CONFIG, **kwargs):
         """
@@ -352,11 +354,12 @@ class WebServer(YellowService):
 
         Notes:
             Will only return None if the port was not provided during construction and the service thread is not running
-            If the service is starting up, this property will block until the port is binded.
+            If the service is starting up, this property will block until the port is binded, or raise an error if
+            blocked for longer than 1 second.
         """
         if self._port or not self._serve_thread.is_alive():
             return self._port
-        while True:
+        for _ in range(self.PORT_ACCESS_MAX_RETRIES):
             servers = getattr(self._server, 'servers', None)
             if servers:
                 sockets = getattr(servers[0], 'sockets', None)
@@ -364,6 +367,8 @@ class WebServer(YellowService):
                     socket = sockets[0]
                     break
             sleep(0.01)
+        else:
+            raise RuntimeError('timed out when getting binding port')
         self._port = socket.getsockname()[1]
         return self._port
 
