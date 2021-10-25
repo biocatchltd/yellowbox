@@ -8,7 +8,7 @@ from starlette.requests import HTTPConnection
 from starlette.websockets import WebSocket
 
 from yellowbox.extras.webserver.request_capture import ScopeExpectation
-from yellowbox.extras.webserver.util import MismatchReason
+from yellowbox.extras.webserver.util import MismatchReason, reason_is_ne
 
 
 class WebSocketRecorder(WebSocket):
@@ -34,7 +34,12 @@ class WebSocketRecorder(WebSocket):
         message = await super().receive()
         message_type = message.get('type')
         if message_type == "websocket.receive":
-            self.transcript.append(RecordedWSMessage(message.get('text') or message.get('bytes'), Sender.Client))
+            # by asgi uvicorn implementation (def asgi_receive), a message will always contain exactly one of
+            #  'text' or 'data'
+            data = message.get('text')
+            if data is None:
+                data = message.get('bytes')
+            self.transcript.append(RecordedWSMessage(data, Sender.Client))
         elif message_type == "websocket.disconnect":
             self.transcript.close = (Sender.Client, message.get('code', 1000))
         return message
@@ -177,7 +182,7 @@ class ExpectedWSMessage:
             True if the message matches, or a mismatch reason otherwise.
         """
         if self.sender != message.sender:
-            return MismatchReason.is_ne('sender', self.sender, message.sender)
+            return MismatchReason(reason_is_ne('sender', self.sender, message.sender))
 
         if self.data is ...:
             return True
@@ -191,7 +196,7 @@ class ExpectedWSMessage:
             return True
         else:
             if self.data != message.data:
-                return MismatchReason.is_ne('data', self.data, message.data)
+                return MismatchReason(reason_is_ne('data', self.data, message.data))
         return True
 
     def __str__(self):
@@ -260,22 +265,22 @@ class ExpectedWSTranscript(ScopeExpectation):
         Returns:
             True if the transcript matches, or a mismatch reason otherwise.
         """
-        scope_match = super().matches(recorded)
-        if not scope_match:
-            return scope_match
-
         if recorded.close is None:
             raise RuntimeError('the transcript is not yet done')
+
+        reasons = list(self.scope_mismatch_reasons(recorded))
+
         if self.close is not None and recorded.close != self.close:
-            return MismatchReason.is_ne('close_code', self.close, recorded.close)
+            reasons.append(reason_is_ne('close_code', self.close, recorded.close))
         if self.accepted is not None and recorded.accepted != self.accepted:
-            return MismatchReason.is_ne('accepted', self.accepted, recorded.accepted)
+            reasons.append(reason_is_ne('accepted', self.accepted, recorded.accepted))
 
         if not self.any_start and not self.any_end and len(recorded) != len(self.expected_messages):
-            return MismatchReason(f'expected exactly {len(self.expected_messages)} messages, found {len(recorded)}')
+            reasons.append(f'expected exactly {len(self.expected_messages)} messages, found {len(recorded)}')
         if len(recorded) < len(self.expected_messages):
-            return MismatchReason(f'expected at least {len(self.expected_messages)} messages,'
-                                  f' found only {len(recorded)}')
+            reasons.append(f'expected at least {len(self.expected_messages)} messages, found only {len(recorded)}')
+        if reasons:
+            return MismatchReason(f', '.join(reasons))
         # in order to account for any_start, any_end, we check every subsequence of the recorded transcript
         # we store a list of candidate indices for the subsequence start
         if not self.any_start:
@@ -285,6 +290,7 @@ class ExpectedWSTranscript(ScopeExpectation):
             indices = (len(recorded) - len(self.expected_messages),)
         else:
             indices = range(0, len(recorded) - len(self.expected_messages) + 1)
+
 
         whynots = []
         for start_index in indices:

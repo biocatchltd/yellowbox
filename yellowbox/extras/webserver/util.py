@@ -4,21 +4,21 @@ from contextlib import contextmanager
 from logging import Filter, getLogger
 
 
+def reason_is_ne(field: str, expected, got) -> str:
+    """
+    Create a string that is describes two values being unequal
+    Args:
+        field: the name of the mismatched field
+        expected: the expected value
+        got: the actual value
+    """
+    return f'{field} mismatch: expected {expected}, got {got}'
+
+
 class MismatchReason(str):
     """
     A falsish object, signifying a failure to match, with a reason.
     """
-
-    @classmethod
-    def is_ne(cls, field: str, expected, got) -> MismatchReason:
-        """
-        Create a mismatch reason that is caused by two values being unequal
-        Args:
-            field: the name of the mismatched field
-            expected: the expected value
-            got: the actual value
-        """
-        return cls(f'{field} mismatch: expected {expected}, got {got}')
 
     def __bool__(self):
         return False

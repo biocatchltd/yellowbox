@@ -8,7 +8,7 @@ from igraph import Graph
 from starlette.requests import Request
 
 from yellowbox.extras.webserver.request_capture import ScopeExpectation
-from yellowbox.extras.webserver.util import MismatchReason
+from yellowbox.extras.webserver.util import MismatchReason, reason_is_ne
 
 _missing = object()
 
@@ -95,21 +95,22 @@ class ExpectedHTTPRequest(ScopeExpectation):
         Returns:
             True if the request matches, or a MismatchReason object with the reason why otherwise.
         """
-        scope_match = super().matches(recorded)
-        if not scope_match:
-            return scope_match
+        reasons = list(self.scope_mismatch_reasons(recorded))
 
         if self.method and self.method != recorded.method:
-            return MismatchReason.is_ne('body', self.method, recorded.method)
+            reasons.append(reason_is_ne('body', self.method, recorded.method))
 
         if self.body_decode is not None:
             try:
                 body = self.body_decode(recorded.content)
             except Exception as e:
-                return MismatchReason(f'failed to parse content: {e!r}')
-            if self.data != body:
-                return MismatchReason.is_ne('content', self.data, body)
+                reasons.append(f'failed to parse content: {e!r}')
+            else:
+                if self.data != body:
+                    reasons.append(reason_is_ne('content', self.data, body))
 
+        if reasons:
+            return MismatchReason(', '.join(reasons))
         return True
 
     def __repr__(self):
@@ -354,14 +355,17 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         graph = Graph.Bipartite([0] * len(expected_requests) + [1] * len(self), edges)
 
         max_matching = graph.maximum_bipartite_matching()
+        unmatched_strs = []
         for i, expected in enumerate(expected_requests):
             if not max_matching.is_matched(i):
-                raise AssertionError(f'could not match expected request {expected}:'
-                                     + ''.join((f'\n\t{req}- {why_nots[expected][id(req)]}'
-                                                if id(req) in why_nots[expected]
-                                                else f'\n\t{req}- matched expected request '
-                                                     + str(expected_requests[max_matching.match_of(node_index)]))
-                                               for node_index, req in enumerate(self, len(expected_requests))))
+                unmatched_strs.append(f'could not match expected request {expected}:'
+                                      + ''.join((f'\n\t{req}- {why_nots[expected][id(req)]}'
+                                                 if id(req) in why_nots[expected]
+                                                 else f'\n\t{req}- matched expected request '
+                                                      + str(expected_requests[max_matching.match_of(node_index)]))
+                                                for node_index, req in enumerate(self, len(expected_requests))))
+        if unmatched_strs:
+            raise AssertionError('\n'.join(unmatched_strs))
 
     def assert_has_requests(self, *expected_requests: ExpectedHTTPRequest):
         """

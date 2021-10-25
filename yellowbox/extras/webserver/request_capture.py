@@ -1,8 +1,8 @@
 import re
 from collections import Counter
-from typing import Any, Collection, Iterable, Mapping, Optional, Pattern, Tuple, TypeVar, Union
+from typing import Any, Collection, Iterable, Mapping, Optional, Pattern, Tuple, TypeVar, Union, Iterator
 
-from yellowbox.extras.webserver.util import MismatchReason
+from yellowbox.extras.webserver.util import MismatchReason, reason_is_ne
 
 T = TypeVar('T')
 
@@ -85,8 +85,8 @@ def _to_expected_map(name: str, exact: Optional[T], submap: Optional[T]) -> Opti
     return None
 
 
-def _matches_expected_map(name: str, expected: Optional[Tuple[Mapping[K, V], bool]], recorded: Mapping[K, V])\
-        -> Union[bool, MismatchReason]:
+def _matches_expected_map(name: str, expected: Optional[Tuple[Mapping[K, V], bool]], recorded: Mapping[K, V]) \
+        -> Optional[str]:
     """
     Matches a map against the return value of _to_expected_map
     Args:
@@ -95,23 +95,23 @@ def _matches_expected_map(name: str, expected: Optional[Tuple[Mapping[K, V], boo
         recorded: the recorded value to match
 
     Returns:
-        True if the condition exists, or a MismatchReason otherwise.
+        True if the condition matches, or a MismatchReason otherwise.
     """
     if expected is None:
-        return True
+        return None
     expected_value, is_subset = expected
     if is_subset:
         submap_match = _is_submap_of(expected_value, recorded)
         if not submap_match:
-            return MismatchReason(f'{name} mismatch: {submap_match}')
+            return f'{name} mismatch: {submap_match}'
     else:
         if expected_value != recorded:
-            return MismatchReason.is_ne(name, expected_value, recorded)
-    return True
+            return reason_is_ne(name, expected_value, recorded)
+    return None
 
 
 def _matches_expected_multimap(name: str, expected: Optional[Tuple[Mapping[K, Collection[V]], bool]],
-                               recorded: Mapping[K, Collection[V]]) -> Union[bool, MismatchReason]:
+                               recorded: Mapping[K, Collection[V]]) -> Optional[str]:
     """
     Matches a multimap against the return value of _to_expected_map
     Args:
@@ -120,19 +120,19 @@ def _matches_expected_multimap(name: str, expected: Optional[Tuple[Mapping[K, Co
         recorded: the recorded value to match
 
     Returns:
-        True if the condition exists, or a MismatchReason otherwise.
+        None if the condition matches, or a string describing the reason otherwise.
     """
     if expected is None:
-        return True
+        return None
     expected_value, is_subset = expected
     if is_subset:
         submap_match = _is_submultimap_of(expected_value, recorded)
         if not submap_match:
-            return MismatchReason(f'{name} mismatch: {submap_match}')
+            return f'{name} mismatch: {submap_match}'
     else:
         if expected_value != recorded:
-            return MismatchReason.is_ne(name, expected_value, recorded)
-    return True
+            return reason_is_ne(name, expected_value, recorded)
+    return None
 
 
 def _repr_map(name: str, expected: Optional[Tuple[T, bool]]):
@@ -174,24 +174,22 @@ class ScopeExpectation:
         self.path_params = _to_expected_map('path_params', path_params, path_params_submap)
         self.query_params = _to_expected_map('query_params', query_params, query_params_submap)
 
-    def matches(self, recorded) -> Union[bool, MismatchReason]:
+    def scope_mismatch_reasons(self, recorded) -> Iterator[str]:
         header_match = _matches_expected_multimap('header', self.headers, recorded.headers)
-        if not header_match:
-            return header_match
+        if header_match:
+            yield header_match
 
         if (self.path_pattern is not None
                 and self.path_pattern.fullmatch(str(recorded.path)) is None):
-            return MismatchReason.is_ne('path', self.path_pattern.pattern, recorded.path)
+            yield reason_is_ne('path', self.path_pattern.pattern, recorded.path)
 
         path_params_match = _matches_expected_map('path_params', self.path_params, recorded.path_params)
-        if not path_params_match:
-            return path_params_match
+        if path_params_match:
+            yield path_params_match
 
         query_params_match = _matches_expected_multimap('query_params', self.query_params, recorded.query_params)
-        if not query_params_match:
-            return query_params_match
-
-        return True
+        if query_params_match:
+            yield query_params_match
 
     def _repr_map(self):
         """
