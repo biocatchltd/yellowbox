@@ -161,7 +161,7 @@ def download_file(container: Container, path: Union[str, PathLike[str]]
     """Download a file from the given container
 
     Args:
-        container: Docker container at any secrets.
+        container: Docker container at any state.
         path: File path.
 
     Raises:
