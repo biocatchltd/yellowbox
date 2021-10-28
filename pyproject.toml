@@ -29,7 +29,8 @@ Flask = { version = "^2.0.1", optional = true }
 python-igraph = { version = "^0.9.6", optional = true }
 starlette = { version = "*", optional = true }
 uvicorn = { version = "*", optional = true }
-websockets = { version = "^10.0", optional = true }
+websockets = { version = "*", optional = true }
+hvac = { version = "*", optional = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.0"
@@ -45,16 +46,17 @@ types-redis = "^3.5.4"
 pytest-xdist = "^2.1.0"
 
 [tool.poetry.extras]
-redis = ["redis"]
-rabbit = ["pika"]
-kafka = ["kafka-python"]
 azure = ["azure-storage-blob", "cffi"]
+kafka = ["kafka-python"]
 postgresql = ["sqlalchemy", "psycopg2"]
-websocket = ["simple_websocket_server", "websocket_client"]
+rabbit = ["pika"]
+redis = ["redis"]
+vault = ["hvac"]
 webserver = ["starlette", "python-igraph", "uvicorn", "websockets"]
+websocket = ["simple_websocket_server", "websocket_client"]
 
 _all = ["redis", "pika", "kafka-python", "azure-storage-blob", "cffi", "sqlalchemy", "psycopg2",
-    "simple_websocket_server", "websocket_client", "starlette", "python-igraph", "uvicorn", "websockets"]
+    "simple_websocket_server", "websocket_client", "starlette", "python-igraph", "uvicorn", "websockets", "hvac"]
 
 [build-system]
 requires = ["poetry>=1.0.0"]
