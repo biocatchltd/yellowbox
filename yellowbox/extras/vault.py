@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Optional, Iterator, Any, Iterable, Tuple, List, Mapping
+from typing import Any, Iterable, Iterator, List, Mapping, Optional, Tuple
 
 import hvac
 from docker import DockerClient
@@ -8,7 +8,7 @@ from requests.exceptions import ConnectionError
 
 from yellowbox.containers import create_and_pull, get_ports
 from yellowbox.retry import RetrySpec
-from yellowbox.subclasses import SingleContainerService, RunMixin
+from yellowbox.subclasses import RunMixin, SingleContainerService
 from yellowbox.utils import docker_host_name
 
 __all__ = ['VAULT_DEFAULT_PORT', 'DEV_POLICY', 'VaultService']

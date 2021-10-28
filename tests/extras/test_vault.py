@@ -1,9 +1,8 @@
-from pytest import raises
-
 import hvac
 from hvac.exceptions import InvalidPath
+from pytest import raises
 
-from yellowbox import temp_network, connect
+from yellowbox import connect, temp_network
 from yellowbox.extras.vault import VaultService
 
 
