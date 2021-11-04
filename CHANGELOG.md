@@ -1,5 +1,5 @@
 # Yellowbox Changelog
-## Next
+## 0.6.6
 ### Deprecated
 * `HttpService` is now deprecated in favor of `WebService`
 * `WebsocketService` is now deprecated in favor of `WebService`
