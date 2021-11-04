@@ -15,7 +15,7 @@ from starlette.websockets import WebSocket
 from websocket import WebSocket as WSClient, WebSocketBadStatusException, create_connection as create_ws_connection
 
 from yellowbox.extras.webserver import WebServer, http_endpoint, ws_endpoint
-from yellowbox.extras.webserver.webserver import HandlerError
+from yellowbox.extras.webserver.webserver import HandlerError, MockHTTPEndpoint, MockWSEndpoint
 from yellowbox.extras.webserver.ws_request_capture import RecordedWSMessage, Sender
 
 
@@ -574,3 +574,63 @@ def test_ws_capture_empties(server, ws_client_factory):
         RecordedWSMessage('a', Sender.Client),
         RecordedWSMessage('a', Sender.Server),
     ]
+
+
+def test_server_as_class():
+    class CalculatorService(WebServer):
+        square: MockHTTPEndpoint
+        calc: MockWSEndpoint
+
+        def start(self, retry_spec=None) -> WebServer:
+            ret = super().start(retry_spec)
+
+            async def square(request: Request):
+                return PlainTextResponse(str(request.path_params['a'] ** 2))
+
+            async def interactive_calulate(ws: WebSocket):
+                await ws.accept()
+                if 'mod' in ws.query_params:
+                    mod = int(ws.query_params['mod'])
+                else:
+                    mod = None
+
+                v = ws.path_params['a']
+                while True:
+                    if mod:
+                        v %= mod
+                    await ws.send_json(v)
+                    operation = await ws.receive_json()
+                    action = operation.get('op')
+                    if not action:
+                        return WS_1008_POLICY_VIOLATION
+                    if action == 'done':
+                        return WS_1000_NORMAL_CLOSURE
+                    operand = operation.get('value')
+                    if operand is None:
+                        return WS_1008_POLICY_VIOLATION
+                    if action == 'add':
+                        v += operand
+                        continue
+                    if action == 'mul':
+                        v *= operand
+                        continue
+
+            self.square = self.add_http_endpoint('GET', '/{a:int}/square', square)
+            self.calc = self.add_ws_endpoint('/{a:int}/calc', interactive_calulate)
+            return ret
+
+    with CalculatorService('calulator').start() as server:
+        with Client(base_url=server.local_url()) as client:
+            with server.square.capture_calls() as calls:
+                resp = client.get('/12/square')
+                resp.raise_for_status()
+                assert resp.text == '144'
+            calls.assert_requested_once_with(path='/12/square')
+
+        ws_client = create_ws_connection(server.local_url('ws') + '/12/calc?mod=20')
+        assert json.loads(ws_client.recv()) == 12
+        ws_client.send(json.dumps({'op': 'add', 'value': 1}))
+        assert json.loads(ws_client.recv()) == 13
+        ws_client.send(json.dumps({'op': 'mul', 'value': 15}))
+        assert json.loads(ws_client.recv()) == 15
+        ws_client.send(json.dumps({'op': 'done'}))
