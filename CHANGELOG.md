@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## 0.6.7
+### Fixed
+* removed the flask dependency
 ## 0.6.6
 ### Deprecated
 * `HttpService` is now deprecated in favor of `WebService`
