@@ -6,7 +6,7 @@ from httpx import Client, HTTPError
 from pytest import fixture, raises
 from starlette.datastructures import QueryParams
 from starlette.requests import Request
-from starlette.responses import JSONResponse, PlainTextResponse
+from starlette.responses import JSONResponse, PlainTextResponse, Response
 from starlette.status import (
     HTTP_200_OK, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR, WS_1000_NORMAL_CLOSURE,
     WS_1008_POLICY_VIOLATION
@@ -14,8 +14,10 @@ from starlette.status import (
 from starlette.websockets import WebSocket
 from websocket import WebSocket as WSClient, WebSocketBadStatusException, create_connection as create_ws_connection
 
-from yellowbox.extras.webserver import WebServer, http_endpoint, ws_endpoint
-from yellowbox.extras.webserver.webserver import HandlerError, MockHTTPEndpoint, MockWSEndpoint
+from yellowbox.extras.webserver import MockHTTPEndpoint, MockWSEndpoint, WebServer, http_endpoint, ws_endpoint
+from yellowbox.extras.webserver.class_endpoint import class_http_endpoint, class_ws_endpoint
+from yellowbox.extras.webserver.util import iter_side_effects
+from yellowbox.extras.webserver.webserver import HandlerError
 from yellowbox.extras.webserver.ws_request_capture import RecordedWSMessage, Sender
 
 
@@ -233,40 +235,40 @@ def test_parallel_capture(server):
             con2.__enter__()
 
 
+async def do_some_math(ws: WebSocket):
+    await ws.accept()
+    query_args = QueryParams(ws.scope["query_string"])
+    if 'mod' in query_args:
+        mod = int(query_args['mod'])
+    else:
+        mod = None
+
+    v = ws.scope['path_params']['a']
+    while True:
+        if mod:
+            v %= mod
+        await ws.send_json(v)
+        operation = await ws.receive_json()
+        action = operation.get('op')
+        if not action:
+            return WS_1008_POLICY_VIOLATION
+        if action == 'done':
+            return WS_1000_NORMAL_CLOSURE
+        operand = operation.get('value')
+        if operand is None:
+            return WS_1008_POLICY_VIOLATION
+        if action == 'add':
+            v += operand
+            continue
+        if action == 'mul':
+            v *= operand
+            continue
+
+
 @fixture
 def ws_calc(server):
-    @server.add_ws_endpoint
-    @ws_endpoint('/{a:int}/calc')
-    async def do_some_math(ws: WebSocket):
-        await ws.accept()
-        query_args = QueryParams(ws.scope["query_string"])
-        if 'mod' in query_args:
-            mod = int(query_args['mod'])
-        else:
-            mod = None
-
-        v = ws.scope['path_params']['a']
-        while True:
-            if mod:
-                v %= mod
-            await ws.send_json(v)
-            operation = await ws.receive_json()
-            action = operation.get('op')
-            if not action:
-                return WS_1008_POLICY_VIOLATION
-            if action == 'done':
-                return WS_1000_NORMAL_CLOSURE
-            operand = operation.get('value')
-            if operand is None:
-                return WS_1008_POLICY_VIOLATION
-            if action == 'add':
-                v += operand
-                continue
-            if action == 'mul':
-                v *= operand
-                continue
-
-    return do_some_math
+    ep = server.add_ws_endpoint(ws_endpoint('/{a:int}/calc', do_some_math))
+    return ep
 
 
 def test_ws_path(server, ws_calc, ws_client_factory):
@@ -587,36 +589,8 @@ def test_server_as_class():
             async def square(request: Request):
                 return PlainTextResponse(str(request.path_params['a'] ** 2))
 
-            async def interactive_calulate(ws: WebSocket):
-                await ws.accept()
-                if 'mod' in ws.query_params:
-                    mod = int(ws.query_params['mod'])
-                else:
-                    mod = None
-
-                v = ws.path_params['a']
-                while True:
-                    if mod:
-                        v %= mod
-                    await ws.send_json(v)
-                    operation = await ws.receive_json()
-                    action = operation.get('op')
-                    if not action:
-                        return WS_1008_POLICY_VIOLATION
-                    if action == 'done':
-                        return WS_1000_NORMAL_CLOSURE
-                    operand = operation.get('value')
-                    if operand is None:
-                        return WS_1008_POLICY_VIOLATION
-                    if action == 'add':
-                        v += operand
-                        continue
-                    if action == 'mul':
-                        v *= operand
-                        continue
-
             self.square = self.add_http_endpoint('GET', '/{a:int}/square', square)
-            self.calc = self.add_ws_endpoint('/{a:int}/calc', interactive_calulate)
+            self.calc = self.add_ws_endpoint('/{a:int}/calc', do_some_math)
             return ret
 
     with CalculatorService('calulator').start() as server:
@@ -634,3 +608,53 @@ def test_server_as_class():
         ws_client.send(json.dumps({'op': 'mul', 'value': 15}))
         assert json.loads(ws_client.recv()) == 15
         ws_client.send(json.dumps({'op': 'done'}))
+
+
+def test_server_class_endpoints():
+    class CalculatorService(WebServer):
+        @class_http_endpoint('GET', '/{a:int}/square')
+        async def square(self, request: Request):
+            return PlainTextResponse(str(request.path_params['a'] ** 2))
+
+        @class_ws_endpoint('/{a:int}/calc')
+        async def calc(self, websocket: WebSocket):
+            return await do_some_math(websocket)
+
+    with CalculatorService('calulator').start() as server:
+        with Client(base_url=server.local_url()) as client:
+            with server.square.capture_calls() as calls:
+                resp = client.get('/12/square')
+                resp.raise_for_status()
+                assert resp.text == '144'
+            calls.assert_requested_once_with(path='/12/square')
+
+        ws_client = create_ws_connection(server.local_url('ws') + '/12/calc?mod=20')
+        assert json.loads(ws_client.recv()) == 12
+        ws_client.send(json.dumps({'op': 'add', 'value': 1}))
+        assert json.loads(ws_client.recv()) == 13
+        ws_client.send(json.dumps({'op': 'mul', 'value': 15}))
+        assert json.loads(ws_client.recv()) == 15
+        ws_client.send(json.dumps({'op': 'done'}))
+
+def test_iter_side_effect(server, client):
+    async def side_effect0(request: Request):
+        return PlainTextResponse(str(int(request.query_params['x'])*2))
+    async def side_effect1(request: Request):
+        return PlainTextResponse(str(int(request.query_params['x'])**2))
+    side_effect2 = Response(status_code=526)
+    async def side_effect3(request: Request):
+        return PlainTextResponse(str(-int(request.query_params['x'])))
+
+    server.add_http_endpoint('GET', '/foo', iter_side_effects([side_effect0, side_effect1, side_effect2, side_effect3]))
+
+    resp = client.get('/foo?x=12')
+    resp.raise_for_status()
+    assert resp.text == '24'
+    resp = client.get('/foo?x=12')
+    resp.raise_for_status()
+    assert resp.text == '144'
+    resp = client.get('/foo?x=12')
+    assert resp.status_code == 526
+    resp = client.get('/foo?x=12')
+    resp.raise_for_status()
+    assert resp.text == '-12'

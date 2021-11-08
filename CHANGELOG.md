@@ -1,5 +1,12 @@
 # Yellowbox Changelog
 ## 0.6.7
+### Added
+* MockHttpEndpoint and MockWSEndpoint added to webserver package
+* Webserver: `class_http_endpoint` and `class_ws_endpoint`, WebServer subclasses automatically add all
+class_*_endpoints to their instances when started
+* Webserver: `iter_side_effects` to create a side effect that delegates to other per request.
+### Changed
+* Webserver: `PORT_ACCESS_MAX_RETRIES` renamed to `_PORT_ACCESS_MAX_RETRIES`
 ### Fixed
 * removed the flask dependency
 ## 0.6.6
