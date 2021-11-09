@@ -1,4 +1,29 @@
 # Yellowbox Changelog
+## 0.6.7
+### Added
+* MockHttpEndpoint and MockWSEndpoint added to webserver package
+* Webserver: `class_http_endpoint` and `class_ws_endpoint`, WebServer subclasses automatically add all
+class_*_endpoints to their instances when started
+* Webserver: `iter_side_effects` to create a side effect that delegates to other per request.
+### Changed
+* Webserver: `PORT_ACCESS_MAX_RETRIES` renamed to `_PORT_ACCESS_MAX_RETRIES`
+### Fixed
+* removed the flask dependency
+## 0.6.6
+### Deprecated
+* `HttpService` is now deprecated in favor of `WebService`
+* `WebsocketService` is now deprecated in favor of `WebService`
+### Added
+* `WebService`, a new service to mock http and websocket server
+* PostgreSQLService: added method host_connection_string to connect to the database from another container.
+* Added tests for python 3.10
+* `extras.vault.VaultService`, A new service for Hashicorp Vault.
+### Fixed
+* `websocket-client` has been downgraded to a dev dependency
+## 0.6.5
+### Added
+* build_image ContextManager, to create an image from dockerfile
+* docker_client can be imported directly from yellowbox package
 ## 0.6.4
 ### Fixed
 * Changed rabbitmq configuration to use config files instead of env vars. Allowing usage of rabbitmq 3.9.0 and upwards.
