@@ -1,13 +1,13 @@
 import json
 
 from httpx import Client
-from starlette.responses import Response, PlainTextResponse
 from pytest import raises
+from starlette.responses import PlainTextResponse, Response
+from websocket import create_connection as create_ws_connection
+
 from tests.extras.test_webserver import do_some_math
 from yellowbox.extras.webserver import WebServer, class_ws_endpoint
 from yellowbox.extras.webserver.class_endpoint import class_http_endpoint
-
-from websocket import create_connection as create_ws_connection
 
 
 def test_const_class_endpoint():
@@ -80,6 +80,7 @@ def test_conflict_from_parents():
     with raises(TypeError):
         class Server(Server0, Server1):
             pass
+
 
 def test_conflict_from_parent():
     class Server0(WebServer):

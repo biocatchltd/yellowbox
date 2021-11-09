@@ -1,8 +1,8 @@
 from functools import update_wrapper
-from typing import TYPE_CHECKING, Callable, Generic, Optional, TypeVar, overload, ClassVar
+from typing import TYPE_CHECKING, Callable, ClassVar, Generic, Optional, TypeVar, overload
 
 from yellowbox.extras.webserver.endpoints import (
-    HTTP_SIDE_EFFECT, METHODS, MockHTTPEndpoint, MockWSEndpoint, http_endpoint, ws_endpoint, WS_SIDE_EFFECT
+    HTTP_SIDE_EFFECT, METHODS, WS_SIDE_EFFECT, MockHTTPEndpoint, MockWSEndpoint, http_endpoint, ws_endpoint
 )
 
 T = TypeVar('T')

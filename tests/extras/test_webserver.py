@@ -636,12 +636,16 @@ def test_server_class_endpoints():
         assert json.loads(ws_client.recv()) == 15
         ws_client.send(json.dumps({'op': 'done'}))
 
+
 def test_iter_side_effect(server, client):
     async def side_effect0(request: Request):
-        return PlainTextResponse(str(int(request.query_params['x'])*2))
+        return PlainTextResponse(str(int(request.query_params['x']) * 2))
+
     async def side_effect1(request: Request):
-        return PlainTextResponse(str(int(request.query_params['x'])**2))
+        return PlainTextResponse(str(int(request.query_params['x']) ** 2))
+
     side_effect2 = Response(status_code=526)
+
     async def side_effect3(request: Request):
         return PlainTextResponse(str(-int(request.query_params['x'])))
 
