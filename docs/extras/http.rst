@@ -9,34 +9,37 @@
 An HTTP :class:`~service.YellowService` used to easily mock and test HTTP
 connections.
 
+.. deprecated:: 0.6.6
+    Use :class:`~extras.http_server.webserver` instead.
+
+
 .. class:: HttpService(host="0.0.0.0", port=0, name=None)
 
     A Simple HTTP server wrapped as :class:`~service.YellowService`.
 
-    *host* is the listening host. Defaults to ``"0.0.0.0"`` to listen on all IPv4
-    interfaces.
-
-    *port* is the listening port. Defaults to ``0`` which signals a random empty
-    port. Use :attr:`server_port` to fetch the port.
-
-    *name* is a string identifying this server and thread for logging purposes.
-    If ``None``, a default name with a running number is generated.
-
     Inherits from :class:`~service.YellowService`.
 
-    Example usage::
+    :param str host: is the listening host. Defaults to ``"0.0.0.0"`` to listen on all IPv4
+     interfaces.
+    :param int port: is the listening port. Defaults to ``0`` to let the OS choose a free port. Use :attr:`server_port` to fetch the port.
+    :param Optional[str] name: is a string identifying this server and thread for logging purposes. If ``None``, a default name with a running number is generated.
 
-        >>> with HttpService().start() as service:
-        ...   @service.patch_route('GET', '/hello/world')
-        ...   def hello_world(handler: RouterHTTPRequestHandler):
-        ...      return "hi there"
-        ...   # hello_world is now a context manager
-        ...   with hello_world:
-        ...      # within this scope, the path "/hello/world" will return a 200 response with the body "hi there"
-        ...      assert requests.get(service.local_url+"/hello/world").text == "hi there"
-        ...   # routes can also be set without a function
-        ...   with service.patch_route('GET', '/meaning_of_life', '42'):
-        ...      assert requests.get(service.local_url+"/meaning_of_life").content == b'42'
+
+    .. code-block::
+        :caption: Example Usage
+
+        with HttpService().start() as service:
+          @service.patch_route('GET', '/hello/world')
+          def hello_world(handler: RouterHTTPRequestHandler):
+             return "hi there"
+          # hello_world is now a context manager
+          with hello_world:
+             # within this scope, the path "/hello/world" will return a 200 response
+             # with the body "hi there"
+             assert requests.get(service.local_url+"/hello/world").text == "hi there"
+          # routes can also be set without a function
+          with service.patch_route('GET', '/meaning_of_life', '42'):
+             assert requests.get(service.local_url+"/meaning_of_life").content == b'42'
 
     Has the following additional methods:
 

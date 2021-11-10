@@ -16,35 +16,55 @@ connects successfully.
 
 .. class:: RetrySpec(interval=2, attempts=None, timeout=None)
 
-   Specification object for repeated attempts of an arbitrary action that might
-   fail.
+    Specification object for repeated attempts of an arbitrary action that might fail.
 
     :class:`RetrySpec` is a dataclass. For arguments, see the defined
     attributes.
 
     .. attribute:: interval
+        :type: int | float
+        :value: 2
 
-        Time between attempts in seconds. *interval* can be an int or a float.
-        Defaults to 2.
+        Time in seconds to pause after a failed attempt. Defaults to 2.
+
 
     .. attribute:: attempts
+        :type: Optional[int]
+        :value: None
 
         Max number of attempts. If ``None``, infinite attempts are made.
 
     .. attribute:: timeout
+        :type: int | float | None
+        :value: None
 
-        A timeout for all the attempts (including the interval) combined. If
-        ``None``, function will never time out.
+        A timeout for all the attempts (including the interval) combined. If ``None``, function will never time out.
 
-    .. method:: retry(func, exceptions)
+    .. method:: retry(func, exceptions)->T
 
-        Retry the given function until it succeeds according to the
-        :class:`RetrySpec`.
+        :param func: A no-argument function that may fail with an exception.
+        :type func: Callable[[], T]
 
-        *func* is a no-argument function that may fail with an exception, and
-         will be run multiple times according to the spec. If you wish to supply
-         arguments to the function, use :func:`functools.partial`.
+        :param exceptions: A list of exceptions that ``func`` can raise and that will trigger a retry.
+        :type exceptions: Tuple[Type[Exception],...] | Type[Exception]
 
-        *exceptions* is a single exception type or a :class:`tuple` of multiple
-         exception types, that will be caught when the function fails.
+        Retry the given function until it succeeds according to the :class:`RetrySpec`. Returns the result of the
+        ``func`` if it completes successfully. If the maximum number of retries or the timeout is reached, raises the
+        last error raises by ``func``.
 
+        .. note::
+
+            If you wish to retry a function that takes arguments, use :func:`functools.partial` to supply the
+            arguments.
+
+    .. code-block::
+        :caption: Example Usage
+
+        retry_spec = RetrySpec(interval=0.1, attempts=10)
+        try:
+            # will attempt to get a URL 10 times, with a 0.1 second interval between attempts
+            response = retry_spec.retry(lambda: requests.get('https://www.example.com'),
+                                        RequestException)
+        except RequestException:
+            # all 10 attempts failed
+            ...

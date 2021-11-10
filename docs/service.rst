@@ -24,14 +24,14 @@ units.
         with YellowService().start() as service:
             service.do_stuff()
 
-    Service will automatically stop leaving the context manager.
+    Service will automatically stop upon leaving the context manager.
 
-    .. method:: start()
+    .. method:: start() -> YellowService
         :abstractmethod:
 
         Start the service.
 
-        This method will block until the service is fully up and running.
+        This method should block until the service is fully up and running.
 
         Returns the service itself.
 
@@ -40,9 +40,9 @@ units.
 
         Stop the service.
 
-        This method will block until the service is fully stopped.
+        This method should block until the service is fully stopped.
 
-    .. method:: is_alive()
+    .. method:: is_alive() -> bool
         :abstractmethod:
 
         Returns whether the service is currently running.
