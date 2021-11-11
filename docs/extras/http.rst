@@ -21,8 +21,10 @@ connections.
 
     :param str host: is the listening host. Defaults to ``"0.0.0.0"`` to listen on all IPv4
      interfaces.
-    :param int port: is the listening port. Defaults to ``0`` to let the OS choose a free port. Use :attr:`server_port` to fetch the port.
-    :param Optional[str] name: is a string identifying this server and thread for logging purposes. If ``None``, a default name with a running number is generated.
+    :param int port: is the listening port. Defaults to ``0`` to let the OS choose a free port. Use :attr:`server_port`
+     to fetch the port.
+    :param Optional[str] name: is a string identifying this server and thread for logging purposes. If ``None``, a
+     default name with a running number is generated.
 
 
     .. code-block::
@@ -45,16 +47,19 @@ connections.
 
     .. method:: server_port
         :property:
+        :rtype: int
 
         HTTP Server listening port.
 
     .. method:: local_url
         :property:
+        :rtype: str
 
         Full URL to access the HTTP Server from localhost (including port).
 
     .. method:: container_url
         :property:
+        :rtype: str
 
         Full URL to access the HTTP Server from inside a locally-running
         container (including port).
