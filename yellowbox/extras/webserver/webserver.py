@@ -11,7 +11,7 @@ from starlette.applications import Starlette
 from starlette.responses import PlainTextResponse
 from starlette.routing import Route, WebSocketRoute
 from uvicorn import Config, Server
-from uvicorn.config import LOGGING_CONFIG
+from uvicorn.config import LOGGING_CONFIG as uvicorn_logging_config
 
 from yellowbox import YellowService
 from yellowbox.extras.webserver.class_endpoint import HTTPEndpointTemplate, WSEndpointTemplate
@@ -29,9 +29,6 @@ class HandlerError(Exception):
     """
 
 
-DEFAULT_LOG_CONFIG = deepcopy(LOGGING_CONFIG)
-
-
 class WebServer(YellowService):
     """
     An easy-to-modify HTTP and websocket server, wrapping a starlette application
@@ -41,13 +38,11 @@ class WebServer(YellowService):
 
     _CLASS_ENDPOINT_TEMPLATES: Mapping[str, Union[HTTPEndpointTemplate, WSEndpointTemplate]] = {}
 
-    def __init__(self, name: str, port: Optional[int] = None, log_config=DEFAULT_LOG_CONFIG, **kwargs):
+    def __init__(self, name: str, port: Optional[int] = None, **kwargs):
         """
         Args:
             name: the name of the service
             port: the port to bind to when serving, default will bind to an available port
-            log_config: the logging configuration fot the uvicorn server. On default, will override the access format
-             to include the service name.
             **kwargs: forwarded to the uvicorn configuration.
         """
         self._app = Starlette(debug=True)
@@ -57,13 +52,17 @@ class WebServer(YellowService):
         #  and raise them in the main thread as soon as we can
         self._pending_exception: Optional[Exception] = None
 
-        if log_config is DEFAULT_LOG_CONFIG:
-            log_config = deepcopy(DEFAULT_LOG_CONFIG)
-            log_config['formatters']['access']['fmt'] = f'%(levelprefix)s {name} - "%(request_line)s" %(status_code)s'
+        if 'log_config' not in kwargs:
+            log_config = deepcopy(uvicorn_logging_config)
+            log_config['formatters']['access']['fmt'] = f'%(levelprefix)s {name} %(client_addr)s - "%(request_line)s" %(status_code)s'
+            log_config['formatters']['default']['fmt'] = f'%(levelprefix)s {name} %(message)s'
+            kwargs['log_config'] = log_config
+
+        kwargs.setdefault('host', '0.0.0.0')
 
         self._port = port
 
-        config = Config(self._app, **kwargs, port=self._port, log_config=log_config)
+        config = Config(self._app, **kwargs, port=self._port)
         self._server = Server(config)
         self._serve_thread = Thread(name=f'{name}_thread', target=self._server.run)
 
