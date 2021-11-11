@@ -457,14 +457,18 @@ def test_ws_readd_paths(server, ws_client_factory, square_ep):
 
 
 def test_from_container(server, docker_client, create_and_pull):
-    server.add_http_endpoint('GET', '/foo', PlainTextResponse('hi'))
-    container = create_and_pull(
-        docker_client,
-        "byrnedo/alpine-curl:latest",
-        f'-vvv "{server.container_url()}" --fail -X "GET"'
-    )
-    container.reload()
-    assert container.attrs['State']["ExitCode"] == 0
+    ep = server.add_http_endpoint('GET', '/foo', PlainTextResponse('hi'))
+    with ep.capture_calls() as calls:
+        container = create_and_pull(
+            docker_client,
+            "byrnedo/alpine-curl:latest",
+            f'-vvv "{server.container_url()}/foo" --fail -X "GET"', remove=False
+        )
+        container.start()
+        container.wait()
+        container.reload()
+        assert container.attrs['State']["ExitCode"] == 0
+    calls.assert_requested_once()
 
 
 def test_ws_capture_client_close(server, ws_client_factory):
