@@ -54,7 +54,8 @@ class WebServer(YellowService):
 
         if 'log_config' not in kwargs:
             log_config = deepcopy(uvicorn_logging_config)
-            log_config['formatters']['access']['fmt'] = f'%(levelprefix)s {name} %(client_addr)s - "%(request_line)s" %(status_code)s'
+            log_config['formatters']['access']['fmt'] = \
+                f'%(levelprefix)s {name} %(client_addr)s - "%(request_line)s" %(status_code)s'
             log_config['formatters']['default']['fmt'] = f'%(levelprefix)s {name} %(message)s'
             kwargs['log_config'] = log_config
 
