@@ -6,102 +6,84 @@
 
 -------
 
-A full-fledged PostgreSQL :class:`~service.YellowService` for running the famous
-database. Runs the official PostgreSQL docker image, with ``sqlalchemy`` on top
-of ``psycopg2`` as the default Python client.
+A :class:`~service.YellowService` for running PostGreSQL DB. Runs the official PostgreSQL docker image, with
+integration with ``sqlalchemy``.
 
 .. note::
 
-    If you wish to use this package, please install Yellowbox with the
-    ``postgresql`` extra. For more information, see our
-    :ref:`installation guide <installation>`.
+    Requires the ``postgresql`` extra. For more information, see our :ref:`installation guide <installation>`.
 
-.. class:: PostgreSQLService(docker_client, image="postgres:latest", *,
-    user='postgres', password='guest', default_db=None, **kwargs)
+.. class:: PostgreSQLService(docker_client, image="postgres:latest", *, user='postgres', password='guest', \
+        default_db=None, **kwargs)
 
-    A :class:`~subclasses.SingleContainerService` used to run the Postgres
-    database.
+    A service that runs a PostgreSQL database. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
+    :class:`~subclasses.RunMixin`.
 
-    *docker_client* is a ``docker.py`` client used to pull the Postgres image
-    and create the container during instance construction.
+    :param docker_client: The docker client to used to pull and create the Postgresql container.
+    :type docker_client: :class:`docker.DockerClient<docker.client.DockerClient>`
 
-    *image* is the Postgres database image to use. Defaults to the latest
-    official build.
+    :param str image: The image name to create a container of.
 
-    *user* and *password* are the default username and password to set for
-    the server.
+    :param str user: The name of the default user for the database.
+    :param str password: The password for the default user.
 
-    If set, *default_db* would be a name for the default database. Otherwise,
-    the default database would be named the same as the username.
+    :param str | None default_db: The name of the default database. If :data:`None`, uses the same name as the
+     default user.
 
-    Further `kwargs` are passed to the parent classes' constructor.
-
-    Inherits from :class:`~subclasses.SingleContainerService` and
-    :class:`subclasses.RunMixin`.
+    :param \*\*kwargs: Additional keyword arguments passed to :class:`~subclasses.SingleContainerService`.
 
     Has the following additional methods:
 
-    .. method:: external_port()
+    .. method:: external_port() -> int
 
         Returns the port to be used when connecting to the Postgres server.
 
-    .. method:: local_connection_string(dialect='postgresql', driver=None,
-        database=None)
+    .. method:: local_connection_string(dialect='postgresql', driver=None, database=None)->str
 
         Returns an sqlalchemy connection string to the database from the localhost.
 
-        *dialect* is the dialect of the sql server. Defaults to ``'postgresql'``.
+        :param str dialect: The dialect to use for the connection string.
+        :param str | None driver: The driver to use for the connection string. If :data:`None`, uses the default
+         driver for the dialect (psycopg2).
+        :param str | None database: The database to use for the connection string. If :data:`None`, uses the default
+         database.
 
-        *driver*, if specified, is an additional driver for sqlalchemy to use.
+        .. note::
 
-        *database* is the name of the database to connect to. Defaults to the
-        service's default database.
+            To connect from a container, see :meth:`container_connection_string` or :meth:`host_connection_string`.
 
-        If you wish to connect from a different container, see
-        :meth:`container_connection_string`.
+    .. method:: container_connection_string(hostname, dialect='postgresql', driver=None, database=None)->str
 
-    .. method:: container_connection_string(hostname, dialect='postgresql',
-        driver=None, database=None)
+        Returns an sqlalchemy connection string to the database from a different container.
 
-        Returns an sqlalchemy connection string to the database across containers.
+        :param str hostname: The hostname of the container. Most commonly this is an alias of the
+         PostgreSQLService within a network.
+        :param str dialect: The dialect to use for the connection string.
+        :param str | None driver: The driver to use for the connection string. If :data:`None`, uses the default
+         driver for the dialect (psycopg2).
+        :param str | None database: The database to use for the connection string. If :data:`None`, uses the default
+         database.
 
-        *hostname* is the alias of the postgres container.
+    .. method:: host_connection_string(dialect='postgresql', driver=None, database=None)->str
 
-        *dialect* is the dialect of the sql server. Defaults to ``'postgresql'``.
+        Returns an sqlalchemy connection string to the database from a child container through the docker host.
 
-        *driver*, if specified, is an additional driver for sqlalchemy to use.
+        :param str dialect: The dialect to use for the connection string.
+        :param str | None driver: The driver to use for the connection string. If :data:`None`, uses the default
+         driver for the dialect (psycopg2).
+        :param str | None database: The database to use for the connection string. If :data:`None`, uses the default
+         database.
 
-        *database* is the name of the database to connect to. Defaults to the
-        service's default database.
+    .. method:: engine(**kwargs) -> sqlalchemy.engine.Engine
 
-        If you wish to connect from the local docker host, see
+        Returns a sqlalchemy engine to the database, using a default connection string generated by
         :meth:`local_connection_string`.
 
-    .. method:: connection(**kwargs)
+        :param \*\*kwargs: Additional keyword arguments passed to :func:`sqlalchemy.create_engine`.
 
-        Creates an SQLAlchemy connection to the default database.
+    .. method:: connection(**kwargs) -> sqlalchemy.engine.Connection
 
-        *kwargs* are extra parameters passed to the
-        :meth:`engine.connect <sqlalchemy:engine.connect>` function.
+        Creates an SQLAlchemy connection to the database, using a default connection string generated by
+        :meth:`local_connection_string`.
 
-        Returns a :class:`Connection <sqlalchemy:connection>` object.
-
-
-
-
-    .. method:: reset_state()
-
-        Flush the database.
-
-        Equivalent to running ``flushall()`` on a redis client.
-
-    .. method:: set_state(db_dict)
-
-        Set the database to a certain state.
-
-        *db_dict* is a dictionary mapping between string keys used as Redis keys,
-        and values. Values can be any of:
-
-        * Primitives - str, int, float, or bytes.
-        * Sequence of primitives, for Redis lists.
-        * Mapping of field names to primitives, for Redis hashmaps.
+        :param \*\*kwargs: Additional keyword arguments passed to :meth:`sqlalchemy.Engine.connect`.

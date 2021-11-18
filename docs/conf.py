@@ -16,11 +16,14 @@
 
 
 # -- Project information -----------------------------------------------------
+from importlib import import_module
+from inspect import getsourcelines, getsourcefile
+from traceback import print_exc
+import re
 
 project = 'Yellowbox'
 copyright = '2021, Biocatch'
 author = 'Biocatch'
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -28,14 +31,75 @@ author = 'Biocatch'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.intersphinx", 'python_docs_theme'
+    "sphinx.ext.intersphinx", 'python_docs_theme', 'sphinx.ext.linkcode'
 ]
 
 intersphinx_mapping = {
-    'python':('http://docs.python.org/3/', None),
+    'python': ('https://docs.python.org/3/', None),
     'pika': ('https://pika.readthedocs.io/en/stable/', None),
+    'sqlalchemy': ('https://docs.sqlalchemy.org/en/14/', None),
     'docker': ('https://docker-py.readthedocs.io/en/stable/', None),
-    }
+    'kafka-python': ('https://kafka-python.readthedocs.io/en/master/', None),
+}
+
+import yellowbox
+import os
+import ast
+
+release = yellowbox.__version__ or 'master'
+
+
+# Resolve function for the linkcode extension.
+def linkcode_resolve(domain, info):
+    def find_var_lines(parent_source, parent_start_lineno, var_name):
+        class_body = ast.parse(''.join(parent_source)).body[0].body
+        for node in class_body:
+            if (isinstance(node, ast.Assign)
+                and any(isinstance(target, ast.Name) and target.id == var_name for target in node.targets)) \
+                    or (isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
+                        and node.target.id == var_name):
+                lineno = node.lineno
+                end_lineno = node.end_lineno
+                return parent_source[lineno:end_lineno + 1], lineno+parent_start_lineno-1
+        return parent_source, parent_start_lineno
+
+    def find_source():
+        obj = import_module('yellowbox.' + info['module'])
+        item = None
+        for part in info['fullname'].split('.'):
+            try:
+                new_obj = getattr(obj, part)
+            except AttributeError:
+                # sometimes we run into an attribute/thing that doesn't exist at import time, just get the last obj
+                break
+            if isinstance(new_obj, (str, int, float, bool, bytes, type(None))):
+                # the object is a variable, we search for it's declaration manually
+                item = part
+                break
+            obj = new_obj
+        if isinstance(obj, property):
+            obj = obj.fget
+        while hasattr(obj, '__func__'):
+            obj = obj.__func__
+
+        fn = getsourcefile(obj)
+        fn = os.path.relpath(fn, start=os.path.dirname(yellowbox.__file__))
+        source, lineno = getsourcelines(obj)
+        if item:
+            source, lineno = find_var_lines(source, lineno, item)
+        return fn, lineno, lineno + len(source) - 1
+
+    if domain != 'py' or not info['module']:
+        return None
+    try:
+        fn, lineno, endno = find_source()
+        filename = f'yellowbox/{fn}#L{lineno}-L{endno}'
+    except Exception as e:
+        print(f'error getting link code {info}')
+        print_exc()
+        raise
+    return "https://github.com/biocatchltd/yellowbox/blob/%s/%s" % (release, filename)
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -44,7 +108,6 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
 
 # -- Options for HTML output -------------------------------------------------
 

@@ -52,6 +52,11 @@ required for running the service.
         :param signal: The signal to send to the containers.
         :type signal: str | int
 
+        .. note::
+
+            Some subclasses override the default signal with something better suited to a specific image (like
+            ``'SIGKILL'`` or ``'SIGINT'``).
+
     .. attribute:: remove
         :type: bool
 

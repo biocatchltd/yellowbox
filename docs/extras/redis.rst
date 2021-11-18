@@ -6,68 +6,70 @@
 
 -------
 
-A full-fledged Redis :class:`~service.YellowService` for running the famous
-database. Runs the official Redis docker image, with ``redis.py`` as the default
-Python client.
+A :class:`~service.YellowService` for running Redis DB. Runs the official Redis docker image.
 
 .. note::
 
-    If you wish to use this package, please install Yellowbox with the ``redis``
-    extra. For more information, see our
-    :ref:`installation guide <installation>`.
+    Requires the ``redis`` extra. For more information, see our :ref:`installation guide <installation>`.
 
 .. class:: RedisService(docker_client, image="redis:latest", redis_file=None,\
                         **kwargs)
 
-    A :class:`~subclasses.SingleContainerService` used to run the redis
-    database.
+    A service to run the redis database. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
+    :class:`~subclasses.RunMixin`.
 
-    *docker_client* is a ``docker.py`` client used to pull the Redis image
-    and create the container during instance construction.
+    :param docker_client: The docker client to used to pull and create the Postgresql container.
+    :type docker_client: :class:`docker.DockerClient<docker.client.DockerClient>`
 
-    *image* is the Redis database image to use. Defaults to the latest official
-    build.
+    :param str image: The image name to create a container of.
 
-    *redis_file* is a :term:`file-like object` used to load an existing Redis
-    database. The file is an RDB file that was dumped earlier on. For more
-    information read the official
-    `redis manual <https://redis.io/topics/persistence>`_. Defaults to None for a
-    fresh database.
+    :param redis_file: A bytes :term:`file object` for an RDB file used to load an existing Redis database. For more
+     information read the official `redis manual <https://redis.io/topics/persistence>`_. Defaults to None for a fresh
+     database.
+    :type redis_file: :class:`~typing.IO`\[:class:`bytes`]
 
-    Further `kwargs` are passed to the parent classes' constructor.
-
-    Inherits from :class:`~subclasses.SingleContainerService` and
-    :class:`subclasses.RunMixin`.
+    :param \*\*kwargs: Additional keyword arguments passed to :class:`~subclasses.SingleContainerService`.
 
     Has the following additional methods:
+
+    .. method:: set_rdb(redis_file)
+
+        Load an existing database file onto a redis service.
+
+        :param redis_file: A bytes :term:`file object` for an RDB file used to load an existing Redis database. For more
+         information read the official `redis manual <https://redis.io/topics/persistence>`_.
+        :type redis_file: :class:`~typing.IO`\[:class:`bytes`]
+
+        .. note::
+
+            Cannot be called while the service is running.
+
 
     .. method:: client(*, client_cls = Redis, **kwargs)
 
         Returns a connected Redis client.
 
-        By default, the client class is a ``redis.py`` Redis object. A callable
-        that implements the same interface as the ``redis.py`` Redis constructor
-        can be passed as *client_cls*.
+        :param client_cls: The class or callable to use for the client. Defaults to :class:`Redis`.
 
-        *kwargs* are further keyword arguments that are passed to *client_cls*.
+        :param \*\*kwargs: Additional keyword arguments passed to the client class.
     
-    .. method:: client_port()
+    .. method:: client_port() -> int
 
-        Returns the port to be used when connecting to the Redis server.
+        Returns the port to be used when connecting to the Redis server from the docker host.
 
     .. method:: reset_state()
 
-        Flush the database.
+        Remove all keys from the database.
         
-        Equivalent to running ``flushall()`` on a redis client.
+        Equivalent to the redis command `FLUSHALL <https://redis.io/commands/FLUSHALL>`_.
     
     .. method:: set_state(db_dict)
 
         Set the database to a certain state.
 
-        *db_dict* is a dictionary mapping between string keys used as Redis keys,
-        and values. Values can be any of:
+        :param db_dict: A Mapping of string keys used as Redis keys TO values. Values can be any of:
 
-        * Primitives - str, int, float, or bytes.
-        * Sequence of primitives, for Redis lists.
-        * Mapping of field names to primitives, for Redis hashmaps.
+         * Primitives - :class:`str`, :class:`int`, :class:`float`, or :class:`bytes`.
+         * :class:`~collections.abc.Sequence` of primitives, for Redis lists.
+         * :class:`~collections.abc.Mapping` of string field names to primitives, for Redis hashmaps.
+        :type db_dict: :class:`~collections.abc.Mapping`\[:class:`str`, ...]
