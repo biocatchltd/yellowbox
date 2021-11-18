@@ -1,4 +1,8 @@
 # Yellowbox Changelog
+## 0.6.8
+### Fixed
+* Fixed issue where webserver would refuse connections from containers on some platforms
+* Webserver logs now show the client address
 ## 0.6.7
 ### Added
 * MockHttpEndpoint and MockWSEndpoint added to webserver package
