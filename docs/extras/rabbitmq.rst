@@ -21,7 +21,7 @@ official docker container, with `Pika <https://pika.readthedocs.io/en/stable/>`_
     A service that runs a rabbitmq queue. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
     :class:`~subclasses.RunMixin`.
 
-    :param docker_client: The docker client to used to pull and create the Postgresql container.
+    :param docker_client: The docker client to used to pull and create the RabbitMQ container.
     :type docker_client: :class:`docker.DockerClient<docker.client.DockerClient>`
 
     :param str image: The image name to create a container of.

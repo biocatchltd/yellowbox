@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## Next
+### Fixed
+* webserver: forbid_head_verb fixed to forbid_implicit_head_verb in the type annotation.
 ## 0.6.8
 ### Fixed
 * Fixed issue where webserver would refuse connections from containers on some platforms

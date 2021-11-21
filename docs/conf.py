@@ -16,6 +16,7 @@
 
 
 # -- Project information -----------------------------------------------------
+from enum import EnumMeta
 from importlib import import_module
 from inspect import getsourcelines, getsourcefile
 from traceback import print_exc
@@ -40,6 +41,7 @@ intersphinx_mapping = {
     'sqlalchemy': ('https://docs.sqlalchemy.org/en/14/', None),
     'docker': ('https://docker-py.readthedocs.io/en/stable/', None),
     'kafka-python': ('https://kafka-python.readthedocs.io/en/master/', None),
+    'hvac': ('https://hvac.readthedocs.io/en/stable/', None),
 }
 
 import yellowbox
@@ -72,15 +74,19 @@ def linkcode_resolve(domain, info):
             except AttributeError:
                 # sometimes we run into an attribute/thing that doesn't exist at import time, just get the last obj
                 break
-            if isinstance(new_obj, (str, int, float, bool, bytes, type(None))):
+            if isinstance(new_obj, (str, int, float, bool, bytes, type(None))) or isinstance(type(new_obj), EnumMeta):
                 # the object is a variable, we search for it's declaration manually
                 item = part
                 break
             obj = new_obj
-        if isinstance(obj, property):
+        while hasattr(obj, 'fget'):  # for properties
             obj = obj.fget
-        while hasattr(obj, '__func__'):
+        while hasattr(obj, 'func'):  # for cached properties
+            obj = obj.func
+        while hasattr(obj, '__func__'):  # for wrappers
             obj = obj.__func__
+        while hasattr(obj, '__wrapped__'):  # for wrappers
+            obj = obj.__wrapped__
 
         fn = getsourcefile(obj)
         fn = os.path.relpath(fn, start=os.path.dirname(yellowbox.__file__))

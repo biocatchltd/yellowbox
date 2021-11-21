@@ -1,4 +1,4 @@
-:mod:`extras.kafka` --- Redis Database Service
+:mod:`extras.kafka` --- Apache Kafka Queue
 ==============================================
 
 .. module:: extras.kafka
@@ -18,7 +18,7 @@ docker images.
     A service to run the redis database. Inherits from :class:`~subclasses.SingleEndpointService`. Usable with
     :class:`~subclasses.RunMixin`.
 
-    :param docker_client: The docker client to used to pull and create the Postgresql container.
+    :param docker_client: The docker client to used to pull and create the Kafka containers.
     :type docker_client: :class:`docker.DockerClient<docker.client.DockerClient>`
 
     :param tag_or_images: The images to use to run the Kafka queue. If a string, it is used as the tag for both the

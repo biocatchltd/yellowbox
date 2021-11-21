@@ -28,7 +28,7 @@ to the service.
     A service that runs an Azurite server. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
     :class:`~subclasses.RunMixin`.
 
-    :param docker_client: The docker client to used to pull and create the Postgresql container.
+    :param docker_client: The docker client to used to pull and create the Azurite container.
     :type docker_client: :class:`docker.DockerClient<docker.client.DockerClient>`
 
     :param str image: The image name to create a container of.
