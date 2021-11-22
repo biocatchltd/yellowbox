@@ -19,7 +19,7 @@ docker images.
     :class:`~subclasses.RunMixin`.
 
     :param docker_client: The docker client to used to pull and create the Kafka containers.
-    :type docker_client: :class:`docker.DockerClient<docker.client.DockerClient>`
+    :type docker_client: :class:`~docker.client.DockerClient`
 
     :param tag_or_images: The images to use to run the Kafka queue. If a string, it is used as the tag for both the
         bitnami zookeeper and kafka broker images. If a tuple, it is used as the image name for the zookeeper and broker

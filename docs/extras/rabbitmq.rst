@@ -22,7 +22,7 @@ official docker container, with `Pika <https://pika.readthedocs.io/en/stable/>`_
     :class:`~subclasses.RunMixin`.
 
     :param docker_client: The docker client to used to pull and create the RabbitMQ container.
-    :type docker_client: :class:`docker.DockerClient<docker.client.DockerClient>`
+    :type docker_client: :class:`~docker.client.DockerClient`
 
     :param str image: The image name to create a container of.
 

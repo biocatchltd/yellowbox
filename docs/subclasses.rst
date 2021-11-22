@@ -163,7 +163,7 @@ required for running the service.
 
         :param docker_client: The docker client to use to create the containers, or to pull the docker images from
          dockerhub if it does not exist on the local machine.
-        :type docker_client: :class:`docker.DockerClient<docker.client.DockerClient>`
+        :type docker_client: :class:`~docker.client.DockerClient`
 
         :param spinner: If True a spinner is printed to stdout while the image is being pulled and the service is
          starting.

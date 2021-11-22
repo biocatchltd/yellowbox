@@ -483,14 +483,14 @@ of handling both HTTP and websocket routes.
 
         Assert that exactly one request was made.
 
-        :raises AssertionError: If no or multiple request was made.
+        :raises AssertionError: If no or multiple request were made.
 
     .. method:: assert_requested_with(expected)
                 assert_requested_with(**kwargs)
 
         Assert that the latest request was made matches an expected request.
 
-        :param expected: The expected request parameters.
+        :param expected: The expected request.
         :type expected: :class:`ExpectedHTTPRequest`
         :param \*\*kwargs: Alternatively, users can skip the ``expected`` argument and specify the expected request
             parameters as keyword arguments.
@@ -517,19 +517,19 @@ of handling both HTTP and websocket routes.
 
         Assert that only one request was made, and that it matches an expected request.
 
-        :param expected: The expected request parameters.
+        :param expected: The expected request.
         :type expected: :class:`ExpectedHTTPRequest`
         :param \*\*kwargs: Alternatively, users can skip the ``expected`` argument and specify the expected request
             parameters as keyword arguments (see :ref:`the example in assert_requested_with <skip expected creation>`).
         :raises AssertionError: If there are more than one or no requests made, or if the only request does not match
-            the request.
+            the קספקבאקג request.
 
     .. method:: assert_any_request(expected)
                 assert_any_request(**kwargs)
 
         Assert that a request was made that matches an expected request.
 
-        :param expected: The expected request parameters.
+        :param expected: The expected request.
         :type expected: :class:`ExpectedHTTPRequest`
         :param \*\*kwargs: Alternatively, users can skip the ``expected`` argument and specify the expected request
             parameters as keyword arguments (see :ref:`the example in assert_requested_with <skip expected creation>`).
@@ -592,6 +592,117 @@ of handling both HTTP and websocket routes.
               match.
             * :data:`Ellipsis`: A special value that matches any payload.
 
+.. class:: ExpectedWSTranscript(messages=(...,), headers=None, headers_submap=None, path=None, path_params=None,\
+                                path_params_submap=None, query_params=None, query_params_submap=None, close=None, \
+                                accepted=None)
+
+    An expectation of a websocket transcript. Used to match against a recorded websocket transcript.
+
+    :param messages: The expected messages in the transcript, in order. Create an expected message by calling
+        :class:`Sender`. The sequence may begin or end with :data:`Ellipsis` to signify that any number of messages can
+        precede or follow the messages to match.
+    :type messages: :class:`~collections.abc.Sequence`\[:class:`Sender`\(...\) | :data:`Ellipsis`\]
+    :param headers: If specified, a recorded request must have the specified headers exactly.
+    :type headers: :class:`~collections.abc.Mapping`\[:class:`bytes`,
+        :class:`~collections.abc.Collection`\[:class:`bytes`\]\]
+    :param headers_submap: If specified, a recorded request must have at least the specified headers.
+    :type headers_submap: :class:`~collections.abc.Mapping`\[:class:`bytes`,
+        :class:`~collections.abc.Collection`\[:class:`bytes`\]\]
+    :param path: If specified, a recorded request must have the specified path exactly (if :class:`str`), or must match
+        the specified pattern fully (if :class:`~typing.Pattern`).
+    :type path: :class:`str` | :class:`~typing.Pattern`\[:class:`str`]
+    :param path_params: If specified, a recorded request must have the specified path parameters exactly.
+    :type path_params: :class:`~collections.abc.Mapping`\[:class:`str`, ...\]
+    :param path_params_submap: If specified, a recorded request must have at least the specified path parameters.
+    :type path_params_submap: :class:`~collections.abc.Mapping`\[:class:`str`, ...\]
+    :param query_params: If specified, a recorded request must have the specified query parameters exactly.
+    :type query_params: :class:`~collections.abc.Mapping`\[:class:`str`,
+        :class:`~collections.abc.Collection`\[:class:`str`\]\]
+    :param query_params_submap: If specified, a recorded request must have at least the specified query parameters.
+    :type query_params_submap: :class:`~collections.abc.Mapping`\[:class:`str`,
+        :class:`~collections.abc.Collection`\[:class:`str`\]\]
+    :param close: If specified, the transcript closing must have been done by the specified sender, and with the
+        specified code.
+    :type close: (:class:`Sender`, :class:`int`)
+    :param bool accepted: If specified, the connection must have been accepted by the server (if True), or rejected by
+        the server (if False).
+
+    .. note::
+
+        Only a parameter or its ``*_submap`` variant may be specified, but not both.
+
+    .. code-block::
+        :caption: Example usage
+
+        expected_transcript = ExpectedWSTranscript([
+            Sender.Server(b'hi there, what is your name?'),
+            Sender.Client(re.compile(b'My name is [A-Z][a-z]+')),
+            Sender.Client(b'And I like pie'),
+            ...
+        ], close=(Sender.Server, 1000))
+
+        # requires that the transcript will begin with the server sending 'hi
+        # there, what is your name?', then the client should respond with a
+        # name, then the client should respond with 'And I like pie'. Any
+        # number of messages can follow after that, but eventually the server
+        # should close the connection with code 1000.
+
+.. class:: ws_request_capture.RecordedWSTranscripts
+
+    A :class:`list` of recorded websocket requests. Yielded by :meth:`MockWSEndpoint.capture_calls` to record
+    transcripts.
+
+    .. method:: assert_not_requested()
+
+        Assert that no connections were made.
+
+        :raises AssertionError: If any connections were made.
+
+    .. method:: assert_requested()
+
+        Assert that at least one connection was made.
+
+        :raises AssertionError: If no connections were made.
+
+    .. method:: assert_requested_once()
+
+        Assert that exactly one connection was made.
+
+        :raises AssertionError: If no or multiple connections were made.
+
+    .. method:: assert_requested_with(expected)
+                assert_requested_with(**kwargs)
+
+        Assert that the latest connections was made matches an expected transcript.
+
+        :param expected: The expected connection.
+        :type expected: :class:`ExpectedWSTranscript`
+        :param \*\*kwargs: Alternatively, users can skip the ``expected`` argument and specify the expected transcript
+            parameters as keyword arguments.
+        :raises AssertionError: If the last transcript doesn't match the expected request, or if there are no transcript.
+
+    .. method:: assert_requested_once_with(expected)
+                assert_requested_once_with(**kwargs)
+
+        Assert that only one connection was made, and that it matches an expected transcript.
+
+        :param expected: The expected connection.
+        :type expected: :class:`ExpectedWSTranscript`
+        :param \*\*kwargs: Alternatively, users can skip the ``expected`` argument and specify the expected request
+            parameters as keyword arguments.
+        :raises AssertionError: If there are more than one or no connections made, or if the only transcript does not
+            match the expectation.
+
+    .. method:: assert_any_request(expected)
+                assert_any_request(**kwargs)
+
+        Assert that a connection was made that matches an expected transcript.
+
+        :param expected: The expected connection.
+        :type expected: :class:`ExpectedWSTranscript`
+        :param \*\*kwargs: Alternatively, users can skip the ``expected`` argument and specify the expected request
+            parameters as keyword arguments.
+        :raises AssertionError: If no connection that matches the expectation was made.
 
 .. function:: iter_side_effects(side_effects)
 

@@ -19,7 +19,7 @@ A :class:`~service.YellowService` for running Redis DB. Runs the official Redis 
     :class:`~subclasses.RunMixin`.
 
     :param docker_client: The docker client to used to pull and create the Redis container.
-    :type docker_client: :class:`docker.DockerClient<docker.client.DockerClient>`
+    :type docker_client: :class:`~docker.client.DockerClient`
 
     :param str image: The image name to create a container of.
 

@@ -6,7 +6,7 @@ from docker import DockerClient
 @contextmanager
 def docker_client():
     """
-    Starts docker client from the environment, with a fallback to default HTTP port
+    Starts docker client from the environment, with a fallback to default TCP port
     (for running from within virtual machines)
     """
     try:
