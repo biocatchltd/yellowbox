@@ -21,4 +21,4 @@ Current extras are:
     * :mod:`webserver (for running an http/websocket server) <extras.webserver>`
     * :mod:`websocket (for running a websocket server, deprecated) <extras.websocket>`
 
-For development purposes, you can also install the ``_all`` extra, which will install all of the above extras.
+For development purposes, you can also install the ``dev`` extra, which will install all of the above extras.

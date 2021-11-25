@@ -11,7 +11,7 @@ python:
     - method: pip
       path: "."
       extra_requirements:
-        - "_all"
+        - "dev"
 
 submodules:
   include: all
