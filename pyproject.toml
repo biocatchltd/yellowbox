@@ -56,7 +56,7 @@ vault = ["hvac"]
 webserver = ["starlette", "python-igraph", "uvicorn", "websockets"]
 websocket = ["simple_websocket_server", "websocket_client"]
 
-_all = ["redis", "pika", "kafka-python", "azure-storage-blob", "cffi", "sqlalchemy", "psycopg2",
+dev = ["redis", "pika", "kafka-python", "azure-storage-blob", "cffi", "sqlalchemy", "psycopg2",
     "simple_websocket_server", "websocket_client", "starlette", "python-igraph", "uvicorn", "websockets", "hvac"]
 
 [build-system]
