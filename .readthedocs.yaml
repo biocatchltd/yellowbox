@@ -11,7 +11,7 @@ python:
     - method: pip
       path: "."
       extra_requirements:
-        - "redis"
+        - "_all"
 
 submodules:
   include: all
