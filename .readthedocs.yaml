@@ -10,8 +10,7 @@ python:
   install:
     - method: pip
       path: .
-      extra_requirements:
-        - "_all"
+      extra_requirements: ["_all"]
 
 submodules:
   include: all
