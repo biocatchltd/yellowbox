@@ -9,8 +9,9 @@ python:
   version: "3.8"
   install:
     - method: pip
-      path: .
-      extra_requirements: ["_all"]
+      path: "."
+      extra_requirements:
+        - "redis"
 
 submodules:
   include: all
