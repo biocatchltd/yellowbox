@@ -15,12 +15,12 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 
+import re
 # -- Project information -----------------------------------------------------
 from enum import EnumMeta
 from importlib import import_module
-from inspect import getsourcelines, getsourcefile
+from inspect import getsourcefile, getsourcelines
 from traceback import print_exc
-import re
 
 project = 'Yellowbox'
 copyright = '2021, Biocatch'
@@ -45,9 +45,10 @@ intersphinx_mapping = {
     'requests': ('https://requests.readthedocs.io/en/master/', None),
 }
 
-import yellowbox
-import os
 import ast
+import os
+
+import yellowbox
 
 release = yellowbox.__version__ or 'master'
 
