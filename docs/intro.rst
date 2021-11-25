@@ -1,8 +1,8 @@
 Intro
-================
+-----------
 
 Yellowbox is a library for making it easy to `blackbox-test <https://en.wikipedia.org/wiki/Black-box_testing>`_ your
-code, be setting up all the dependencies your program would need. Say your program requires connection to a redis
+code by setting up all the dependencies your program would need. Say your program requires connection to a redis
 database, a postgresql database, and an HTTP server. You can use yellowbox to set up all of these dependencies for you.
 
 .. code-block::
@@ -31,7 +31,7 @@ database, a postgresql database, and an HTTP server. You can use yellowbox to se
 
         app.run()
 
-Yellowbox can be used seamlessly with pytest fixtures
+Yellowbox can be used seamlessly with `pytest <https://docs.pytest.org/>`_ fixtures
 
 .. code-block::
 
@@ -75,3 +75,16 @@ Yellowbox can be used seamlessly with pytest fixtures
         return app
 
     # you can now use the "app" fixture in your tests and get a fully-functional application
+
+Yellowbox comes with built-in services for many popular infras, such as PostgreSQL, Redis, and RabbitMQ, and also has a
+comprehensive, easy-to-use library to :ref:`create your own services <Create-your-own-Yellow-service>` for
+whatever your app needs.
+
+**Use Yellowbox if:**
+
+* Your program requires other services to be running, such as a database, a webserver, a message queue, or a message
+  broker.
+* You want to test your program's ability to connect to these services.
+* You want to test your program's connection to these services.
+* You want the tests to easily integrate with your existing testing infrastructure. Making it easy to run these tests
+  both locally and remotely in CI/CD.

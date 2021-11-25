@@ -32,7 +32,7 @@ author = 'Biocatch'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.intersphinx", 'python_docs_theme', 'sphinx.ext.linkcode'
+    "sphinx.ext.intersphinx", 'sphinx.ext.linkcode'
 ]
 
 intersphinx_mapping = {
@@ -42,6 +42,7 @@ intersphinx_mapping = {
     'docker': ('https://docker-py.readthedocs.io/en/stable/', None),
     'kafka-python': ('https://kafka-python.readthedocs.io/en/master/', None),
     'hvac': ('https://hvac.readthedocs.io/en/stable/', None),
+    'requests': ('https://requests.readthedocs.io/en/master/', None),
 }
 
 import yellowbox
@@ -62,7 +63,7 @@ def linkcode_resolve(domain, info):
                         and node.target.id == var_name):
                 lineno = node.lineno
                 end_lineno = node.end_lineno
-                return parent_source[lineno:end_lineno + 1], lineno+parent_start_lineno-1
+                return parent_source[lineno:end_lineno + 1], lineno + parent_start_lineno - 1
         return parent_source, parent_start_lineno
 
     def find_source():
@@ -120,14 +121,11 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'python_docs_theme'
+html_theme = 'sphinx_rtd_theme'
 html_favicon = "_static/favicon.png"
 
 html_theme_options = {
-    "root_icon": "_static/favicon.png",
-    "root_include_title": False,
-    "root_name": "Yellowbox documentation",
-    "root_url": "index.html"
+    'vcs_pageview_mode': 'edit'
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

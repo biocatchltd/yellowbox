@@ -21,9 +21,9 @@ required for running the service.
     the containers to docker virtual networks using :meth:`connect` and
     :meth:`disconnect`.
 
-    :param containers: A sequence of docker ``Container`` objects, relevant
-     for the service. The containers can come both stopped and started.
-    :type containers: Sequence[:class:`docker.Container<docker.models.containers.Container>`]
+    :param containers: A sequence of docker container objects, relevant for the service. The containers may be either
+     stopped or started.
+    :type containers: :class:`~collections.abc.Sequence`\[:class:`docker.Container<docker.models.containers.Container>`\]
 
     :param bool remove: Set :attr:`remove`
 
@@ -33,10 +33,10 @@ required for running the service.
 
         Start the service by turning on all stopped containers. Containers are started sequentially in the order provided.
 
-        :param Optional[RetrySpec] retry_spec: specifies the internal retry semantics for the chosen "check" function.
+        :param RetrySpec | None retry_spec: specifies the internal retry semantics for the chosen "check" function.
          It allows specifying a timeout or maximum number of attempts before startup counts as a failure. Subclasses
-         should block until the service is responsive using this :class:`RetrySpec`. If ``None``, subclasses should
-         use the a custom default :class:`RetrySpec`.
+         should block until the service is responsive using this :class:`~retry.RetrySpec`. If ``None``, subclasses should
+         use the a custom default :class:`~retry.RetrySpec`.
 
     .. method:: stop(signal='SIGTERM')
 
@@ -108,7 +108,7 @@ required for running the service.
         :param kwargs: Forwarded to :meth:`Network.connect<docker.models.networks.Network.connect>`.
 
         :returns: A list of the container's aliases within the network.
-        :rtype: Sequence[str]
+        :rtype: :class:`~colleciont.abc.Sequence`\[:class:`str`\]
 
     .. method:: disconnect(network, **kargs)
 
@@ -170,6 +170,6 @@ required for running the service.
         :type spinner: bool
 
         :param retry_spec: Passed to :meth:`~ContainerService.start`.
-        :type retry_spec: Optional[:class:`~retry.RetrySpec`]
+        :type retry_spec: :class:`~retry.RetrySpec` | None
 
         :param kwargs: Forwarded to the class constructor.

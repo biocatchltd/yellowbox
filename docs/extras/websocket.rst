@@ -1,5 +1,5 @@
-:mod:`extras.websocket` --- Simple Websocket Server
-=========================================================
+:mod:`extras.websocket` --- Simple Websocket Server (Deprecated)
+============================================================================
 
 .. module:: extras.websocket
     :synopsis: Simple Websocket Server.

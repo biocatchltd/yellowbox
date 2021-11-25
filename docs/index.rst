@@ -10,12 +10,14 @@ Welcome to the Yellowbox documentation!
     service
     subclasses
     client
+    extras: <extras/index.rst>
     networks
+    containers
     retry
     image_build
-    extras: <extras/index.rst>
     cookbook
 
+`source code <https://github.com/biocatchltd/yellowbox>`_
 
 Indices and tables
 ==================

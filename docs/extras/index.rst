@@ -1,3 +1,5 @@
+.. _extras:
+
 .. module:: extras
     :synopsis: Implementation of external services.
 

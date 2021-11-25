@@ -1,5 +1,5 @@
-:mod:`extras.http_server` --- Simple HTTP Server
-================================================
+:mod:`extras.http_server` --- Simple HTTP Server (Deprecated)
+=======================================================================
 
 .. module:: extras.http_server
     :synopsis: Simple HTTP Server.
