@@ -6,12 +6,12 @@ sphinx:
 formats: all
 
 python:
-  version: 3.8
+  version: "3.8"
   install:
     - method: pip
       path: .
       extra_requirements:
-        - _all
+        - "_all"
 
 submodules:
   include: all
