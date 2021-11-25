@@ -35,8 +35,6 @@ jobs:
     - name: Lint
       run: |
         poetry run sh scripts/lint.sh
-    - name: setup-docker
-      uses: docker-practice/actions-setup-docker@0.0.1
     - name: Tests
       run: |
         poetry run sh scripts/unittest.sh

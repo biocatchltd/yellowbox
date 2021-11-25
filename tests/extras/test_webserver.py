@@ -2,7 +2,7 @@ import json
 from time import sleep
 from typing import Callable
 
-from httpx import Client, HTTPError
+from httpx import Client, HTTPError, get
 from pytest import fixture, raises
 from starlette.datastructures import QueryParams
 from starlette.requests import Request
@@ -666,3 +666,20 @@ def test_iter_side_effect(server, client):
     resp = client.get('/foo?x=12')
     resp.raise_for_status()
     assert resp.text == '-12'
+
+
+def test_two_servers():
+    with WebServer('foo').start() as server1:
+        with WebServer('bar').start() as server2:
+            server1.add_http_endpoint('GET', '/foo', PlainTextResponse('foo'))
+
+            @server2.add_http_endpoint
+            @http_endpoint('GET', '/bar')
+            async def bar(request: Request):
+                resp = get(server1.local_url() + '/foo')
+                resp.raise_for_status()
+                return PlainTextResponse(resp.text + 'bar')
+
+            resp = get(server2.local_url() + '/bar')
+            resp.raise_for_status()
+            assert resp.text == 'foobar'

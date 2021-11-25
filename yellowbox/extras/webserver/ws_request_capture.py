@@ -224,7 +224,7 @@ class ExpectedWSTranscript(ScopeExpectation):
         """
         Args:
             messages: the expected messages in the transcript, can begin or end ellipsis to signify that any
-                number of messages and precede or follow the messages to match.
+                number of messages can precede or follow the messages to match.
             headers: If specified, expects the request to have these headers exactly
             headers_submap: If specified expects the request to have at least the headers specified
             path: If specified, expected the request url (after the host) to either be equal to this (in case of string)

@@ -18,8 +18,7 @@ from yellowbox.utils import docker_host_name
 
 __all__ = ['HttpService', 'RouterHTTPRequestHandler']
 SideEffectResponse = Union[bytes, str, int, 'RouterHTTPRequestHandler']
-SideEffect = Union[Callable[['RouterHTTPRequestHandler'], None],
-                   Callable[['RouterHTTPRequestHandler'], SideEffectResponse],
+SideEffect = Union[Callable[['RouterHTTPRequestHandler'], SideEffectResponse],
                    SideEffectResponse]
 
 

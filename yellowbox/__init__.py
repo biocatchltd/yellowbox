@@ -14,5 +14,4 @@ __all__ = [
     'RetrySpec',
     'YellowService',
     'ContainerService', 'RunMixin', 'SingleContainerService', 'SingleEndpointService',
-
 ]

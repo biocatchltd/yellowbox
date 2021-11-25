@@ -150,7 +150,7 @@ class WebServer(YellowService):
 
     @overload
     def patch_http_endpoint(self, methods: METHODS, rule_string: str, side_effect: HTTP_SIDE_EFFECT, *,
-                            auto_read_body: bool = True, forbid_head_verb: bool = True) \
+                            auto_read_body: bool = True, forbid_implicit_head_verb: bool = True) \
             -> ContextManager[MockHTTPEndpoint]:
         ...
 

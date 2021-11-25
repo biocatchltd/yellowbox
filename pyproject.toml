@@ -43,6 +43,8 @@ mypy = "^0.902"
 types-requests = "^2.25.0"
 types-redis = "^3.5.4"
 pytest-xdist = "^2.1.0"
+sphinx = "*"
+sphinx-rtd-theme = "*"
 
 [tool.poetry.extras]
 azure = ["azure-storage-blob", "cffi"]

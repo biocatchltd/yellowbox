@@ -136,3 +136,4 @@ poetry.lock
 .pytype
 .anaconda
 .vscode
+**/.DS_Store

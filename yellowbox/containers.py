@@ -156,8 +156,7 @@ def is_removed(container: Container):
     return False
 
 
-def download_file(container: Container, path: Union[str, PathLike[str]]
-                  ) -> IO[bytes]:
+def download_file(container: Container, path: Union[str, PathLike]) -> IO[bytes]:
     """Download a file from the given container
 
     Args:
