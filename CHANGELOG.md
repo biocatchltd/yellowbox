@@ -2,6 +2,7 @@
 ## Next
 ### Changed
 * the "_all" extra has been renamed to "dev"
+* Added minimum versions for uvicorn and starlette
 ### Fixed
 * webserver: forbid_head_verb fixed to forbid_implicit_head_verb in the type annotation.
 ## 0.6.8
