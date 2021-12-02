@@ -4,6 +4,10 @@
 
 
 Yellowbox makes it easy to run docker containers as part of black box tests.
+
+**Documentation:** https://yellowbox.readthedocs.io/
+
+---
 ## Examples
 Say you want to run a blackbox test on a service that depends on a redis server.
 
@@ -89,10 +93,13 @@ def black_box(redis_service):
   ...
 ```
 since docker container may take some time to set up, it's advisable to set their scope to at least `"module"`
+
+---
 ## Extending Yellow
 Users can create their own Yellow Service classes by implementing the `YellowService` abstract class.
 If the service encapsulates only a single container, the `SingleContainerService` class already implements
 the necessary methods.
 
+---
 ## License
 Yellowbox is registered under the MIT public license
