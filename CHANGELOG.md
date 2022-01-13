@@ -1,5 +1,5 @@
 # Yellowbox Changelog
-## Next
+## 0.6.9
 ### Changed
 * the "_all" extra has been renamed to "dev"
 * Added minimum versions for uvicorn and starlette
