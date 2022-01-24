@@ -60,19 +60,21 @@ class WebSocketRecorder(WebSocket):
         await super().send(message)
 
 
-async def recorder_websocket_endpoint(scope, receive, send, *, function, sinks: Sequence[RecordedWSTranscripts]):
+class RecorderEndpoint:
     """
     An entrypoint app that records websocket conversations
     Args:
-        scope: the http scope of the conversation
-        receive: forwarded to the Websocket
-        send: forwarded to the Websocket
         function: the function to call the endpoint with
         sinks: a list of transcripts that the record should be added to
     """
-    # a partial version of this function will be the app endpoint of all our mock websocket routes
-    ws = WebSocketRecorder(scope, receive, send, sinks=sinks)
-    return await function(ws)
+
+    def __init__(self, function, sinks: Sequence[RecordedWSTranscripts]):
+        self.function = function
+        self.sinks = sinks
+
+    async def __call__(self, scope, receive, send):
+        ws = WebSocketRecorder(scope, receive, send, sinks=self.sinks)
+        return await self.function(ws)
 
 
 class Sender(Enum):
