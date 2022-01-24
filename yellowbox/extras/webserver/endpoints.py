@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from functools import partial
 from typing import (
     TYPE_CHECKING, Awaitable, Callable, ContextManager, Iterable, Iterator, List, Optional, Tuple, Union, overload
 )
@@ -13,7 +12,7 @@ from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR, WS_1011_INTERNAL_ER
 from starlette.websockets import WebSocket
 
 from yellowbox.extras.webserver.http_request_capture import RecordedHTTPRequest, RecordedHTTPRequests
-from yellowbox.extras.webserver.ws_request_capture import RecordedWSTranscripts, recorder_websocket_endpoint
+from yellowbox.extras.webserver.ws_request_capture import RecordedWSTranscripts, RecorderEndpoint
 
 HTTP_SIDE_EFFECT = Union[Response, Callable[[Request], Awaitable[Response]]]
 WS_SIDE_EFFECT = Callable[[WebSocket], Awaitable[Optional[int]]]
@@ -206,11 +205,9 @@ class MockWSEndpoint:
         self.__name__ = name
         self.side_effect = side_effect
 
-        # this will be the endpoint handed to the starlette.WebSocketRoute.
-        # the route chooses whether to hand off the scope, receive, send functions (which we need) only if we fail
-        # inspect.isfunction and inspect.ismethod. Fortunately, partial fails these tests. By storing it as an
+        # this will be the endpoint handed to the starlette.WebSocketRoute. By storing it as an
         # attribute of the endpoint, we will be able to better locate routes relating to the endpoint
-        self.endpoint = partial(recorder_websocket_endpoint, function=self.get, sinks=self._request_captures)
+        self.endpoint = RecorderEndpoint(function=self.get, sinks=self._request_captures)
 
     async def get(self, websocket: WebSocket):
         # this will be the function that our endpoint will eventually route to

@@ -53,7 +53,7 @@ postgresql = ["sqlalchemy", "psycopg2"]
 rabbit = ["pika"]
 redis = ["redis"]
 vault = ["hvac"]
-webserver = ["starlette", "python-igraph", "uvicorn", "websockets"]
+webserver = ["starlette", "igraph", "uvicorn", "websockets"]
 websocket = ["simple_websocket_server", "websocket_client"]
 
 dev = ["redis", "pika", "kafka-python", "azure-storage-blob", "cffi", "sqlalchemy", "psycopg2",

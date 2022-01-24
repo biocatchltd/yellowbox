@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## Next
+### Fixed
+* webserver: fixed websocket endpoint not working for starlette 0.18
 ## 0.6.9
 ### Changed
 * the "_all" extra has been renamed to "dev"
