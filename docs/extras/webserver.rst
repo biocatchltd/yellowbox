@@ -522,7 +522,7 @@ of handling both HTTP and websocket routes.
         :param \*\*kwargs: Alternatively, users can skip the ``expected`` argument and specify the expected request
             parameters as keyword arguments (see :ref:`the example in assert_requested_with <skip expected creation>`).
         :raises AssertionError: If there are more than one or no requests made, or if the only request does not match
-            the קספקבאקג request.
+            the expected request.
 
     .. method:: assert_any_request(expected)
                 assert_any_request(**kwargs)
