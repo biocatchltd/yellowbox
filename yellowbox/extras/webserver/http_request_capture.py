@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from json import loads as json_loads
-from typing import Any, Callable, Collection, Dict, List, Mapping, Optional, Pattern, Sequence, Tuple, Union, overload
+from typing import Any, Callable, Collection, List, Mapping, Optional, Pattern, Sequence, Tuple, Union, overload
 
-from igraph import Graph
 from starlette.requests import Request
 
 from yellowbox.extras.webserver.request_capture import ScopeExpectation
@@ -326,46 +325,6 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
             whynots.append((req, match))
         raise AssertionError(f'expected request {expected}, but no requests match:',
                              ''.join(f'\n\t {existing}- {whynot}' for (existing, whynot) in whynots))
-
-    def assert_has_requests_any_order(self, *expected_requests: ExpectedHTTPRequest):
-        """
-        Asserts that all of the expected requests exclusively match a one of the recorded requests, in any order.
-        Args:
-            *expected_requests: the expected requests.
-        """
-        if not expected_requests:
-            raise TypeError('at least one expected request must be provided')
-        if len(self) < len(expected_requests):
-            raise AssertionError(f"expected {len(expected_requests)} sequential requests, but found {len(self)}: "
-                                 f"{self}")
-        # this problem is equivalent to a maximum bipartite matching in a graph, where one set holds the recorded
-        # requests, and the other, the expected requests. We construct an igraph object to represent the problem.
-        edges = []
-        # since recorded requests are unhashable, we store the why_nots for requests by their ids
-        why_nots: Dict[ExpectedHTTPRequest, Dict[int, MismatchReason]] = {expected: {} for expected in
-                                                                          expected_requests}
-        for i, expected in enumerate(expected_requests):
-            for j, request in enumerate(self):
-                match = expected.matches(request)
-                if match:
-                    edges.append((i, j + len(expected_requests)))
-                else:
-                    assert isinstance(match, MismatchReason)
-                    why_nots[expected][id(request)] = match
-        graph = Graph.Bipartite([0] * len(expected_requests) + [1] * len(self), edges)
-
-        max_matching = graph.maximum_bipartite_matching()
-        unmatched_strs = []
-        for i, expected in enumerate(expected_requests):
-            if not max_matching.is_matched(i):
-                unmatched_strs.append(f'could not match expected request {expected}:'
-                                      + ''.join((f'\n\t{req}- {why_nots[expected][id(req)]}'
-                                                 if id(req) in why_nots[expected]
-                                                 else f'\n\t{req}- matched expected request '
-                                                      + str(expected_requests[max_matching.match_of(node_index)]))
-                                                for node_index, req in enumerate(self, len(expected_requests))))
-        if unmatched_strs:
-            raise AssertionError('\n'.join(unmatched_strs))
 
     def assert_has_requests(self, *expected_requests: ExpectedHTTPRequest):
         """
