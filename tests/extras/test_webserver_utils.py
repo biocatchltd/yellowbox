@@ -183,8 +183,6 @@ def test_http_requests_empty():
         requests.assert_any_request(body=b'')
     with raises(AssertionError):
         requests.assert_has_requests(ExpectedHTTPRequest(body=b''))
-    with raises(AssertionError):
-        requests.assert_has_requests_any_order(ExpectedHTTPRequest(body=b''))
 
 
 def test_http_requests_many():
@@ -243,17 +241,6 @@ def test_http_requests_many():
         )
     with raises(AssertionError):
         requests.assert_has_requests(ExpectedHTTPRequest(body=b'3'))
-    requests.assert_has_requests_any_order(
-        ExpectedHTTPRequest(body=b'1'),
-        ExpectedHTTPRequest(body=b'0'),
-        ExpectedHTTPRequest(body=b'2'),
-    )
-    with raises(AssertionError):
-        requests.assert_has_requests_any_order(
-            ExpectedHTTPRequest(body=b'1'),
-            ExpectedHTTPRequest(body=b'0'),
-            ExpectedHTTPRequest(body=b'3'),
-        )
 
 
 def test_http_requests_one():
@@ -291,15 +278,6 @@ def test_http_requests_one():
         )
     with raises(AssertionError):
         requests.assert_has_requests(ExpectedHTTPRequest(body=b'3'))
-    requests.assert_has_requests_any_order(
-        ExpectedHTTPRequest(body=b'0'),
-    )
-    with raises(AssertionError):
-        requests.assert_has_requests_any_order(
-            ExpectedHTTPRequest(body=b'1'),
-            ExpectedHTTPRequest(body=b'0'),
-            ExpectedHTTPRequest(body=b'3'),
-        )
 
 
 @fixture

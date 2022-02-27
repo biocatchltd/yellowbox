@@ -535,33 +535,6 @@ of handling both HTTP and websocket routes.
             parameters as keyword arguments (see :ref:`the example in assert_requested_with <skip expected creation>`).
         :raises AssertionError: If no request that matches the expectation was made.
 
-    .. method:: assert_has_requests_any_order(*expected_requests)
-
-        Assert that a set of expected requests were made, in any order.
-
-        :param \*expected: The expected requests to match.
-        :type \*expected: :class:`ExpectedHTTPRequest`
-
-        :raises AssertionError: If any of the expected requests were not made.
-
-        .. note::
-
-            Each expected request must match **exclusively** to a recorded request, meaning that there must be at least as
-            many recorded requests as expected requests.
-
-            .. code-block::
-                :caption: Example of exclusivity requirements
-
-                endpoint = server.add_http_endpoint('/', PlainTextResponse('hi'))
-                with endpoint.capture_calls as recorded:
-                    get(server.local_url()+'/', headers={'A':'B'})
-
-                # the following will raise an AssertionError
-                recorded.assert_has_requests_any_order(
-                    ExpectedHTTPRequest(method='GET'),
-                    ExpectedHTTPRequest(headers={b'A':[b'B']}),
-                )
-
     .. method:: assert_has_requests(*expected_requests)
 
         Assert that a set of expected requests were made, in sequential order.

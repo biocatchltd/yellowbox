@@ -1,7 +1,11 @@
 # Yellowbox Changelog
-## Next
+## 0.7.0
+### Removed
+* the method ``RecordedHTTPRequests.has_requests_any_order`` has been removed.
 ### Fixed
 * webserver: fixed websocket endpoint not working for starlette 0.18
+### Changed
+* igraph is no longer a requirement for webserver
 ## 0.6.9
 ### Changed
 * the "_all" extra has been renamed to "dev"
