@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from copy import deepcopy
 from threading import Lock, Thread
 from time import sleep
 from typing import ContextManager, Iterator, Mapping, Optional, Union, overload
@@ -11,7 +10,6 @@ from starlette.applications import Starlette
 from starlette.responses import PlainTextResponse
 from starlette.routing import Route, WebSocketRoute
 from uvicorn import Config, Server
-from uvicorn.config import LOGGING_CONFIG as uvicorn_logging_config
 
 from yellowbox import YellowService
 from yellowbox.extras.webserver.class_endpoint import HTTPEndpointTemplate, WSEndpointTemplate

@@ -4,13 +4,13 @@ import sys
 from datetime import datetime
 from functools import update_wrapper
 from logging import Filter
-from typing import Awaitable, Callable, Iterable, TypeVar, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Awaitable, Callable, Iterable, TypeVar, Union
 
 from starlette.requests import Request
 from starlette.responses import Response
 
 if TYPE_CHECKING:
-    from yellowbox.extras.webserver.endpoints import BASE_HTTP_SIDE_EFFECT, MockHTTPEndpoint, HTTP_SIDE_EFFECT
+    from yellowbox.extras.webserver.endpoints import BASE_HTTP_SIDE_EFFECT, HTTP_SIDE_EFFECT, MockHTTPEndpoint
 
 
 def reason_is_ne(field: str, expected, got) -> str:
@@ -67,7 +67,7 @@ def iter_side_effects(side_effects: Iterable[Union[Callable[..., Awaitable[T]], 
         return await next_side_effect(*args, **kwargs)
 
     # we don't want the inner function's __name__ to be the endpoint's name
-    ret.__skip_name_for_side_effect__ = True
+    ret.__skip_name_for_side_effect__ = True  # type: ignore[attr-defined]
 
     return ret
 
@@ -88,6 +88,7 @@ def verbose_http_side_effect(side_effect: BASE_HTTP_SIDE_EFFECT,
     """
     Wrap a side effect so that it prints the arguments and return value on each call.
     """
+
     def side_effect_factory(endpoint: MockHTTPEndpoint):
         async def side_effect_wrapper(request: Request):
             if isinstance(side_effect, Response):
@@ -103,8 +104,8 @@ def verbose_http_side_effect(side_effect: BASE_HTTP_SIDE_EFFECT,
             update_wrapper(side_effect_wrapper, side_effect)
         else:
             # we don't want the inner function's __name__ to be the endpoint's name
-            side_effect_wrapper.__skip_name_for_side_effect__ = True
+            side_effect_wrapper.__skip_name_for_side_effect__ = True  # type: ignore[attr-defined]
         return side_effect_wrapper
 
-    side_effect_factory.__side_effect_factory__ = True
+    side_effect_factory.__side_effect_factory__ = True  # type: ignore[attr-defined]
     return side_effect_factory

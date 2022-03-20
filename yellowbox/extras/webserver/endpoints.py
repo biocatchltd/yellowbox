@@ -200,7 +200,7 @@ def http_endpoint(methods: METHODS, rule_string: str, side_effect: Optional[HTTP
         nonlocal name
         if name is None and not getattr(func, '__skip_name_for_side_effect__', False):
             try:
-                name = func.__name__
+                name = func.__name__  # type: ignore[union-attr]
             except AttributeError:
                 pass
         if name is None:

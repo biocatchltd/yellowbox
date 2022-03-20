@@ -1,5 +1,6 @@
 from docker import DockerClient
 from pytest import fixture
+
 from yellowbox.clients import open_docker_client
 
 
