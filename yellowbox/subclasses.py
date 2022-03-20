@@ -197,6 +197,6 @@ class AsyncRunMixin(ABC):
             await service.astart(retry_spec=retry_spec)    # type: ignore[attr-defined]
             if verbose:
                 print(f"{_SPINNER_SUCCESSMSG} "    # type: ignore[attr-defined]
-                      f"{cls.service_name()} started successfully")
+                      f"{cls.service_name()} started successfully")    # type: ignore[attr-defined]
             with service:
                 yield service
