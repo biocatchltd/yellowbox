@@ -10,9 +10,9 @@ from docker.models.networks import Network
 
 from yellowbox.containers import create_and_pull, get_ports, short_id
 from yellowbox.retry import RetrySpec
-from yellowbox.subclasses import RunMixin, SingleContainerService
+from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 
-__all__ = ['BlobStorageService']
+__all__ = ['AzuriteService', 'BlobStorageService']
 
 BLOB_STORAGE_DEFAULT_PORT = 10000
 DEFAULT_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
@@ -24,7 +24,7 @@ class _ResourceNotReady(Exception):
     pass
 
 
-class BlobStorageService(SingleContainerService, RunMixin):
+class AzuriteService(SingleContainerService, RunMixin, AsyncRunMixin):
     """
     Starts Azurite, Azure's storage emulator.
     Provides helper functions for preparing the instance for testing.
@@ -82,16 +82,24 @@ class BlobStorageService(SingleContainerService, RunMixin):
         """Azure credentials dict to connect to the service"""
         return {'account_name': self.account_name, 'account_key': self.account_key}
 
+    def _check_ready(self):
+        if b"Azurite Blob service successfully listens on" not in self.container.logs():
+            raise _ResourceNotReady
+
     def start(self, retry_spec: Optional[RetrySpec] = None):
         super().start()
 
-        def check_ready():
-            if b"Azurite Blob service successfully listens on" not in self.container.logs():
-                raise _ResourceNotReady
+        retry_spec = retry_spec or RetrySpec(attempts=10)
+
+        retry_spec.retry(self._check_ready, _ResourceNotReady)
+        return self
+
+    async def astart(self, retry_spec: Optional[RetrySpec] = None):
+        super().start()
 
         retry_spec = retry_spec or RetrySpec(attempts=10)
 
-        retry_spec.retry(check_ready, _ResourceNotReady)
+        await retry_spec.aretry(self._check_ready, _ResourceNotReady)
         return self
 
     def connect(self, network: Network, aliases: Optional[List[str]] = None,
@@ -101,3 +109,7 @@ class BlobStorageService(SingleContainerService, RunMixin):
         if aliases is not None:
             aliases.append(short_id(self.container))
         return super().connect(network, aliases=aliases, **kwargs)
+
+
+# legacy alias
+BlobStorageService = AzuriteService

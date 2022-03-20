@@ -17,6 +17,14 @@ def test_connection_works(docker_client):
             assert client.get('a') == b'12'
 
 
+@mark.asyncio
+async def test_connection_works_async(docker_client):
+    async with RedisService.arun(docker_client) as redis:
+        with redis.client() as client:
+            client.set('a', 12)
+            assert client.get('a') == b'12'
+
+
 def test_reset_state(docker_client):
     with RedisService.run(docker_client) as redis:
         with redis.client() as client:

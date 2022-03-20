@@ -30,6 +30,24 @@ def test_kafka_works(docker_client):
                 assert False
 
 
+@mark.asyncio
+async def test_kafka_works_async(docker_client):
+    async with KafkaService.arun(docker_client) as service:
+        with service.consumer() as consumer, service.producer() as producer:
+
+            producer.send('test', b'hello world')
+
+            consumer.subscribe('test')
+            consumer.topics()
+            consumer.seek_to_beginning()
+
+            for msg in consumer:
+                assert msg.value == b'hello world'
+                break
+            else:
+                assert False
+
+
 def test_kafka_sibling_network(docker_client, create_and_pull):
     with temp_network(docker_client) as network, \
             KafkaService.run(docker_client, spinner=False) as service, \

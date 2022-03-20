@@ -22,11 +22,11 @@ to the service.
     Currently, the service only supports the default
     `Azure Storage account <https://github.com/Azure/Azurite/blob/main/README.md#user-content-default-storage-account>`_.
 
-.. class:: BlobStorageService(docker_client,\
+.. class:: AzuriteService(docker_client,\
     image="mcr.microsoft.com/azure-storage/azurite:latest", **kwargs)
 
     A service that runs an Azurite server. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
-    :class:`~subclasses.RunMixin`.
+    :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
 
     :param docker_client: The docker client to used to pull and create the Azurite container.
     :type docker_client: :class:`~docker.client.DockerClient`
@@ -94,3 +94,7 @@ to the service.
 
             Since ``BlobStorageService`` currently only supports the default azurite account, this attribute should not
             be changed.
+
+.. class:: BlobStorageService(...)
+
+    A legacy alias of :class:`AzuriteService`.

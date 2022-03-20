@@ -33,6 +33,27 @@ def test_local_connection(docker_client):
             assert vals == [2, 3]
 
 
+@mark.asyncio
+async def test_local_connection_async(docker_client):
+    service: PostgreSQLService
+    async with PostgreSQLService.arun(docker_client) as service:
+        with service.connection() as connection:
+            connection.execute("""
+            CREATE TABLE foo (x INTEGER, y TEXT);
+            INSERT INTO foo VALUES (1,'one'), (2, 'two'), (3, 'three'), (10, 'ten');
+            """)
+            connection.execute("""
+            DELETE FROM foo WHERE x = 10;
+            """)
+
+        with service.connection() as connection:
+            results = connection.execute("""
+            SELECT x, y FROM foo WHERE y like 't%%'
+            """)
+            vals = [row['x'] for row in results]
+            assert vals == [2, 3]
+
+
 def test_sibling(docker_client, create_and_pull):
     service: PostgreSQLService
     with PostgreSQLService.run(docker_client) as service:

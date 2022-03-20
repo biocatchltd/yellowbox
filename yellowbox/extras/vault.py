@@ -8,7 +8,7 @@ from requests.exceptions import ConnectionError
 
 from yellowbox.containers import create_and_pull, get_ports
 from yellowbox.retry import RetrySpec
-from yellowbox.subclasses import RunMixin, SingleContainerService
+from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 from yellowbox.utils import docker_host_name
 
 __all__ = ['VAULT_DEFAULT_PORT', 'DEV_POLICY', 'VaultService']
@@ -24,7 +24,7 @@ DEV_POLICY = {
 }
 
 
-class VaultService(SingleContainerService, RunMixin):
+class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
     """
     A yellow service for Hashicorp Vault, with hvac as a client. The vault container is in dev mode AND SHOULD ONLY BE
     USED FOR DEVELOPMENT.
@@ -70,20 +70,30 @@ class VaultService(SingleContainerService, RunMixin):
         finally:
             client.adapter.close()
 
+    def _check_health(self):
+        with self.client() as client:
+            client.lookup_token()
+
     def start(self, retry_spec: Optional[RetrySpec] = None):
         super().start()
 
         retry_spec = retry_spec or RetrySpec(attempts=10)
 
-        def check_health():
-            with self.client() as client:
-                client.lookup_token()
-
-        retry_spec.retry(check_health, (VaultError, ConnectionError))
+        retry_spec.retry(self._check_health, (VaultError, ConnectionError))
         with self.client() as client:
             client.sys.enable_auth_method('userpass')
         self.started = True
         return self
+
+    async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
+        super().start(retry_spec)
+
+        retry_spec = retry_spec or RetrySpec(attempts=10)
+
+        await retry_spec.aretry(self._check_health, (VaultError, ConnectionError))
+        with self.client() as client:
+            client.sys.enable_auth_method('userpass')
+        self.started = True
 
     def set_users(self, userpass: Iterable[Tuple[str, str]], policy_name='dev', policy: Optional[Mapping] = DEV_POLICY):
         """

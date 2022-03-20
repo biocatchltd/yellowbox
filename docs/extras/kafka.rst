@@ -16,7 +16,7 @@ docker images.
 .. class:: KafkaService(docker_client, tag_or_images = 'latest', inner_port=0, outer_port=0, **kwargs)
 
     A service to run the redis database. Inherits from :class:`~subclasses.SingleEndpointService`. Usable with
-    :class:`~subclasses.RunMixin`.
+    :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
 
     :param docker_client: The docker client to used to pull and create the Kafka containers.
     :type docker_client: :class:`~docker.client.DockerClient`

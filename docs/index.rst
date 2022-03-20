@@ -16,6 +16,7 @@ Welcome to the Yellowbox documentation!
     retry
     image_build
     cookbook
+    pytest_integration
 
 `source code <https://github.com/biocatchltd/yellowbox>`_
 

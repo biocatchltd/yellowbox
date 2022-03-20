@@ -4,7 +4,9 @@ from yellowbox.image_build import build_image
 from yellowbox.networks import connect, temp_network
 from yellowbox.retry import RetrySpec
 from yellowbox.service import YellowService
-from yellowbox.subclasses import ContainerService, RunMixin, SingleContainerService, SingleEndpointService
+from yellowbox.subclasses import (
+    AsyncRunMixin, ContainerService, RunMixin, SingleContainerService, SingleEndpointService
+)
 
 __all__ = [
     '__version__',
@@ -13,5 +15,5 @@ __all__ = [
     'connect', 'temp_network',
     'RetrySpec',
     'YellowService',
-    'ContainerService', 'RunMixin', 'SingleContainerService', 'SingleEndpointService',
+    'ContainerService', 'RunMixin', 'AsyncRunMixin', 'SingleContainerService', 'SingleEndpointService',
 ]

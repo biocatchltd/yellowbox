@@ -57,6 +57,11 @@ connects successfully.
             If you wish to retry a function that takes arguments, use :func:`functools.partial` to supply the
             arguments.
 
+    .. method:: aretry(func, exceptions)->T
+        :async:
+
+        similar to :meth:`retry`, but waits asynchronously between attempts.
+
     .. code-block::
         :caption: Example Usage
 

@@ -173,3 +173,50 @@ required for running the service.
         :type retry_spec: :class:`~retry.RetrySpec` | None
 
         :param kwargs: Forwarded to the class constructor.
+
+.. class:: AsyncRunMixin
+
+    Mixin class implementing a runnable :class:`ContainerService`, whose startup is asynchronous.
+
+    Adds the convenience method :meth:`arun`.
+
+    .. warning::
+
+        Currently, all docker commands are executed synchronously. The only asynchronous part of startup is the time
+        waiting between healthcheck attempts.
+
+    .. method:: astart(retry_spec=None)
+        :abstractmethod:
+        :async:
+
+        Start the service by turning on all stopped containers and waiting for startup. Similar to
+        :meth:`ContainerService.start`, but asynchronous.
+
+    .. method:: service_name
+        :classmethod:
+
+        :returns: The name of the service. May be overridden by subclasses. Defaults
+         to ``cls.__name__``.
+        :rtype: str
+
+    .. method:: arun(docker_client, *, verbose=True, retry_spec=None, **kwargs)
+        :classmethod:
+
+        Convenience method to run the service asynchronously. Used as an async context manager.
+
+        Upon context manager entry, creates the service and starts it. Upon
+        exit, stops the service.
+
+
+        :param docker_client: The docker client to use to create the containers, or to pull the docker images from
+         dockerhub if it does not exist on the local machine.
+        :type docker_client: :class:`~docker.client.DockerClient`
+
+        :param verbose: If True a spinner is printed to stdout while the image is being pulled, and messages are printed
+         while the service is starting.
+        :type verbose: bool
+
+        :param retry_spec: Passed to :meth:`~ContainerService.start`.
+        :type retry_spec: :class:`~retry.RetrySpec` | None
+
+        :param kwargs: Forwarded to the class constructor.

@@ -6,7 +6,7 @@ from sqlalchemy.exc import OperationalError
 
 from yellowbox import RetrySpec, RunMixin
 from yellowbox.containers import create_and_pull, get_ports
-from yellowbox.subclasses import SingleContainerService
+from yellowbox.subclasses import AsyncRunMixin, SingleContainerService
 
 __all__ = ['PostgreSQLService', 'POSTGRES_INTERNAL_PORT']
 
@@ -15,7 +15,7 @@ from yellowbox.utils import docker_host_name
 POSTGRES_INTERNAL_PORT = 5432
 
 
-class PostgreSQLService(SingleContainerService, RunMixin):
+class PostgreSQLService(SingleContainerService, RunMixin, AsyncRunMixin):
     """
     A postgresSQL service
     """
@@ -106,16 +106,22 @@ class PostgreSQLService(SingleContainerService, RunMixin):
         """
         return self.engine().connect(**kwargs)
 
+    def _connect(self):
+        with self.connection():
+            return
+
     def start(self, retry_spec: Optional[RetrySpec] = None):
-        retry_spec = retry_spec or RetrySpec(attempts=20)
         super().start(retry_spec)
+        retry_spec = retry_spec or RetrySpec(attempts=20)
 
-        def connect():
-            with self.connection():
-                return
-
-        retry_spec.retry(connect, OperationalError)
+        retry_spec.retry(self._connect, OperationalError)
         return self
+
+    async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
+        super().start(retry_spec)
+        retry_spec = retry_spec or RetrySpec(attempts=20)
+
+        await retry_spec.aretry(self._connect, OperationalError)
 
     def stop(self, signal='SIGINT'):
         # change in default

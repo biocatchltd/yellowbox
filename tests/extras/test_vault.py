@@ -1,6 +1,6 @@
 import hvac
 from hvac.exceptions import InvalidPath
-from pytest import raises
+from pytest import mark, raises
 
 from yellowbox import connect, temp_network
 from yellowbox.extras.vault import VaultService
@@ -18,6 +18,19 @@ def test_create_vault(docker_client):
 
 def test_vault_secrets(docker_client):
     with VaultService.run(docker_client) as service:
+        service.set_secrets({
+            'foo': {'smee': {'lee': 23}},
+            'tlee/gmoo': {'hero': 'shmero'},
+        })
+        with service.client() as client:
+            assert client.secrets.kv.read_secret('foo')['data']['data'] == {'smee': {'lee': 23}}
+            assert client.secrets.kv.read_secret('tlee/gmoo')['data']['data'] == {'hero': 'shmero'}
+            assert_is_missing(client, 'tlee')
+
+
+@mark.asyncio
+async def test_vault_secrets_async(docker_client):
+    async with VaultService.arun(docker_client) as service:
         service.set_secrets({
             'foo': {'smee': {'lee': 23}},
             'tlee/gmoo': {'hero': 'shmero'},
