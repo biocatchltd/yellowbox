@@ -70,7 +70,6 @@ def test_sibling(docker_client, create_and_pull):
             " -c 'DELETE FROM foo WHERE x < 3'",
             environment={'PGPASSWORD': service.password},
             detach=True,
-            remove=False,
         )
         container.start()
         return_status = container.wait()
@@ -144,7 +143,6 @@ def test_remote_connection_string(docker_client, create_and_pull):
             "python:latest",
             'sh -c "pip install sqlalchemy psycopg2 && python ./main.py"',
             detach=True,
-            remove=False  # todo
         )
         upload_file(
             container, './main.py',

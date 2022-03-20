@@ -464,7 +464,7 @@ def test_from_container(server, docker_client, create_and_pull):
         container = create_and_pull(
             docker_client,
             "byrnedo/alpine-curl:latest",
-            f'-vvv "{server.container_url()}/foo" --fail -X "GET"', remove=False
+            f'-vvv "{server.container_url()}/foo" --fail -X "GET"',
         )
         container.start()
         container.wait()

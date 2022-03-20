@@ -1,6 +1,4 @@
 #!/bin/sh
+set -e
 # run the unittests with branch coverage
-poetry run coverage run --include="yellowbox/**" -m pytest -n auto --dist loadfile tests/ "$@"
-coverage html
-coverage report -m
-coverage xml
+poetry run pytest -n auto --dist load --cov-branch --cov=./yellowbox --cov-report=xml --cov-report=html --cov-report=term-missing tests/ "$@"
