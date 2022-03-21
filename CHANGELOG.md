@@ -8,7 +8,7 @@
 * Webserver: all endpoint factory functions now also accept a `name` parameter, to manually set the name of an endpoint.
 * `RetrySpec.aretry` to retry a function but to wait asynchronously between attempts. 
 ### Changed
-* `docker_client` renamed to `open_docker_client` (legacy alias kept for backwards compatibility)
+* `docker_client` function renamed to `open_docker_client` (legacy alias kept for backwards compatibility)
 * `extras.BlobStorageService` renamed to `extras.AzuriteService` (legacy alias kept for backwards compatibility)
 * Webserver no longer uses uvicorn's logging. This can be reverted by manually setting the `log_config` in `WebServer`'s constructor.
   To note endpoint access, use `webserver.verbose_http_side_effect`.

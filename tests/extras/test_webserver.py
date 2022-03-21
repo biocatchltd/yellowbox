@@ -701,6 +701,8 @@ def test_verbose_side_effect():
         resp.raise_for_status()
         assert resp.text == 'foo'
 
+    # <date> <time> <server name>:<endpoint name> <client_ip>:<client_port> - <method> <path> <status code>
+    # <response size>
     assert re.fullmatch(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} my_foo:foo [\d.]+:\d+ - GET /foo 200 \(3 bytes\)\n'
                         r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} my_foo:foo [\d.]+:\d+ - GET /foo\?x=12 200 \(3 bytes\)\n',
                         file.getvalue())
