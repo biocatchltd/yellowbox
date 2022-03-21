@@ -202,6 +202,95 @@ method to connect to it from the host machine.
     slower machines like CI/CD pipelines). In these cases, we may increase the retry_spec to a higher value, to afford
     the service more time to start up.
 
+Making your YellowService runnable in async
+-----------------------------------------------------------
+
+For reasons we'll explore soon, you might want to be able to start up multiple services in parallel. In order to do
+this, we need to be able to start up services asynchronously, we do this by extending the
+:class:`~subclasses.AsyncRunMixin`. All the built-in yellowx-extras already do this, but in order to implement it for
+your own service, you'll need to implement the ``astart`` method. The ``astart`` method is very similar to the
+``start`` method, with the sole difference that it waits for startup asynchronously. Following up from the previous
+example, we can implement ``astart`` as follows:
+
+.. code-block::
+    :emphasize-lines: 8, 19-23
+
+    import aerospike
+
+    from yellowbox.containers import create_and_pull, get_ports
+    from yellowbox.subclasses import SingleContainerService, RunMixin, AsyncRunMixin
+
+    INTERNAL_AEROSPOKE_PORT = 3000
+
+    class AerospikeService(SingleContainerService, RunMixin, AsyncRunMixin):
+        def __init__(self, docker_client: DockerClient, image='aerospike:ce-5.7.0.8', **kwargs):
+            container = create_and_pull(docker_client, image, publish_all_ports=True, detach=True)
+            super().__init__(container, **kwargs)
+
+        def start(self, retry_spec: Optional[RetrySpec] = None):
+            super().start()
+            retry_spec = retry_spec or RetrySpec(max_retries=10,retry_interval=1)
+            retry_spec.retry(self.client, aerospike.exception.AerospikeError)
+            return self
+
+        async def astart(self, retry_spec: Optional[RetrySpec] = None):
+            super().start()  # start up the containers like before
+            retry_spec = retry_spec or RetrySpec(max_retries=10,retry_interval=1)
+            # wait for the service to start up asynchronously
+            await retry_spec.aretry(self.client, aerospike.exception.AerospikeError)
+
+        def client_port(self):
+            return get_ports(self.container)[INTERNAL_AEROSPOKE_PORT]
+
+        def client(self):
+            config = {
+                'hosts': [('127.0.0.1', self.client_port())]
+            }
+            return aerospike.client(config).connect()
+
+Parallel Startup in Pytest
+---------------------------------
+
+Once you start test your service that has a lot of dependencies, you might run into an issue where the startup of the
+sets suite takes a long time. This is because all the yellow services are started sequentially. You can gain a large
+speed boost by paralleling the startup of your services. However, if you try to implement this in pytest with
+pytest-asyncio, you will run into a problem.
+
+.. code-block::
+
+    @pytest_asyncio.fixture(scope='session')
+    async def my_redis(docker_client):
+        async with RedisService.arun(docker_client) as redis:
+            yield redis
+
+    @pytest_asyncio.fixture(scope='session')
+    async def my_rabbit(docker_client):
+        async with RabbitMQService.arun(docker_client) as rabbit:
+            yield rabbit
+
+Each startup may be asynchronous, but he fixtures still run sequentially. This is because of how pytest-asyncio handles
+async fixtures.
+
+To remedy this, we can use the in-house `pytest-gather-fixtures <https://github.com/bentheiii/pytest-gather-fixtures>``
+library. This library allows you to run multiple fixtures in parallel.
+
+.. code-block::
+    :emphasize-lines: 1, 3, 8
+
+    docker_fixture_group = ConcurrentFixtureGroup('docker_fixture_group', scope='session')
+
+    @docker_fixture_group.fixture
+    async def my_redis(docker_client):
+        async with RedisService.arun(docker_client) as redis:
+            yield redis
+
+    @docker_fixture_group.fixture
+    async def my_rabbit(docker_client):
+        async with RabbitMQService.arun(docker_client) as rabbit:
+            yield rabbit
+
+Now the rabbitMQ service will be started in parallel with the redis service.
+
 Creating an HTTP/Websocket service as a class
 --------------------------------------------------
 

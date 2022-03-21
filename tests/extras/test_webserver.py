@@ -1,4 +1,6 @@
 import json
+import re
+from io import StringIO
 from time import sleep
 from typing import Callable
 
@@ -16,7 +18,7 @@ from websocket import WebSocket as WSClient, WebSocketBadStatusException, create
 
 from yellowbox.extras.webserver import MockHTTPEndpoint, MockWSEndpoint, WebServer, http_endpoint, ws_endpoint
 from yellowbox.extras.webserver.class_endpoint import class_http_endpoint, class_ws_endpoint
-from yellowbox.extras.webserver.util import iter_side_effects
+from yellowbox.extras.webserver.util import iter_side_effects, verbose_http_side_effect
 from yellowbox.extras.webserver.webserver import HandlerError
 from yellowbox.extras.webserver.ws_request_capture import RecordedWSMessage, Sender
 
@@ -462,7 +464,7 @@ def test_from_container(server, docker_client, create_and_pull):
         container = create_and_pull(
             docker_client,
             "byrnedo/alpine-curl:latest",
-            f'-vvv "{server.container_url()}/foo" --fail -X "GET"', remove=False
+            f'-vvv "{server.container_url()}/foo" --fail -X "GET"',
         )
         container.start()
         container.wait()
@@ -683,3 +685,24 @@ def test_two_servers():
             resp = get(server2.local_url() + '/bar')
             resp.raise_for_status()
             assert resp.text == 'foobar'
+
+
+def test_verbose_side_effect():
+    with WebServer('my_foo').start() as server:
+        file = StringIO()
+        side_effect = verbose_http_side_effect(PlainTextResponse('foo'), file=file)
+        server.add_http_endpoint('GET', '/foo', side_effect, name='foo')
+
+        resp = get(server.local_url() + '/foo')
+        resp.raise_for_status()
+        assert resp.text == 'foo'
+
+        resp = get(server.local_url() + '/foo', params={'x': '12'})
+        resp.raise_for_status()
+        assert resp.text == 'foo'
+
+    # <date> <time> <server name>:<endpoint name> <client_ip>:<client_port> - <method> <path> <status code>
+    # <response size>
+    assert re.fullmatch(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} my_foo:foo [\d.]+:\d+ - GET /foo 200 \(3 bytes\)\n'
+                        r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} my_foo:foo [\d.]+:\d+ - GET /foo\?x=12 200 \(3 bytes\)\n',
+                        file.getvalue())

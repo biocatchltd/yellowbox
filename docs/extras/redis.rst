@@ -16,7 +16,7 @@ A :class:`~service.YellowService` for running Redis DB. Runs the official Redis 
                         **kwargs)
 
     A service to run the redis database. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
-    :class:`~subclasses.RunMixin`.
+    :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
 
     :param docker_client: The docker client to used to pull and create the Redis container.
     :type docker_client: :class:`~docker.client.DockerClient`

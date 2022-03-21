@@ -17,7 +17,7 @@ integration with ``sqlalchemy``.
         default_db=None, **kwargs)
 
     A service that runs a PostgreSQL database. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
-    :class:`~subclasses.RunMixin`.
+    :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
 
     :param docker_client: The docker client to used to pull and create the Postgresql container.
     :type docker_client: :class:`~docker.client.DockerClient`

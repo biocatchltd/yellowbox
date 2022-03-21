@@ -1,5 +1,4 @@
-from contextlib import contextmanager
-from typing import ContextManager, Optional
+from typing import Optional
 from urllib.parse import quote
 
 import requests
@@ -9,7 +8,7 @@ from pika.exceptions import AMQPConnectionError
 
 from yellowbox.containers import create_and_pull, get_ports, upload_file
 from yellowbox.retry import RetrySpec
-from yellowbox.subclasses import RunMixin, SingleContainerService
+from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 
 __all__ = ['RabbitMQService', 'RABBIT_DEFAULT_PORT', 'RABBIT_HTTP_API_PORT']
 
@@ -17,9 +16,9 @@ RABBIT_DEFAULT_PORT = 5672
 RABBIT_HTTP_API_PORT = 15672
 
 
-class RabbitMQService(SingleContainerService, RunMixin):
+class RabbitMQService(SingleContainerService, RunMixin, AsyncRunMixin):
     def __init__(self, docker_client: DockerClient, image='rabbitmq:latest', *, user="guest", password="guest",
-                 virtual_host="/", **kwargs):
+                 virtual_host="/", enable_management=False, **kwargs):
         self.user = user
         self.password = password
         self.virtual_host = virtual_host
@@ -35,6 +34,8 @@ class RabbitMQService(SingleContainerService, RunMixin):
                     default_vhost = {virtual_host}
                     loopback_users = none
                     '''.encode())
+
+        self._enable_management = enable_management
 
     def connection_port(self):
         return get_ports(self.container)[RABBIT_DEFAULT_PORT]
@@ -53,7 +54,17 @@ class RabbitMQService(SingleContainerService, RunMixin):
         retry_spec = retry_spec or RetrySpec(attempts=30)
         conn = retry_spec.retry(self.connection, (AMQPConnectionError, ConnectionError))
         conn.close()
+        if self._enable_management:
+            self.enable_management()
         return self
+
+    async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
+        super().start()
+        retry_spec = retry_spec or RetrySpec(attempts=30)
+        conn = await retry_spec.aretry(self.connection, (AMQPConnectionError, ConnectionError))
+        conn.close()
+        if self._enable_management:
+            self.enable_management()
 
     def management_url(self):
         try:
@@ -90,15 +101,6 @@ class RabbitMQService(SingleContainerService, RunMixin):
                 management_url + f'api/queues/{vhost}/{name}',
                 auth=(self.user, self.password), params=delete_params
             ).raise_for_status()
-
-    @classmethod
-    @contextmanager
-    def run(cls, docker_client: DockerClient, *, enable_management=False, **kwargs):
-        cmg: ContextManager[RabbitMQService] = super().run(docker_client, **kwargs)
-        with cmg as ret:
-            if enable_management:
-                ret.enable_management()
-            yield ret
 
     def stop(self, signal='SIGKILL'):
         # change in default

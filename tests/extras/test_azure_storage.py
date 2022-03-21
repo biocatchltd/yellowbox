@@ -5,7 +5,7 @@ from azure.storage.blob import BlobServiceClient
 from pytest import mark
 
 from yellowbox.extras.azure_storage import (
-    BLOB_STORAGE_DEFAULT_PORT, DEFAULT_ACCOUNT_KEY, DEFAULT_ACCOUNT_NAME, BlobStorageService
+    BLOB_STORAGE_DEFAULT_PORT, DEFAULT_ACCOUNT_KEY, DEFAULT_ACCOUNT_NAME, AzuriteService
 )
 from yellowbox.networks import connect, temp_network
 from yellowbox.utils import docker_host_name
@@ -13,12 +13,23 @@ from yellowbox.utils import docker_host_name
 
 @mark.parametrize('spinner', [True, False])
 def test_make_azure_storage(docker_client, spinner):
-    with BlobStorageService.run(docker_client, spinner=spinner):
+    with AzuriteService.run(docker_client, spinner=spinner):
         pass
 
 
 def test_sanity(docker_client):
-    with BlobStorageService.run(docker_client) as service:
+    with AzuriteService.run(docker_client) as service:
+        port = service.client_port()
+        with BlobServiceClient(f"http://127.0.0.1:{port}/{DEFAULT_ACCOUNT_NAME}", DEFAULT_ACCOUNT_KEY) as client:
+            with client.create_container("test") as container:
+                container.upload_blob("file_1", b"data")
+                downloader = container.download_blob("file_1")
+                assert downloader.readall() == b"data"
+
+
+@mark.asyncio
+async def test_sanity_async(docker_client):
+    async with AzuriteService.arun(docker_client) as service:
         port = service.client_port()
         with BlobServiceClient(f"http://127.0.0.1:{port}/{DEFAULT_ACCOUNT_NAME}", DEFAULT_ACCOUNT_KEY) as client:
             with client.create_container("test") as container:
@@ -29,7 +40,7 @@ def test_sanity(docker_client):
 
 def test_connection_works_sibling_network(docker_client, create_and_pull):
     with temp_network(docker_client) as network:
-        with BlobStorageService.run(docker_client) as blob, \
+        with AzuriteService.run(docker_client) as blob, \
                 connect(network, blob) as aliases:
             url = f"http://{aliases[0]}:{BLOB_STORAGE_DEFAULT_PORT}"
             container = create_and_pull(
@@ -44,7 +55,7 @@ def test_connection_works_sibling_network(docker_client, create_and_pull):
 
 
 def test_connection_works_sibling(docker_client, create_and_pull):
-    with BlobStorageService.run(docker_client) as blob:
+    with AzuriteService.run(docker_client) as blob:
         port = blob.client_port()
         url = f"http://{docker_host_name}:{port}"
         container = create_and_pull(
@@ -58,13 +69,13 @@ def test_connection_works_sibling(docker_client, create_and_pull):
 
 
 def test_connection_string(docker_client):
-    with BlobStorageService.run(docker_client) as service:
+    with AzuriteService.run(docker_client) as service:
         BlobServiceClient.from_connection_string(service.connection_string)
 
 
 def test_container_connection_string(docker_client, create_and_pull):
     with temp_network(docker_client) as network, \
-            BlobStorageService.run(docker_client) as service:
+            AzuriteService.run(docker_client) as service:
         client = BlobServiceClient.from_connection_string(service.connection_string)
         client.create_container("test")
         service.connect(network)

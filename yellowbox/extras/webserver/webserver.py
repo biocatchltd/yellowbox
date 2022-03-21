@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from copy import deepcopy
 from threading import Lock, Thread
 from time import sleep
 from typing import ContextManager, Iterator, Mapping, Optional, Union, overload
@@ -11,14 +10,12 @@ from starlette.applications import Starlette
 from starlette.responses import PlainTextResponse
 from starlette.routing import Route, WebSocketRoute
 from uvicorn import Config, Server
-from uvicorn.config import LOGGING_CONFIG as uvicorn_logging_config
 
 from yellowbox import YellowService
 from yellowbox.extras.webserver.class_endpoint import HTTPEndpointTemplate, WSEndpointTemplate
 from yellowbox.extras.webserver.endpoints import (
     HTTP_SIDE_EFFECT, METHODS, WS_SIDE_EFFECT, MockHTTPEndpoint, MockWSEndpoint, http_endpoint, ws_endpoint
 )
-from yellowbox.extras.webserver.util import mute_uvicorn_log
 from yellowbox.retry import RetrySpec
 from yellowbox.utils import docker_host_name
 
@@ -45,6 +42,7 @@ class WebServer(YellowService):
             port: the port to bind to when serving, default will bind to an available port
             **kwargs: forwarded to the uvicorn configuration.
         """
+        self.__name__ = name
         self._app = Starlette(debug=True)
         self._route_lock = Lock()
 
@@ -53,11 +51,7 @@ class WebServer(YellowService):
         self._pending_exception: Optional[Exception] = None
 
         if 'log_config' not in kwargs:
-            log_config = deepcopy(uvicorn_logging_config)
-            log_config['formatters']['access']['fmt'] = \
-                f'%(levelprefix)s {name} %(client_addr)s - "%(request_line)s" %(status_code)s'
-            log_config['formatters']['default']['fmt'] = f'%(levelprefix)s {name} %(message)s'
-            kwargs['log_config'] = log_config
+            kwargs['log_config'] = None
 
         kwargs.setdefault('host', '0.0.0.0')
 
@@ -99,7 +93,8 @@ class WebServer(YellowService):
 
     @overload
     def add_http_endpoint(self, methods: METHODS, rule_string: str, side_effect: HTTP_SIDE_EFFECT, *,
-                          auto_read_body: bool = True, forbid_implicit_head_verb: bool = True) -> MockHTTPEndpoint:
+                          auto_read_body: bool = True, forbid_implicit_head_verb: bool = True, name: str = None) \
+            -> MockHTTPEndpoint:
         ...
 
     def add_http_endpoint(self, *args, **kwargs) -> MockHTTPEndpoint:
@@ -150,7 +145,7 @@ class WebServer(YellowService):
 
     @overload
     def patch_http_endpoint(self, methods: METHODS, rule_string: str, side_effect: HTTP_SIDE_EFFECT, *,
-                            auto_read_body: bool = True, forbid_implicit_head_verb: bool = True) \
+                            auto_read_body: bool = True, forbid_implicit_head_verb: bool = True, name: str = None) \
             -> ContextManager[MockHTTPEndpoint]:
         ...
 
@@ -176,7 +171,7 @@ class WebServer(YellowService):
         ...
 
     @overload
-    def add_ws_endpoint(self, rule_string: str, side_effect: WS_SIDE_EFFECT) -> MockWSEndpoint:
+    def add_ws_endpoint(self, rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None) -> MockWSEndpoint:
         ...
 
     def add_ws_endpoint(self, *args, **kwargs):
@@ -228,7 +223,8 @@ class WebServer(YellowService):
         ...
 
     @overload
-    def patch_ws_endpoint(self, rule_string: str, side_effect: WS_SIDE_EFFECT) -> ContextManager[MockWSEndpoint]:
+    def patch_ws_endpoint(self, rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None)\
+            -> ContextManager[MockWSEndpoint]:
         ...
 
     @contextmanager  # type:ignore[misc]
@@ -271,14 +267,13 @@ class WebServer(YellowService):
     def start(self, retry_spec: Optional[RetrySpec] = None) -> WebServer:
         if self._serve_thread.is_alive():
             raise RuntimeError('thread cannot be started twice')
-        with mute_uvicorn_log():
-            self._serve_thread.start()
-            with self.patch_http_endpoint('GET', '/__yellowbox/ping', side_effect=PlainTextResponse('')):
-                retry_spec = retry_spec or RetrySpec(interval=0.1, timeout=5)
-                retry_spec.retry(
-                    lambda: get(self.local_url() + '/__yellowbox/ping').raise_for_status(),
-                    (ConnectionError, HTTPError)
-                )
+        self._serve_thread.start()
+        with self.patch_http_endpoint('GET', '/__yellowbox/ping', side_effect=PlainTextResponse('')):
+            retry_spec = retry_spec or RetrySpec(interval=0.1, timeout=5)
+            retry_spec.retry(
+                lambda: get(self.local_url() + '/__yellowbox/ping').raise_for_status(),
+                (ConnectionError, HTTPError)
+            )
 
         # add all the class endpoints
         for name, template in type(self)._CLASS_ENDPOINT_TEMPLATES.items():
@@ -295,9 +290,8 @@ class WebServer(YellowService):
         return super().start()
 
     def stop(self):
-        with mute_uvicorn_log():
-            self._server.should_exit = True
-            self._serve_thread.join()
+        self._server.should_exit = True
+        self._serve_thread.join()
         super().stop()
         self._raise_from_pending()
 

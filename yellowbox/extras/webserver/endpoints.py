@@ -14,8 +14,11 @@ from starlette.websockets import WebSocket
 from yellowbox.extras.webserver.http_request_capture import RecordedHTTPRequest, RecordedHTTPRequests
 from yellowbox.extras.webserver.ws_request_capture import RecordedWSTranscripts, RecorderEndpoint
 
-HTTP_SIDE_EFFECT = Union[Response, Callable[[Request], Awaitable[Response]]]
-WS_SIDE_EFFECT = Callable[[WebSocket], Awaitable[Optional[int]]]
+BASE_HTTP_SIDE_EFFECT = Union[Response, Callable[[Request], Awaitable[Response]]]
+BASE_WS_SIDE_EFFECT = Callable[[WebSocket], Awaitable[Optional[int]]]
+
+HTTP_SIDE_EFFECT = Union[BASE_HTTP_SIDE_EFFECT, Callable[['MockHTTPEndpoint'], BASE_HTTP_SIDE_EFFECT]]
+WS_SIDE_EFFECT = Union[BASE_WS_SIDE_EFFECT, Callable[['MockWSEndpoint'], BASE_WS_SIDE_EFFECT]]
 METHODS = Union[str, Iterable[str]]
 
 if TYPE_CHECKING:
@@ -34,6 +37,22 @@ class EndpointPatch(ContextManager):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.endpoint.side_effect = self.restore_side_effect
         self.endpoint.owner._raise_from_pending()
+
+
+@overload
+def bind_side_effect(endpoint: MockHTTPEndpoint, side_effect: HTTP_SIDE_EFFECT) -> BASE_HTTP_SIDE_EFFECT:
+    pass
+
+
+@overload
+def bind_side_effect(endpoint: MockWSEndpoint, side_effect: WS_SIDE_EFFECT) -> BASE_WS_SIDE_EFFECT:
+    pass
+
+
+def bind_side_effect(endpoint, side_effect):
+    if callable(side_effect) and getattr(side_effect, '__side_effect_factory__', False):
+        return side_effect(endpoint)
+    return side_effect
 
 
 class MockHTTPEndpoint:
@@ -65,9 +84,10 @@ class MockHTTPEndpoint:
         self.methods: Tuple[str, ...] = tuple(m.upper() for m in methods)
         self.rule_string = rule_string
         self.__name__ = name
-        self.side_effect = side_effect
         self.auto_read_body = auto_read_body
         self.forbid_implicit_head_verb = forbid_implicit_head_verb
+
+        self.side_effect = bind_side_effect(self, side_effect)
 
     def patch(self, side_effect: HTTP_SIDE_EFFECT):
         """
@@ -80,7 +100,7 @@ class MockHTTPEndpoint:
         """
         self.owner._raise_from_pending()
         previous_side_effect = self.side_effect
-        self.side_effect = side_effect
+        self.side_effect = bind_side_effect(self, side_effect)
         return EndpointPatch(self, previous_side_effect)
 
     @contextmanager
@@ -140,22 +160,25 @@ class MockHTTPEndpoint:
 
 
 @overload
-def http_endpoint(methods: METHODS, rule_string: str, *, auto_read_body: bool = True, forbid_head_verb: bool = True) \
+def http_endpoint(methods: METHODS, rule_string: str, *, auto_read_body: bool = True, forbid_head_verb: bool = True,
+                  name: str = None) \
         -> Callable[[HTTP_SIDE_EFFECT], MockHTTPEndpoint]: ...
 
 
 @overload
 def http_endpoint(methods: METHODS, rule_string: str, side_effect: HTTP_SIDE_EFFECT, *, auto_read_body: bool = True,
-                  forbid_implicit_head_verb: bool = True) -> MockHTTPEndpoint: ...
+                  forbid_implicit_head_verb: bool = True, name: str = None) -> MockHTTPEndpoint: ...
 
 
-def http_endpoint(methods: METHODS, rule_string: str, side_effect: Optional[HTTP_SIDE_EFFECT] = None, **kwargs):
+def http_endpoint(methods: METHODS, rule_string: str, side_effect: Optional[HTTP_SIDE_EFFECT] = None, *,
+                  name: Optional[str] = None, **kwargs):
     """
     Create a mock HTTP endpoint.
     Args:
         methods: forwarded to MockHTTPEndpoint
         rule_string: forwarded to MockHTTPEndpoint
         side_effect: forwarded to MockHTTPEndpoint
+        name: forwarded to MockHTTPEndpoint, if none, an automaitic name is generated.
         **kwargs: forwarded to MockHTTPEndpoint
 
     Returns:
@@ -174,9 +197,13 @@ def http_endpoint(methods: METHODS, rule_string: str, side_effect: Optional[HTTP
     """
 
     def ret(func: HTTP_SIDE_EFFECT):
-        try:
-            name = func.__name__  # type: ignore[union-attr]
-        except AttributeError:
+        nonlocal name
+        if name is None and not getattr(func, '__skip_name_for_side_effect__', False):
+            try:
+                name = func.__name__  # type: ignore[union-attr]
+            except AttributeError:
+                pass
+        if name is None:
             name = f'{methods} {rule_string}'
         return MockHTTPEndpoint(name, methods, rule_string, func, **kwargs)
 
@@ -203,7 +230,7 @@ class MockWSEndpoint:
 
         self.rule_string = rule_string
         self.__name__ = name
-        self.side_effect = side_effect
+        self.side_effect = bind_side_effect(self, side_effect)
 
         # this will be the endpoint handed to the starlette.WebSocketRoute. By storing it as an
         # attribute of the endpoint, we will be able to better locate routes relating to the endpoint
@@ -237,7 +264,7 @@ class MockWSEndpoint:
         """
         self.owner._raise_from_pending()
         previous_side_effect = self.side_effect
-        self.side_effect = side_effect
+        self.side_effect = bind_side_effect(self, side_effect)
         return EndpointPatch(self, previous_side_effect)
 
     @contextmanager
@@ -255,19 +282,20 @@ class MockWSEndpoint:
 
 
 @overload
-def ws_endpoint(rule_string: str) -> Callable[[WS_SIDE_EFFECT], MockWSEndpoint]: pass
+def ws_endpoint(rule_string: str, *, name: str = None) -> Callable[[WS_SIDE_EFFECT], MockWSEndpoint]: pass
 
 
 @overload
-def ws_endpoint(rule_string: str, side_effect: WS_SIDE_EFFECT) -> MockWSEndpoint: pass
+def ws_endpoint(rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None) -> MockWSEndpoint: pass
 
 
-def ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None):
+def ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None, *, name: str = None):
     """
     Create a mock websocket endpoint.
     Args:
         rule_string: forwarded to MockWSEndpoint
         side_effect: forwarded to MockWSEndpoint
+        name: forwarded to MockWSEndpoint. If not specified, a name will be the generated.
 
     Returns:
         a websocket endpoint
@@ -287,7 +315,15 @@ def ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None):
     """
 
     def ret(func: WS_SIDE_EFFECT):
-        return MockWSEndpoint(func.__name__, rule_string, func)
+        nonlocal name
+        if name is None and not getattr(func, '__skip_name_for_side_effect__', False):
+            try:
+                name = func.__name__
+            except AttributeError:
+                pass
+        if name is None:
+            name = rule_string
+        return MockWSEndpoint(name, rule_string, func)
 
     if side_effect is None:
         return ret

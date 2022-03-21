@@ -19,7 +19,7 @@ official docker container, with `Pika <https://pika.readthedocs.io/en/stable/>`_
                            **kwargs)
 
     A service that runs a rabbitmq queue. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
-    :class:`~subclasses.RunMixin`.
+    :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
 
     :param docker_client: The docker client to used to pull and create the RabbitMQ container.
     :type docker_client: :class:`~docker.client.DockerClient`

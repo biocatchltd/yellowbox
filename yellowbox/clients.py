@@ -4,7 +4,7 @@ from docker import DockerClient
 
 
 @contextmanager
-def docker_client():
+def open_docker_client():
     """
     Starts docker client from the environment, with a fallback to default TCP port
     (for running from within virtual machines)
@@ -17,3 +17,7 @@ def docker_client():
         ret.ping()
     with closing(ret):
         yield ret
+
+
+# legacy alias
+docker_client = open_docker_client

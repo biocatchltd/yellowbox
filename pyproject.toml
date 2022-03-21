@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "yellowbox"
-version = "0.7.0"
+version = "0.7.1"
 description = ""
 authors = ["biocatch ltd"]
 license = "MIT"
@@ -44,6 +44,8 @@ types-redis = "^3.5.4"
 pytest-xdist = "^2.1.0"
 sphinx = "*"
 sphinx-rtd-theme = "*"
+pytest-asyncio = "^0.18.2"
+coverage = "^6.3.2"
 
 [tool.poetry.extras]
 azure = ["azure-storage-blob", "cffi"]
@@ -61,3 +63,6 @@ dev = ["redis", "pika", "kafka-python", "azure-storage-blob", "cffi", "sqlalchem
 [build-system]
 requires = ["poetry>=1.0.0"]
 build-backend = "poetry.masonry.api"
+
+[tool.poetry.plugins.pytest11]
+yellowbox = "yellowbox._pytest"

@@ -1,4 +1,20 @@
 # Yellowbox Changelog
+## 0.7.1
+### Added
+* pytest integration, with the `docker_client` fixture
+* `AsyncRunMixin` class, to allow starting up services asynchronously
+  * Note: Currently, only waiting for services to start is asynchronous.
+* `webserver.verbose_http_side_effect` to print all http traffic through an endpoint.
+* Webserver: all endpoint factory functions now also accept a `name` parameter, to manually set the name of an endpoint.
+* `RetrySpec.aretry` to retry a function but to wait asynchronously between attempts. 
+### Changed
+* `docker_client` function renamed to `open_docker_client` (legacy alias kept for backwards compatibility)
+* `extras.BlobStorageService` renamed to `extras.AzuriteService` (legacy alias kept for backwards compatibility)
+* Webserver no longer uses uvicorn's logging. This can be reverted by manually setting the `log_config` in `WebServer`'s constructor.
+  To note endpoint access, use `webserver.verbose_http_side_effect`.
+### Deprecated
+* `yellowbox.docker_client` should be replaced with `yellowbox.open_docker_client` 
+* `yellowbox.extras.BlobStorageService` should be replaced with `yellowbox.extras.AzuriteService`
 ## 0.7.0
 ### Removed
 * the method ``RecordedHTTPRequests.has_requests_any_order`` has been removed.

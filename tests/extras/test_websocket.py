@@ -1,5 +1,6 @@
 import socket
 import threading
+from contextlib import suppress
 from time import sleep
 from urllib.parse import urljoin
 
@@ -183,6 +184,6 @@ def test_websocket_nonexisting_route(websocket_service: WebsocketService):
     conn.send("asd")
 
     # Should be auto-closed.
-    with raises((ConnectionAbortedError, BrokenPipeError)):
+    with suppress(ConnectionAbortedError, BrokenPipeError):
         sleep(0.1)
         conn.send("asd")

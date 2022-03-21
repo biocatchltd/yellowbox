@@ -49,12 +49,15 @@ class WSEndpointTemplate(EndpointTemplate[MockWSEndpoint]):
 
 @overload
 def class_http_endpoint(methods: METHODS, rule_string: str, *, auto_read_body: bool = True,
-                        forbid_head_verb: bool = True) -> Callable[[HTTP_SIDE_EFFECT], HTTPEndpointTemplate]: ...
+                        forbid_head_verb: bool = True, name: Optional[str] = None)\
+        -> Callable[[HTTP_SIDE_EFFECT], HTTPEndpointTemplate]:
+    ...
 
 
 @overload
 def class_http_endpoint(methods: METHODS, rule_string: str, side_effect: HTTP_SIDE_EFFECT, *,
-                        auto_read_body: bool = True, forbid_implicit_head_verb: bool = True) -> HTTPEndpointTemplate:
+                        auto_read_body: bool = True, forbid_implicit_head_verb: bool = True,
+                        name: Optional[str] = None) -> HTTPEndpointTemplate:
     ...
 
 
@@ -81,14 +84,16 @@ def class_http_endpoint(methods: METHODS, rule_string: str, side_effect: Optiona
 
 
 @overload
-def class_ws_endpoint(rule_string: str) -> Callable[[WS_SIDE_EFFECT], WSEndpointTemplate]: pass
+def class_ws_endpoint(rule_string: str, *, name: Optional[str] = None)\
+        -> Callable[[WS_SIDE_EFFECT], WSEndpointTemplate]: pass
 
 
 @overload
-def class_ws_endpoint(rule_string: str, side_effect: WS_SIDE_EFFECT) -> WSEndpointTemplate: pass
+def class_ws_endpoint(rule_string: str, side_effect: WS_SIDE_EFFECT, *,
+                      name: Optional[str] = None) -> WSEndpointTemplate: pass
 
 
-def class_ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None):
+def class_ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None, **kwargs):
     """
     Creates a websocket endpoint template. Declare this as a class variable in your webserver subclass to automatically
      add the endpoint to all instances. Can be used as a decorator.
@@ -101,7 +106,7 @@ def class_ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = 
 
     """
     def ret(side_effect_method):
-        return WSEndpointTemplate(rule_string, side_effect_method=side_effect_method)
+        return WSEndpointTemplate(rule_string, side_effect_method=side_effect_method, **kwargs)
 
     if side_effect is not None:
         return ret(side_effect)

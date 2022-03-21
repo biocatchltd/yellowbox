@@ -51,8 +51,7 @@ of handling both HTTP and websocket routes.
         unless overridden in *\*\*kwargs*, the following values differ from uvicorn's defaults:
 
         * ``host``: changed to ``'0.0.0.0'``
-        * ``log_config``: Changed to a logging config that resembles the default and also includes the server name in
-          its log messages.
+        * ``log_config``: Changed to None, to avoid all of uvicorn's logs.
 
     .. property:: port
         :type: int | None
@@ -66,7 +65,7 @@ of handling both HTTP and websocket routes.
 
     .. method:: add_http_endpoint(endpoint)
                 add_http_endpoint(methods, rule_string, side_effect, *, auto_read_body=True,\
-                                  forbid_implicit_head_verb = True)
+                                  forbid_implicit_head_verb = True, name=None)
 
         Add an HTTP endpoint to the server. Can accept either a created endpoint or arguments to create one.
 
@@ -105,7 +104,7 @@ of handling both HTTP and websocket routes.
 
     .. method:: patch_http_endpoint(endpoint)
                 patch_http_endpoint(methods, rule_string, side_effect, *, auto_read_body=True,\
-                                    forbid_implicit_head_verb = True)
+                                    forbid_implicit_head_verb = True, name=None)
 
         Add to, then remove an HTTP endpoint from the server within a context. Can accept either a created
         endpoint or arguments to create one.
@@ -131,7 +130,7 @@ of handling both HTTP and websocket routes.
             assert get(server.local_url() + '/square/12').status_code == 404
 
     .. method:: add_ws_endpoint(endpoint)
-                add_ws_endpoint(rule_string, side_effect)
+                add_ws_endpoint(rule_string, side_effect, *, name=None)
 
         Add an HTTP endpoint to the server. Can accept either a created endpoint or arguments to create one.
 
@@ -169,7 +168,7 @@ of handling both HTTP and websocket routes.
         :raises RuntimeError: If the endpoint is not added to the server.
 
     .. method:: patch_ws_endpoint(endpoint)
-                patch_ws_endpoint(rule_string, side_effect)
+                patch_ws_endpoint(rule_string, side_effect, *, name=None)
 
         Add to, then remove a websocket endpoint from the server within a context. Can accept either a created
         endpoint or arguments to create one.
@@ -197,8 +196,10 @@ of handling both HTTP and websocket routes.
         :returns: The URL of the server.
         :rtype: :class:`str`
 
-.. function:: http_endpoint(methods, rule_string, side_effect, *, auto_read_body=True, forbid_implicit_head_verb = True)
-              http_endpoint(methods, rule_string, *, auto_read_body=True, forbid_implicit_head_verb = True)
+.. function:: http_endpoint(methods, rule_string, side_effect, *, auto_read_body=True,\
+                            forbid_implicit_head_verb = True, *, name=None)
+              http_endpoint(methods, rule_string, *, auto_read_body=True, forbid_implicit_head_verb = True, *, \
+                            name=None)
 
     Create an HTTP endpoint to link to a :class:`Webserver` (see :meth:`WebServer.add_http_endpoint`).
 
@@ -216,6 +217,8 @@ of handling both HTTP and websocket routes.
      that the entire request arrives to the server before a response is returned.
     :param bool forbid_implicit_head_verb: By default for Starlette routes, if the ``GET`` method is allowed for a route
      , the ``HEAD`` method will also be allowed. This param (enabled by default) disables this behavior.
+    :param str | None name: The name of the endpoint. If ``None``, the name is inferred from the function name and rule
+     string.
     :returns: The a new HTTP endpoint that can be added to a Webservice.
     :rtype: :class:`MockHTTPEndpoint`
 
@@ -241,8 +244,8 @@ of handling both HTTP and websocket routes.
         In order to use a "rotating" side effect (i.e. one that returns a different response per request), see
         :func:`iter_side_effects`.
 
-.. function:: ws_endpoint(rule_string, side_effect)
-              ws_endpoint(rule_string)
+.. function:: ws_endpoint(rule_string, side_effect, *, name=None)
+              ws_endpoint(rule_string, *, name=None)
 
     Create a WebSocket endpoint to link to a :class:`Webserver` (see :meth:`WebServer.add_ws_endpoint`).
 
@@ -252,6 +255,8 @@ of handling both HTTP and websocket routes.
      accepts a positional `Starlette WebSocket <https://www.starlette.io/websockets/#websocket>`_. If the callable
      returns an integer, the connection is closed with that exit code. Can be delegated as a decorator.
     :type side_effect: async `WebSocket <https://www.starlette.io/websockets/#websocket>`_ |rarr| (int | None)
+    :param str | None name: The name of the endpoint. If ``None``, the name is inferred from the function name and rule
+     string.
     :returns: The a new Websocket endpoint that can be added to a Webservice.
     :rtype: :class:`MockWSEndpoint`
 
@@ -391,10 +396,11 @@ of handling both HTTP and websocket routes.
 .. _Response: https://www.starlette.io/responses/#response
 
 .. function:: class_http_endpoint(methods, rule_string, side_effect, *, auto_read_body=True, \
-                                  forbid_implicit_head_verb = True)
-              class_http_endpoint(methods, rule_string, *, auto_read_body=True, forbid_implicit_head_verb = True)
-              class_ws_endpoint(rule_string, side_effect)
-              class_ws_endpoint(rule_string)
+                                  forbid_implicit_head_verb = True, name=None)
+              class_http_endpoint(methods, rule_string, *, auto_read_body=True, forbid_implicit_head_verb = True, \
+                                  name=None)
+              class_ws_endpoint(rule_string, side_effect, *, name=None)
+              class_ws_endpoint(rule_string, *, name=None)
 
     Create an endpoint template. Declare this in a :class:`WebServer` subclass body to automatically add an
     endpoint to all instances of the subclass.
@@ -714,3 +720,16 @@ of handling both HTTP and websocket routes.
             assert get(server.local_url()+'/').text == 'im tired now'
             assert get(server.local_url()+'/').text == 'im tired now'
             ...
+
+.. function:: verbose_http_side_effect(side_effect, format_function = ..., file=...)
+
+    Wraps an HTTP side effect that prints the request and response to a file.
+
+    :param side_effect: The HTTP side effect to wrap. Can be either a function or a response.
+
+    :param format_function: A function that takes an endpoint, request and response and returns a string.
+        The default function will return a string consisting of the time, webserver and endpoint name, the client
+        address, the HTTP method, the relative path with the query string, the status code and length of the response.
+    :type format_function: Callable[[MockHTTPEndpoint, Request, Response], str]
+
+    :param file: The file to write the messages to. defaults to stdout.

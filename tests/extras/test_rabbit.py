@@ -32,6 +32,22 @@ def test_connection_works(docker_client, tag, vhost):
             assert body == b'hi there'
 
 
+@mark.parametrize('tag', ['rabbitmq:management-alpine', 'rabbitmq:latest'])
+@mark.parametrize('vhost', ["/", "guest-vhost"])
+@mark.asyncio
+async def test_connection_works_async(docker_client, tag, vhost):
+    async with RabbitMQService.arun(docker_client, image=tag, virtual_host=vhost) as rabbit:
+        connection: BlockingConnection
+        with rabbit.connection() as connection:
+            channel = connection.channel()
+            channel.queue_declare('routing')
+
+            channel.basic_publish('', 'routing', body=b'hi there')
+            sleep(1)
+            *_, body = channel.basic_get('routing', auto_ack=True)
+            assert body == b'hi there'
+
+
 @mark.parametrize('vhost', ["/", "guest-vhost"])
 def test_connection_works_sibling_network(docker_client, vhost, create_and_pull):
     with temp_network(docker_client) as network:

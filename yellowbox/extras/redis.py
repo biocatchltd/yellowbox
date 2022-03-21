@@ -6,7 +6,7 @@ from redis import ConnectionError as RedisConnectionError, Redis
 from yellowbox import RunMixin
 from yellowbox.containers import create_and_pull, get_ports, upload_file
 from yellowbox.retry import RetrySpec
-from yellowbox.subclasses import SingleContainerService
+from yellowbox.subclasses import AsyncRunMixin, SingleContainerService
 
 __all__ = ['RedisService', 'REDIS_DEFAULT_PORT', 'DEFAULT_RDB_PATH', 'append_state']
 
@@ -28,7 +28,7 @@ def append_state(client: Redis, db_state: RedisState):
             client.set(k, v)
 
 
-class RedisService(SingleContainerService, RunMixin):
+class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
     def __init__(self, docker_client: DockerClient, image='redis:latest',
                  redis_file: Optional[IO[bytes]] = None, **kwargs):
         container = create_and_pull(docker_client, image, publish_all_ports=True, detach=True)
@@ -58,6 +58,14 @@ class RedisService(SingleContainerService, RunMixin):
             retry_spec.retry(client.ping, RedisConnectionError)
         self.started = True
         return self
+
+    async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
+        super().start()
+        client_cm: ContextManager[Redis] = self.client()
+        with client_cm as client:
+            retry_spec = retry_spec or RetrySpec(attempts=10)
+            await retry_spec.aretry(client.ping, RedisConnectionError)
+        self.started = True
 
     def reset_state(self):
         client: Redis
