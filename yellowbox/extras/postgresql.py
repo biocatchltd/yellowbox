@@ -1,6 +1,7 @@
 from typing import Optional
 
 from docker import DockerClient
+from deprecated import deprecated
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 
@@ -93,6 +94,7 @@ class PostgreSQLService(SingleContainerService, RunMixin, AsyncRunMixin):
 
         return f'{dialect}://{self.user}:{self.password}@{docker_host_name}:{self.external_port()}/{database}'
 
+    @deprecated(version='0.7.2', reason='Use sqlalchemy.create_engine(service.local_connection_string()) instead')
     def engine(self, **kwargs):
         """
         Create an sqlalchemy Engine connected to the service's default db.
@@ -100,6 +102,8 @@ class PostgreSQLService(SingleContainerService, RunMixin, AsyncRunMixin):
         cs = self.local_connection_string()
         return create_engine(cs, **kwargs)
 
+    @deprecated(version='0.7.2',
+                reason='Use sqlalchemy.create_engine(service.local_connection_string()).connect() instead')
     def connection(self, **kwargs):
         """
         Create an sqlalchemy Connection connected to the service's default db.
