@@ -49,6 +49,6 @@ def test_set_state(redis, key_prefix):
     })
     client: Redis
     with redis.client() as client:
-        assert client.get('a') == b'12'
-        assert client.hgetall('b') == {b'i': b'0', b'am': b'2', b'hungry': b'3'}
-        assert client.lrange('c', 0, -1) == [b'2', b'3', b'5', b'7', b'11']
+        assert client.get(key_prefix + 'a') == b'12'
+        assert client.hgetall(key_prefix + 'b') == {b'i': b'0', b'am': b'2', b'hungry': b'3'}
+        assert client.lrange(key_prefix + 'c', 0, -1) == [b'2', b'3', b'5', b'7', b'11']
