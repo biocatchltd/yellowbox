@@ -1,9 +1,7 @@
-"""
-Tests for Azure Storage module
-"""
 from azure.storage.blob import BlobServiceClient
-from pytest import mark
+from pytest import mark, fixture
 
+from tests.util import unique_name_generator
 from yellowbox.extras.azure_storage import (
     BLOB_STORAGE_DEFAULT_PORT, DEFAULT_ACCOUNT_KEY, DEFAULT_ACCOUNT_NAME, AzuriteService
 )
@@ -38,51 +36,56 @@ async def test_sanity_async(docker_client):
                 assert downloader.readall() == b"data"
 
 
-def test_connection_works_sibling_network(docker_client, create_and_pull):
-    with temp_network(docker_client) as network:
-        with AzuriteService.run(docker_client) as blob, \
-                connect(network, blob) as aliases:
-            url = f"http://{aliases[0]}:{BLOB_STORAGE_DEFAULT_PORT}"
-            container = create_and_pull(
-                docker_client,
-                "byrnedo/alpine-curl:latest", f'-vvv -I "{url}" --http0.9',
-                detach=True
-            )
-            with connect(network, container):
-                container.start()
-                return_status = container.wait()
-                assert return_status["StatusCode"] == 0
+@fixture(scope='module')
+def azurite_service(docker_client):
+    with AzuriteService.run(docker_client, spinner=False) as blob:
+        yield blob
 
 
-def test_connection_works_sibling(docker_client, create_and_pull):
-    with AzuriteService.run(docker_client) as blob:
-        port = blob.client_port()
-        url = f"http://{docker_host_name}:{port}"
+container_name = fixture(unique_name_generator())
+
+
+def test_connection_works_sibling_network(docker_client, create_and_pull, azurite_service):
+    with temp_network(docker_client) as network, \
+            connect(network, azurite_service) as aliases:
+        url = f"http://{aliases[0]}:{BLOB_STORAGE_DEFAULT_PORT}"
         container = create_and_pull(
             docker_client,
             "byrnedo/alpine-curl:latest", f'-vvv -I "{url}" --http0.9',
             detach=True
         )
-        container.start()
-        return_status = container.wait()
-        assert return_status["StatusCode"] == 0
+        with connect(network, container):
+            container.start()
+            return_status = container.wait()
+            assert return_status["StatusCode"] == 0
 
 
-def test_connection_string(docker_client):
-    with AzuriteService.run(docker_client) as service:
-        BlobServiceClient.from_connection_string(service.connection_string)
+def test_connection_works_sibling(docker_client, create_and_pull, azurite_service):
+    port = azurite_service.client_port()
+    url = f"http://{docker_host_name}:{port}"
+    container = create_and_pull(
+        docker_client,
+        "byrnedo/alpine-curl:latest", f'-vvv -I "{url}" --http0.9',
+        detach=True
+    )
+    container.start()
+    return_status = container.wait()
+    assert return_status["StatusCode"] == 0
 
 
-def test_container_connection_string(docker_client, create_and_pull):
-    with temp_network(docker_client) as network, \
-            AzuriteService.run(docker_client) as service:
-        client = BlobServiceClient.from_connection_string(service.connection_string)
-        client.create_container("test")
-        service.connect(network)
+def test_connection_string(azurite_service):
+    BlobServiceClient.from_connection_string(azurite_service.connection_string)
+
+
+def test_container_connection_string(docker_client, create_and_pull, azurite_service, container_name):
+    with temp_network(docker_client) as network:
+        client = BlobServiceClient.from_connection_string(azurite_service.connection_string)
+        client.create_container(container_name)
+        azurite_service.connect(network)
         container = create_and_pull(
             docker_client, "mcr.microsoft.com/azure-cli:latest",
             ["az", "storage", "blob", "list", "--connection-string",
-             service.container_connection_string, "--container-name", "test"
+             azurite_service.container_connection_string, "--container-name", container_name
              ],
             detach=True,
             network=network.name

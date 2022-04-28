@@ -54,7 +54,7 @@ class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
         super().start()
         client_cm: ContextManager[Redis] = self.client()
         with client_cm as client:
-            retry_spec = retry_spec or RetrySpec(attempts=10)
+            retry_spec = retry_spec or RetrySpec(attempts=15)
             retry_spec.retry(client.ping, RedisConnectionError)
         self.started = True
         return self
@@ -63,7 +63,7 @@ class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
         super().start()
         client_cm: ContextManager[Redis] = self.client()
         with client_cm as client:
-            retry_spec = retry_spec or RetrySpec(attempts=10)
+            retry_spec = retry_spec or RetrySpec(attempts=15)
             await retry_spec.aretry(client.ping, RedisConnectionError)
         self.started = True
 

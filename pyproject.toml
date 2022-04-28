@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "yellowbox"
-version = "0.7.1"
+version = "0.7.2"
 description = ""
 authors = ["biocatch ltd"]
 license = "MIT"
@@ -31,6 +31,7 @@ websockets = { version = "*", optional = true }
 hvac = { version = "*", optional = true }
 pyodbc = { version = "^4.0.32", optional = true }
 Deprecated = "^1.2.13"
+SQLAlchemy-Utils = { version = "^0.38.2", optional = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.0"
@@ -52,8 +53,8 @@ coverage = "^6.3.2"
 [tool.poetry.extras]
 azure = ["azure-storage-blob", "cffi"]
 kafka = ["kafka-python"]
-postgresql = ["sqlalchemy", "psycopg2"]
-mssql = ['sqlalchemy']
+postgresql = ["sqlalchemy", "psycopg2", "SQLAlchemy-Utils"]
+mssql = ['sqlalchemy', "SQLAlchemy-Utils"]
 rabbit = ["pika"]
 redis = ["redis"]
 vault = ["hvac"]
@@ -62,7 +63,7 @@ websocket = ["simple_websocket_server", "websocket_client"]
 
 dev = ["redis", "pika", "kafka-python", "azure-storage-blob", "cffi", "sqlalchemy", "psycopg2",
     "simple_websocket_server", "websocket_client", "starlette", "python-igraph", "uvicorn", "websockets", "hvac",
-    'pyodbc']
+    'pyodbc', '"SQLAlchemy-Utils"']
 
 [build-system]
 requires = ["poetry>=1.0.0"]

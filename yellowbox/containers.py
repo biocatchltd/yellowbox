@@ -8,7 +8,7 @@ import tarfile
 from contextlib import contextmanager
 from os import PathLike
 from tempfile import TemporaryFile
-from typing import IO, Dict, Generator, List, Sequence, TypeVar, Union, cast
+from typing import IO, Dict, Generator, List, Sequence, TypeVar, Union, cast, Optional, Container as AbstractContainer
 
 import docker
 from docker import DockerClient
@@ -119,6 +119,46 @@ def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT,
         if is_alive(container):
             container.kill(signal)
             container.wait(timeout=timeout)
+
+
+@contextmanager
+def removing(container: _CT, *, expected_exit_code: Optional[Union[int, AbstractContainer[int]]] = 0, force=False) \
+        -> Generator[_CT, None, None]:
+    """A context manager that removes a docker container upon completion.
+
+    Example:
+        container = DockerContainer(...)
+        with removing(container):
+            ...
+        # Container is now removed
+
+    Args:
+        container: Container to remove upon completion
+        expected_exit_code: Expected exit code or codes of the container. If the container exited with a different
+            code, an exception will be raised. Defaults to 0.
+        force: If True, the container will be stopped and removed even if it is running.
+
+    Returns:
+        A context manager to be used in a 'with' statement.
+    """
+    try:
+        yield container
+    finally:
+        if is_removed(container):
+            return
+        container.reload()
+        if is_alive(container):
+            if not force:
+                raise RuntimeError(f"Container {container.id} is still alive")
+            container.kill('SIGKILL')
+        result = container.wait(timeout=10)
+        if expected_exit_code is not None:
+            if isinstance(expected_exit_code, int):
+                expected_exit_code = (expected_exit_code,)
+
+            if result['StatusCode'] not in expected_exit_code:
+                raise RuntimeError(f"Container {container.id} exited with code {result['StatusCode']}")
+        container.remove(force=force, v=True)
 
 
 def create_and_pull(docker_client: DockerClient, image: str, *args, **kwargs) -> Container:
@@ -254,6 +294,7 @@ class SafeContainerCreator:
     A class that can safely pull and create multiple containers in succession, where if one fails, all the previous
      ones are removed
     """
+
     def __init__(self, client: DockerClient):
         self.client = client
         self.created: List[Container] = []

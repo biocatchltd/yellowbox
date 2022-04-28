@@ -11,7 +11,7 @@ from yellowbox.containers import download_file, upload_file
 
 def test_upload_file(docker_client, create_and_pull):
     container = create_and_pull(docker_client, "alpine:latest",
-                                ["cat", "/tmp/test"])
+                                ["cat", "/tmp/test"], remove=True)
     container.start()
     assert container.wait()["StatusCode"] != 0
 

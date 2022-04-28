@@ -1,6 +1,7 @@
-from pytest import mark
+from pytest import mark, fixture
 from redis import Redis
 
+from tests.util import unique_name_generator
 from yellowbox.extras.redis import RedisService
 
 
@@ -8,13 +9,6 @@ from yellowbox.extras.redis import RedisService
 def test_make_redis(docker_client, spinner):
     with RedisService.run(docker_client, spinner=spinner):
         pass
-
-
-def test_connection_works(docker_client):
-    with RedisService.run(docker_client) as redis:
-        with redis.client() as client:
-            client.set('a', 12)
-            assert client.get('a') == b'12'
 
 
 @mark.asyncio
@@ -25,23 +19,36 @@ async def test_connection_works_async(docker_client):
             assert client.get('a') == b'12'
 
 
-def test_reset_state(docker_client):
-    with RedisService.run(docker_client) as redis:
-        with redis.client() as client:
-            client.set('a', 12)
-            redis.reset_state()
-            assert not client.keys()
+@fixture(scope='module')
+def redis(docker_client):
+    with RedisService.run(docker_client) as service:
+        yield service
 
 
-def test_set_state(docker_client):
-    with RedisService.run(docker_client) as redis:
-        redis.set_state({
-            'a': 12,
-            'b': {'i': 0, 'am': 2, 'hungry': 3},
-            'c': [2, 3, 5, 7, 11]
-        })
-        client: Redis
-        with redis.client() as client:
-            assert client.get('a') == b'12'
-            assert client.hgetall('b') == {b'i': b'0', b'am': b'2', b'hungry': b'3'}
-            assert client.lrange('c', 0, -1) == [b'2', b'3', b'5', b'7', b'11']
+key_prefix = fixture(unique_name_generator())
+
+
+def test_connection_works(redis, key_prefix):
+    with redis.client() as client:
+        client.set(key_prefix + 'a', 12)
+        assert client.get(key_prefix + 'a') == b'12'
+
+
+def test_reset_state(redis, key_prefix):
+    with redis.client() as client:
+        client.set(key_prefix + 'a', 12)
+        redis.reset_state()
+        assert not client.keys()
+
+
+def test_set_state(redis, key_prefix):
+    redis.set_state({
+        key_prefix + 'a': 12,
+        key_prefix + 'b': {'i': 0, 'am': 2, 'hungry': 3},
+        key_prefix + 'c': [2, 3, 5, 7, 11]
+    })
+    client: Redis
+    with redis.client() as client:
+        assert client.get('a') == b'12'
+        assert client.hgetall('b') == {b'i': b'0', b'am': b'2', b'hungry': b'3'}
+        assert client.lrange('c', 0, -1) == [b'2', b'3', b'5', b'7', b'11']
