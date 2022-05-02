@@ -3,13 +3,13 @@ from typing import Optional
 from docker import DockerClient
 
 from yellowbox.containers import create_and_pull
-from yellowbox.extras.sql_base import SQLServiceMixin, ConnectionOptions
+from yellowbox.extras.sql_base import ConnectionOptions, SQLService
 from yellowbox.subclasses import SingleContainerService
 
 __all__ = ['MSSQLService']
 
 
-class MSSQLService(SQLServiceMixin, SingleContainerService):
+class MSSQLService(SQLService, SingleContainerService):
     """
     A postgresSQL service
     """

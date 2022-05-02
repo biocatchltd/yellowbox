@@ -3,7 +3,7 @@ from time import sleep
 
 import requests
 from pika import BlockingConnection
-from pytest import mark, raises, fixture
+from pytest import fixture, mark, raises
 
 from tests.util import unique_name_generator
 from yellowbox.containers import get_ports

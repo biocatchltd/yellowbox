@@ -73,6 +73,22 @@
     :return: A context manager that yields *container*, and kills the *container* if it is still alive on exit.
     :rtype: :class:`ContextManager <contextlib.AbstractContextManager>`\[:class:`~docker.models.containers.Container`\]
 
+.. function:: removing(container: docker.models.containers.Container, *, \
+                expected_exit_code: None | int | typing.Container[int] = 0, force: bool = False) \
+                ->contextlib.AbstractContextManager[docker.models.containers.Container]
+
+    Create a context manager that ensures a container is removed when exiting.
+
+    :param container: A container object.
+    :param expected_exit_code: The expected exit code (or codes) of the container. If the container exits with a
+        different code, an exception will be raised. If ``None``, any exit code is accepted.
+    :param bool force: If ``True``, the container will be removed even if it is still running, or not yet started.
+
+    :raises: :class:`requests.RuntimeError` if the container has not completed with ``force=False``, or if the container
+        exited with an unexpected exit code. In these cases, the container is not removed.
+
+    :return: A context manager that yields *container*, and removes the *container* on exit.
+
 .. function:: create_and_pull(docker_client, image, *args. **kwargs)
 
     Create a docker container, pulling the image from dockerhub if necessary.

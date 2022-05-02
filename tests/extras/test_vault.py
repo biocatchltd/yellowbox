@@ -1,6 +1,6 @@
 import hvac
 from hvac.exceptions import InvalidPath
-from pytest import mark, raises, fixture
+from pytest import fixture, mark, raises
 
 from tests.util import unique_name_generator
 from yellowbox import connect, temp_network

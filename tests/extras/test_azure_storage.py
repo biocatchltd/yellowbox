@@ -1,5 +1,5 @@
 from azure.storage.blob import BlobServiceClient
-from pytest import mark, fixture
+from pytest import fixture, mark
 
 from tests.util import unique_name_generator
 from yellowbox.extras.azure_storage import (

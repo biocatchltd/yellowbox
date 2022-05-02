@@ -4,7 +4,7 @@ from typing import List, Tuple
 from docker.models.containers import Container
 from pytest import fixture
 
-from yellowbox.containers import create_and_pull as _create_and_pull
+from yellowbox.containers import create_and_pull as _create_and_pull, is_removed
 
 
 @fixture
@@ -22,7 +22,8 @@ def create_and_pull():
 
     yield ret
     for c, force in created:
-        c.reload()
+        if is_removed(c):
+            continue
         if not force \
                 and c.status not in ('created', 'removing', 'paused')\
                 and c.wait(timeout=1)['StatusCode'] != 0:

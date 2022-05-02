@@ -1,11 +1,10 @@
-from pytest import mark, fixture
-from sqlalchemy import Column, Integer, MetaData, String, Table, select, create_engine
+from pytest import fixture, mark
+from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, select
 
 from tests.util import unique_name_generator
 from yellowbox.containers import upload_file
-from yellowbox.networks import temp_network, connect
-
 from yellowbox.extras.mssql import MSSQLService
+from yellowbox.networks import connect, temp_network
 from yellowbox.utils import docker_host_name
 
 
@@ -13,6 +12,7 @@ from yellowbox.utils import docker_host_name
 def test_make_mssql(docker_client, spinner):
     with MSSQLService.run(docker_client, spinner=spinner):
         pass
+
 
 @mark.asyncio
 async def test_local_connection_async(docker_client):
@@ -37,18 +37,20 @@ async def test_local_connection_async(docker_client):
             assert vals == [2, 3]
 
 
-
 @fixture(scope='module')
 def service(docker_client):
     with MSSQLService.run(docker_client, spinner=False) as service:
         yield service
 
+
 db_name = fixture(unique_name_generator())
+
 
 @fixture
 def db(service, db_name):
     with service.database(db_name) as db:
         yield db
+
 
 @fixture
 def engine(db):
@@ -118,7 +120,7 @@ def test_sibling_network(service, db_name, engine, create_and_pull, docker_clien
         container = create_and_pull(
             docker_client,
             "fabiang/sqlcmd:latest",
-            f'-S {docker_host_name},{service.external_port()} -U sa -P {service.admin_password} -d {db_name}'
+            f'-S {service_alias[0]},{service.INTERNAL_PORT} -U sa -P {service.admin_password} -d {db_name}'
             " -Q 'DELETE FROM foo WHERE x < 3'",
             detach=True,
         )

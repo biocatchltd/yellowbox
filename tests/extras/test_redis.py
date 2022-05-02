@@ -1,4 +1,4 @@
-from pytest import mark, fixture
+from pytest import fixture, mark
 from redis import Redis
 
 from tests.util import unique_name_generator

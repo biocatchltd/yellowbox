@@ -8,7 +8,7 @@ import tarfile
 from contextlib import contextmanager
 from os import PathLike
 from tempfile import TemporaryFile
-from typing import IO, Dict, Generator, List, Sequence, TypeVar, Union, cast, Optional, Container as AbstractContainer
+from typing import IO, Container as AbstractContainer, Dict, Generator, List, Optional, Sequence, TypeVar, Union, cast
 
 import docker
 from docker import DockerClient
@@ -18,7 +18,7 @@ from docker.models.networks import Network
 from requests import HTTPError
 
 __all__ = ['get_ports', 'get_aliases', 'is_alive', 'is_removed', 'killing', 'create_and_pull',
-           'download_file', 'upload_file', 'SafeContainerCreator']
+           'download_file', 'upload_file', 'SafeContainerCreator', 'removing']
 
 _DEFAULT_TIMEOUT = 10
 
@@ -146,10 +146,10 @@ def removing(container: _CT, *, expected_exit_code: Optional[Union[int, Abstract
     finally:
         if is_removed(container):
             return
-        container.reload()
+        # checking if the container is removed reloads the container
         if is_alive(container):
             if not force:
-                raise RuntimeError(f"Container {container.id} is still alive")
+                raise RuntimeError(f"Container {container.id} is still alive (status: {container.status})")
             container.kill('SIGKILL')
         result = container.wait(timeout=10)
         if expected_exit_code is not None:

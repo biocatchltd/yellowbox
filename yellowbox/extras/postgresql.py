@@ -1,19 +1,24 @@
-from typing import Optional, Union, Mapping
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, Union
 
 from deprecated import deprecated
 from docker import DockerClient
 from sqlalchemy import create_engine
 
 from yellowbox.containers import create_and_pull
-from yellowbox.extras.sql_base import SQLServiceMixin
+from yellowbox.extras.sql_base import ConnectionOptions, SQLService, as_default
 from yellowbox.subclasses import SingleContainerService
+
+if TYPE_CHECKING:
+    from yellowbox.extras.sql_base import AsDefault
 
 __all__ = ['PostgreSQLService', 'POSTGRES_INTERNAL_PORT']
 
 POSTGRES_INTERNAL_PORT = 5432
 
 
-class PostgreSQLService(SQLServiceMixin, SingleContainerService):
+class PostgreSQLService(SQLService, SingleContainerService):
     """
     A postgresSQL service
     """
@@ -46,18 +51,19 @@ class PostgreSQLService(SQLServiceMixin, SingleContainerService):
     def userpass(self):
         return self.user, self.password
 
-    def local_connection_string(self, dialect: str = ..., driver: str = None, database: Optional[str] = None,
-                                options: Union[None, str, Mapping[str, str]] = None):
+    def local_connection_string(self, dialect: Union[str, AsDefault] = as_default,
+                                driver: Union[str, AsDefault, None] = as_default, database: Optional[str] = None,
+                                options: Union[ConnectionOptions, AsDefault] = as_default):
         database = database or self.default_db
         return super().local_connection_string(dialect, driver, database=database, options=options)
 
-    def container_connection_string(self, hostname: str, dialect: str = 'postgresql', driver: str = None,
-                                    database: str = None, options: Union[None, str, Mapping[str, str]] = None):
+    def container_connection_string(self, hostname: str, dialect: Union[str, AsDefault] = as_default,
+                                    driver: str = None, database: str = None, options: ConnectionOptions = None):
         database = database or self.default_db
         return super().container_connection_string(hostname, dialect, driver, database=database, options=options)
 
-    def host_connection_string(self, dialect: str = 'postgresql', driver: str = None, database: str = None,
-                               options: Union[None, str, Mapping[str, str]] = None):
+    def host_connection_string(self, dialect: Union[str, AsDefault] = as_default, driver: str = None,
+                               database: str = None, options: ConnectionOptions = None):
         database = database or self.default_db
         return super().host_connection_string(dialect, driver, database=database, options=options)
 

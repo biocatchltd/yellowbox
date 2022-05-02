@@ -1,5 +1,5 @@
-from typing import Callable
 import random
+from typing import Callable
 
 
 def _random_name(length=16) -> str:

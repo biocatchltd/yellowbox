@@ -1,5 +1,5 @@
-from pytest import mark, fixture
-from sqlalchemy import Column, Integer, MetaData, String, Table, select, create_engine
+from pytest import fixture, mark
+from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, select
 
 from tests.util import unique_name_generator
 from yellowbox import connect, temp_network
@@ -40,18 +40,22 @@ def service(docker_client):
     with PostgreSQLService.run(docker_client, spinner=False) as service:
         yield service
 
+
 db_name = fixture(unique_name_generator())
+
 
 @fixture
 def db(service, db_name):
     with service.database(db_name) as db:
         yield db
 
+
 @fixture
 def engine(db):
     engine = create_engine(db.local_connection_string())
     yield engine
     engine.dispose()
+
 
 def test_local_connection(engine):
     with engine.connect() as connection:

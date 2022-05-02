@@ -1,4 +1,22 @@
 # Yellowbox Changelog
+## 0.7.2
+### Added
+* `removing` context wrapper, that ensures containers will be removed after exiting.
+* `MSSQLService`, a new service that can be used to create a new MSSQL database.
+* `database` mixing method, use to create and manage database within an sql service. In use both in `MSSQLService` and
+  `PostgreSQLService`.
+* `PostgreSQLService`'s `*_connection_string` methods now also accept an `options` argument.
+* `PostgreSQLService`'s constructor now accept the `local_driver` and `local_options` arguments. 
+### Deprecated
+* `PostgreSQLService`'s `engine` and `connection` methods are now deprecated, create an sqlalchemy engine and
+ connection manually instead.
+### Fixed
+* rabbitmq service startup can now handle `AMQPConnectorException`.
+### Changed
+* redis' default retry attempts changed from 10 to 15.
+### Internal
+* tests have been streamlined to be faster and more stable
+* If a helper container fails during tests, it will not be removed
 ## 0.7.1
 ### Added
 * pytest integration, with the `docker_client` fixture
