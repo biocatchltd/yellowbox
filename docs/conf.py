@@ -45,6 +45,8 @@ intersphinx_mapping = {
     'requests': ('https://requests.readthedocs.io/en/master/', None),
 }
 
+python_use_unqualified_type_names = True
+
 import ast
 import os
 

@@ -1,24 +1,30 @@
-from typing import Optional
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, Optional, Union
+
+from deprecated import deprecated
 from docker import DockerClient
 from sqlalchemy import create_engine
-from sqlalchemy.exc import OperationalError
 
-from yellowbox import RetrySpec, RunMixin
-from yellowbox.containers import create_and_pull, get_ports
-from yellowbox.subclasses import AsyncRunMixin, SingleContainerService
+from yellowbox.containers import create_and_pull
+from yellowbox.extras.sql_base import ConnectionOptions, SQLService, as_default
+from yellowbox.subclasses import SingleContainerService
+
+if TYPE_CHECKING:
+    from yellowbox.extras.sql_base import AsDefault
 
 __all__ = ['PostgreSQLService', 'POSTGRES_INTERNAL_PORT']
-
-from yellowbox.utils import docker_host_name
 
 POSTGRES_INTERNAL_PORT = 5432
 
 
-class PostgreSQLService(SingleContainerService, RunMixin, AsyncRunMixin):
+class PostgreSQLService(SQLService, SingleContainerService):
     """
     A postgresSQL service
     """
+
+    INTERNAL_PORT = POSTGRES_INTERNAL_PORT
+    DIALECT = 'postgresql'
 
     def __init__(self, docker_client: DockerClient, image='postgres:latest', *, user='postgres',
                  password='guest', default_db: str = None, **kwargs):
@@ -40,59 +46,28 @@ class PostgreSQLService(SingleContainerService, RunMixin, AsyncRunMixin):
                 'POSTGRES_PASSWORD': password,
                 'POSTGRES_DB': default_db
             }
-        ), **kwargs)
+        ), default_database=default_db, **kwargs)
 
-    def external_port(self):
-        return get_ports(self.container)[POSTGRES_INTERNAL_PORT]
+    def userpass(self):
+        return self.user, self.password
 
-    def local_connection_string(self, dialect: str = 'postgresql', driver: str = None, database: str = None):
-        """
-        Generate an sqlalchemy-style connection string to the database in the service from the docker host.
-        Args:
-            dialect: The dialect of the sql server.
-            driver: additional driver for sqlalchemy to use.
-            database: the name of the database to connect to. Defaults to the service's default database.
-        """
+    def local_connection_string(self, dialect: Union[str, AsDefault] = as_default,
+                                driver: Union[str, AsDefault, None] = as_default, database: Optional[str] = None,
+                                options: Union[ConnectionOptions, AsDefault] = as_default):
         database = database or self.default_db
+        return super().local_connection_string(dialect, driver, database=database, options=options)
 
-        if driver is not None:
-            dialect += '+' + driver
-
-        return f'{dialect}://{self.user}:{self.password}@localhost:{self.external_port()}/{database}'
-
-    def container_connection_string(self, hostname: str, dialect: str = 'postgresql', driver: str = None,
-                                    database: str = None):
-        """
-        Generate an sqlalchemy-style connection string to the database in the service from another container on a
-         common network.
-        Args:
-            hostname: the alias of the container.
-            dialect: The dialect of the sql server.
-            driver: additional driver for sqlalchemy to use.
-            database: the name of the database to connect to. Defaults to the service's default database.
-        """
+    def container_connection_string(self, hostname: str, dialect: Union[str, AsDefault] = as_default,
+                                    driver: str = None, database: str = None, options: ConnectionOptions = None):
         database = database or self.default_db
+        return super().container_connection_string(hostname, dialect, driver, database=database, options=options)
 
-        if driver is not None:
-            dialect += '+' + driver
-
-        return f'{dialect}://{self.user}:{self.password}@{hostname}:{POSTGRES_INTERNAL_PORT}/{database}'
-
-    def host_connection_string(self, dialect: str = 'postgresql', driver: str = None, database: str = None):
-        """
-        Generate an sqlalchemy-style connection string to the database in the service from another container.
-        Args:
-            dialect: The dialect of the sql server.
-            driver: additional driver for sqlalchemy to use.
-            database: the name of the database to connect to. Defaults to the service's default database.
-        """
+    def host_connection_string(self, dialect: Union[str, AsDefault] = as_default, driver: str = None,
+                               database: str = None, options: ConnectionOptions = None):
         database = database or self.default_db
+        return super().host_connection_string(dialect, driver, database=database, options=options)
 
-        if driver is not None:
-            dialect += '+' + driver
-
-        return f'{dialect}://{self.user}:{self.password}@{docker_host_name}:{self.external_port()}/{database}'
-
+    @deprecated(version='0.7.2', reason='Use sqlalchemy.create_engine(service.local_connection_string()) instead')
     def engine(self, **kwargs):
         """
         Create an sqlalchemy Engine connected to the service's default db.
@@ -100,28 +75,13 @@ class PostgreSQLService(SingleContainerService, RunMixin, AsyncRunMixin):
         cs = self.local_connection_string()
         return create_engine(cs, **kwargs)
 
+    @deprecated(version='0.7.2',
+                reason='Use sqlalchemy.create_engine(service.local_connection_string()).connect() instead')
     def connection(self, **kwargs):
         """
         Create an sqlalchemy Connection connected to the service's default db.
         """
         return self.engine().connect(**kwargs)
-
-    def _connect(self):
-        with self.connection():
-            return
-
-    def start(self, retry_spec: Optional[RetrySpec] = None):
-        super().start(retry_spec)
-        retry_spec = retry_spec or RetrySpec(attempts=20)
-
-        retry_spec.retry(self._connect, OperationalError)
-        return self
-
-    async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
-        super().start(retry_spec)
-        retry_spec = retry_spec or RetrySpec(attempts=20)
-
-        await retry_spec.aretry(self._connect, OperationalError)
 
     def stop(self, signal='SIGINT'):
         # change in default

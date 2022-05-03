@@ -4,6 +4,7 @@ from urllib.parse import quote
 import requests
 from docker import DockerClient
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
+from pika.adapters.utils.connection_workflow import AMQPConnectorException
 from pika.exceptions import AMQPConnectionError
 
 from yellowbox.containers import create_and_pull, get_ports, upload_file
@@ -52,7 +53,7 @@ class RabbitMQService(SingleContainerService, RunMixin, AsyncRunMixin):
     def start(self, retry_spec: Optional[RetrySpec] = None):
         super().start()
         retry_spec = retry_spec or RetrySpec(attempts=30)
-        conn = retry_spec.retry(self.connection, (AMQPConnectionError, ConnectionError))
+        conn = retry_spec.retry(self.connection, (AMQPConnectionError, ConnectionError, AMQPConnectorException))
         conn.close()
         if self._enable_management:
             self.enable_management()
@@ -61,7 +62,7 @@ class RabbitMQService(SingleContainerService, RunMixin, AsyncRunMixin):
     async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
         super().start()
         retry_spec = retry_spec or RetrySpec(attempts=30)
-        conn = await retry_spec.aretry(self.connection, (AMQPConnectionError, ConnectionError))
+        conn = await retry_spec.aretry(self.connection, (AMQPConnectionError, ConnectionError, AMQPConnectorException))
         conn.close()
         if self._enable_management:
             self.enable_management()

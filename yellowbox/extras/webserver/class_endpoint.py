@@ -13,7 +13,7 @@ class EndpointTemplate(Generic[T]):
     A template for a generic endpoint. To be created before any instance of a subclass of webserver, but to be added to
      all instances.
     """
-    constructor: ClassVar[Callable[..., T]]
+    constructor: ClassVar[Callable]
 
     def __init__(self, *args, side_effect_method, **kwargs):
         self.args = args

@@ -1,6 +1,5 @@
-from pytest import mark
+from pytest import fixture, mark
 
-from yellowbox.containers import get_aliases
 from yellowbox.extras.kafka import KafkaService
 from yellowbox.networks import connect, temp_network
 from yellowbox.utils import docker_host_name
@@ -48,36 +47,28 @@ async def test_kafka_works_async(docker_client):
                 assert False
 
 
-def test_kafka_sibling_network(docker_client, create_and_pull):
-    with temp_network(docker_client) as network, \
-            KafkaService.run(docker_client, spinner=False) as service, \
-            connect(network, service) as alias:
-        container = create_and_pull(docker_client,
-                                    "confluentinc/cp-kafkacat:latest",
-                                    f"kafkacat -b {alias[0]}:{service.inner_port} -L")
-        with connect(network, container):
-            container.start()
-            return_status = container.wait()
-            assert return_status["StatusCode"] == 0
-
-
-def test_kafka_connect_in_run(docker_client, create_and_pull):
-    with temp_network(docker_client) as network, \
-            KafkaService.run(docker_client, spinner=False, network=network) as service:
-        container = create_and_pull(docker_client,
-                                    "confluentinc/cp-kafkacat:latest",
-                                    f"kafkacat -b {get_aliases(service.broker, network)[0]}:{service.inner_port} -L")
-        with connect(network, container):
-            container.start()
-            return_status = container.wait()
-            assert return_status["StatusCode"] == 0
-
-
-def test_kafka_sibling(docker_client, create_and_pull):
+@fixture(scope='module')
+def kafka_service(docker_client):
     with KafkaService.run(docker_client, spinner=False) as service:
+        yield service
+
+
+def test_kafka_sibling_network(docker_client, create_and_pull, kafka_service):
+    with temp_network(docker_client) as network, \
+            connect(network, kafka_service) as alias:
         container = create_and_pull(docker_client,
                                     "confluentinc/cp-kafkacat:latest",
-                                    f"kafkacat -b {docker_host_name}:{service.outer_port} -L")
-        container.start()
-        return_status = container.wait()
-        assert return_status["StatusCode"] == 0
+                                    f"kafkacat -b {alias[0]}:{kafka_service.inner_port} -L")
+        with connect(network, container):
+            container.start()
+            return_status = container.wait()
+            assert return_status["StatusCode"] == 0
+
+
+def test_kafka_sibling(docker_client, create_and_pull, kafka_service):
+    container = create_and_pull(docker_client,
+                                "confluentinc/cp-kafkacat:latest",
+                                f"kafkacat -b {docker_host_name}:{kafka_service.outer_port} -L")
+    container.start()
+    return_status = container.wait()
+    assert return_status["StatusCode"] == 0
