@@ -12,6 +12,7 @@
  connection manually instead.
 ### Fixed
 * rabbitmq service startup can now handle `AMQPConnectorException`.
+* `azure-blob-storage` of versions `12.11.0` and up can now be installed.
 ### Changed
 * redis' default retry attempts changed from 10 to 15.
 ### Internal
