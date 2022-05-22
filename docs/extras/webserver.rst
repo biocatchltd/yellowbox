@@ -437,11 +437,11 @@ of handling both HTTP and websocket routes.
     An expected HTTP request, used for matching a recorded request.
 
     :param headers: If specified, a recorded request must have the specified headers exactly.
-    :type headers: :class:`~collections.abc.Mapping`\[:class:`bytes`,
-        :class:`~collections.abc.Collection`\[:class:`bytes`\]\]
+    :type headers: :class:`~collections.abc.Mapping`\[:class:`str`,
+        :class:`~collections.abc.Collection`\[:class:`str`\]\]
     :param headers_submap: If specified, a recorded request must have at least the specified headers.
-    :type headers_submap: :class:`~collections.abc.Mapping`\[:class:`bytes`,
-        :class:`~collections.abc.Collection`\[:class:`bytes`\]\]
+    :type headers_submap: :class:`~collections.abc.Mapping`\[:class:`str`,
+        :class:`~collections.abc.Collection`\[:class:`str`\]\]
     :param path: If specified, a recorded request must have the specified path exactly (if :class:`str`), or must match
         the specified pattern fully (if :class:`~typing.Pattern`).
     :type path: :class:`str` | :class:`~typing.Pattern`\[:class:`str`]
@@ -582,11 +582,11 @@ of handling both HTTP and websocket routes.
         precede or follow the messages to match.
     :type messages: :class:`~collections.abc.Sequence`\[:class:`Sender`\(...\) | :data:`Ellipsis`\]
     :param headers: If specified, a recorded request must have the specified headers exactly.
-    :type headers: :class:`~collections.abc.Mapping`\[:class:`bytes`,
-        :class:`~collections.abc.Collection`\[:class:`bytes`\]\]
+    :type headers: :class:`~collections.abc.Mapping`\[:class:`str`,
+        :class:`~collections.abc.Collection`\[:class:`str`\]\]
     :param headers_submap: If specified, a recorded request must have at least the specified headers.
-    :type headers_submap: :class:`~collections.abc.Mapping`\[:class:`bytes`,
-        :class:`~collections.abc.Collection`\[:class:`bytes`\]\]
+    :type headers_submap: :class:`~collections.abc.Mapping`\[:class:`str`,
+        :class:`~collections.abc.Collection`\[:class:`str`\]\]
     :param path: If specified, a recorded request must have the specified path exactly (if :class:`str`), or must match
         the specified pattern fully (if :class:`~typing.Pattern`).
     :type path: :class:`str` | :class:`~typing.Pattern`\[:class:`str`]

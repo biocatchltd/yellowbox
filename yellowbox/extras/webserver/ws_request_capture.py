@@ -35,7 +35,7 @@ class WebSocketRecorder(WebSocket):
         message_type = message.get('type')
         if message_type == "websocket.receive":
             # by asgi uvicorn implementation (def asgi_receive), a message will always contain exactly one of
-            #  'text' or 'data'
+            #  'text' or 'bytes'
             data = message.get('text')
             if data is None:
                 data = message.get('bytes')
@@ -118,7 +118,7 @@ class RecordedWSTranscript(List[RecordedWSMessage]):
     A transcript of a single websocket connection
     """
 
-    def __init__(self, arg: Iterable[RecordedWSMessage], headers: Dict[bytes, List[bytes]], path: str,
+    def __init__(self, arg: Iterable[RecordedWSMessage], headers: Dict[str, List[str]], path: str,
                  path_params: Dict[str, Any], query_params: Dict[str, List[str]]):
         """
         Args:
@@ -145,8 +145,9 @@ class RecordedWSTranscript(List[RecordedWSMessage]):
         Args:
             connection: the http connection to use
         """
-        headers: Dict[bytes, List[bytes]] = {}
-        for h_k, h_v in connection.headers.raw:
+        headers: Dict[str, List[str]] = {}
+        for h_k, h_v in connection.headers.items():
+            h_k = h_k.lower()
             h_lst = headers.get(h_k)
             if h_lst is None:
                 headers[h_k] = [h_v]
@@ -216,8 +217,8 @@ class ExpectedWSTranscript(ScopeExpectation):
     """
 
     def __init__(self, messages: Sequence[Union[ellipsis, ExpectedWSMessage]] = (...,),  # noqa: F821
-                 headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
-                 headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
+                 headers: Optional[Mapping[str, Collection[str]]] = None,
+                 headers_submap: Optional[Mapping[str, Collection[str]]] = None,
                  path: Optional[Union[str, Pattern[str]]] = None, path_params: Optional[Mapping[str, Any]] = None,
                  path_params_submap: Optional[Mapping[str, Any]] = None,
                  query_params: Optional[Mapping[str, Collection[str]]] = None,

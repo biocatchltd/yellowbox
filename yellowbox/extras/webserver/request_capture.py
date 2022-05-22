@@ -2,7 +2,7 @@ import re
 from collections import Counter
 from typing import Any, Collection, Iterable, Iterator, Mapping, Optional, Pattern, Tuple, TypeVar, Union
 
-from yellowbox.extras.webserver.util import MismatchReason, reason_is_ne
+from yellowbox.extras.webserver.util import MismatchReason, lower_keys, reason_is_ne
 
 T = TypeVar('T')
 
@@ -27,7 +27,7 @@ def _is_submap_of(submap: Mapping[K, V], supermap: Mapping[K, V]):
     for k, v in submap.items():
         other_v = supermap.get(k, _missing)  # type:ignore[arg-type]
         if other_v is _missing:
-            return MismatchReason(f'expected key {k}, none found')
+            return MismatchReason(f'expected key {k}, none found (found keys {list(supermap.keys())})')
         if other_v != v:
             return MismatchReason(f'expected key {k} to have value {v}, got {other_v}')
     return True
@@ -57,7 +57,7 @@ def _is_submultimap_of(submultimap: Mapping[K, Collection[V]], supermultimap: Ma
         missing_value = next((k for (k, v) in diff.items() if v < 0), _missing)
         if missing_value is not _missing:
             expected = sum(i == missing_value for i in v)
-            return MismatchReason(f'expected value {missing_value} to appear {expected} times in key {k}'
+            return MismatchReason(f'expected value {missing_value!r} to appear {expected} times in key {k}'
                                   f', got {other_v}')
     return True
 
@@ -160,13 +160,13 @@ class ScopeExpectation:
     A utility mixin class representing an expected http scope, common to both HTTP and websockets.
     """
 
-    def __init__(self, headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
-                 headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
+    def __init__(self, headers: Optional[Mapping[str, Collection[str]]] = None,
+                 headers_submap: Optional[Mapping[str, Collection[str]]] = None,
                  path: Optional[Union[str, Pattern[str]]] = None, path_params: Optional[Mapping[str, Any]] = None,
                  path_params_submap: Optional[Mapping[str, Any]] = None,
                  query_params: Optional[Mapping[str, Collection[str]]] = None,
                  query_params_submap: Optional[Mapping[str, Collection[str]]] = None, ):
-        self.headers = _to_expected_map('headers', headers, headers_submap)
+        self.headers = _to_expected_map('headers', lower_keys(headers), lower_keys(headers_submap))
         if isinstance(path, str):
             self.path_pattern = re.compile(re.escape(path))
         else:

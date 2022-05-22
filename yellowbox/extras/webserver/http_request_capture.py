@@ -17,8 +17,8 @@ class ExpectedHTTPRequest(ScopeExpectation):
     An expected HTTP request
     """
 
-    def __init__(self, headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
-                 headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
+    def __init__(self, headers: Optional[Mapping[str, Collection[str]]] = None,
+                 headers_submap: Optional[Mapping[str, Collection[str]]] = None,
                  path: Optional[Union[str, Pattern[str]]] = None, path_params: Optional[Mapping[str, Any]] = None,
                  path_params_submap: Optional[Mapping[str, Any]] = None,
                  query_params: Optional[Mapping[str, Collection[str]]] = None,
@@ -149,6 +149,7 @@ class RecordedHTTPRequest:
         """
         headers = {}
         for k, v in request.headers.items():
+            k = k.lower()
             if k not in headers:
                 headers[k] = [v]
             else:
@@ -205,8 +206,8 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         ...
 
     @overload
-    def assert_requested_with(self, *, headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
-                              headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
+    def assert_requested_with(self, *, headers: Optional[Mapping[str, Collection[str]]] = None,
+                              headers_submap: Optional[Mapping[str, Collection[str]]] = None,
                               path: Optional[Union[str, Pattern[str]]] = None,
                               path_params: Optional[Mapping[str, Any]] = None,
                               path_params_submap: Optional[Mapping[str, Any]] = None,
@@ -244,8 +245,8 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         ...
 
     @overload
-    def assert_requested_once_with(self, *, headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
-                                   headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
+    def assert_requested_once_with(self, *, headers: Optional[Mapping[str, Collection[str]]] = None,
+                                   headers_submap: Optional[Mapping[str, Collection[str]]] = None,
                                    path: Optional[Union[str, Pattern[str]]] = None,
                                    path_params: Optional[Mapping[str, Any]] = None,
                                    path_params_submap: Optional[Mapping[str, Any]] = None,
@@ -286,8 +287,8 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         ...
 
     @overload
-    def assert_any_request(self, *, headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
-                           headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
+    def assert_any_request(self, *, headers: Optional[Mapping[str, Collection[str]]] = None,
+                           headers_submap: Optional[Mapping[str, Collection[str]]] = None,
                            path: Optional[Union[str, Pattern[str]]] = None,
                            path_params: Optional[Mapping[str, Any]] = None,
                            path_params_submap: Optional[Mapping[str, Any]] = None,
