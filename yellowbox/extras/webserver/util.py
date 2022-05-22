@@ -3,8 +3,7 @@ from __future__ import annotations
 import sys
 from datetime import datetime
 from functools import update_wrapper
-from logging import Filter
-from typing import TYPE_CHECKING, Awaitable, Callable, Iterable, TypeVar, Union
+from typing import TYPE_CHECKING, AnyStr, Awaitable, Callable, Dict, Iterable, Mapping, Optional, TypeVar, Union
 
 from starlette.requests import Request
 from starlette.responses import Response
@@ -30,15 +29,6 @@ class MismatchReason(str):
     """
 
     def __bool__(self):
-        return False
-
-
-class MuteFilter(Filter):
-    """
-    A simple filter that silences all logs
-    """
-
-    def filter(self, record) -> bool:
         return False
 
 
@@ -109,3 +99,10 @@ def verbose_http_side_effect(side_effect: BASE_HTTP_SIDE_EFFECT,
 
     side_effect_factory.__side_effect_factory__ = True  # type: ignore[attr-defined]
     return side_effect_factory
+
+
+V = TypeVar('V')
+
+
+def lower_keys(d: Optional[Mapping[AnyStr, V]]) -> Optional[Dict[AnyStr, V]]:
+    return {k.lower(): v for k, v in d.items()} if d else None
