@@ -1,5 +1,5 @@
 from functools import update_wrapper
-from typing import TYPE_CHECKING, Callable, ClassVar, Generic, Optional, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generic, Optional, TypeVar, overload
 
 from yellowbox.extras.webserver.endpoints import (
     HTTP_SIDE_EFFECT, METHODS, WS_SIDE_EFFECT, MockHTTPEndpoint, MockWSEndpoint, http_endpoint, ws_endpoint
@@ -50,7 +50,7 @@ class WSEndpointTemplate(EndpointTemplate[MockWSEndpoint]):
 @overload
 def class_http_endpoint(methods: METHODS, rule_string: str, *, auto_read_body: bool = True,
                         forbid_head_verb: bool = True, name: Optional[str] = None)\
-        -> Callable[[HTTP_SIDE_EFFECT], HTTPEndpointTemplate]:
+        -> Callable[[Any], HTTPEndpointTemplate]:
     ...
 
 
@@ -85,7 +85,7 @@ def class_http_endpoint(methods: METHODS, rule_string: str, side_effect: Optiona
 
 @overload
 def class_ws_endpoint(rule_string: str, *, name: Optional[str] = None)\
-        -> Callable[[WS_SIDE_EFFECT], WSEndpointTemplate]: pass
+        -> Callable[[Any], WSEndpointTemplate]: pass
 
 
 @overload

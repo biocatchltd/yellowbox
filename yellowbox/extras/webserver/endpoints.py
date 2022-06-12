@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from traceback import print_exc
 from typing import (
     TYPE_CHECKING, Awaitable, Callable, ContextManager, Iterable, Iterator, List, Optional, Tuple, Union, overload
 )
@@ -138,6 +139,9 @@ class MockHTTPEndpoint:
             else:
                 ret = await self.side_effect(request)
         except Exception as ex:
+            print(f'uncaught exception when handling request: {request.method}'
+                  f' {request.url} [{self.owner.__name__}/{self.__name__}]:')
+            print_exc()
             self.owner._pending_exception = ex
             return PlainTextResponse(f'handler raised an exception: {ex!r}', status_code=HTTP_500_INTERNAL_SERVER_ERROR)
         else:
@@ -247,6 +251,8 @@ class MockWSEndpoint:
         try:
             code = await self.side_effect(websocket)
         except Exception as ex:
+            print(f'uncaught exception when handling ws: {websocket.url} [{self.owner.__name__}/{self.__name__}]:')
+            print_exc()
             self.owner._pending_exception = ex
             await websocket.close(WS_1011_INTERNAL_ERROR)
         else:
