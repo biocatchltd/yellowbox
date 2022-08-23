@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## 0.7.4
+### Fixed
+* all dependencies have been unlocked for major changes (`^X` => `>=X`)
 ## 0.7.3
 ### Fixed
 * the type hints for `class_http_endpoint` and `class_ws_endpoint` have been changed to allow any side effect 
