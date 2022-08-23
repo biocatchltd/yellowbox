@@ -1,7 +1,5 @@
 # Yellowbox Changelog
 ## 0.7.4
-### Added
-* support for python 3.11 in tests
 ### Fixed
 * all dependencies have been unlocked for major changes (`^X` => `>=X`)
 ## 0.7.3
