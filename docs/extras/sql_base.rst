@@ -40,13 +40,13 @@ Includes an abstract base class that can be used to easily create SQL services.
 
         Returns a tuple of (username, password) for the service, with admin permissions.
 
-    .. method:: create_database(name: str) -> None
+    .. method:: create_database(name: str)
 
         Creates a database with the given name.
 
         :raises: :exc:`ValueError` if the database already exists.
 
-    .. method:: drop_database(name: str) -> None
+    .. method:: drop_database(name: str)
 
         Drops the database with the given name.
 

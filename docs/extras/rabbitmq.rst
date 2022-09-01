@@ -14,23 +14,23 @@ official docker container, with `Pika <https://pika.readthedocs.io/en/stable/>`_
     Requires the ``rabbit`` extra. For more information, see our :ref:`installation guide <installation>`.
 
 
-.. class:: RabbitMQService(docker_client, image="rabbitmq:latest", *,\
-                           user="guest", password="guest", virtual_host="/",\
-                           **kwargs)
+.. class:: RabbitMQService(docker_client: docker.client.DockerClient, image:str ="rabbitmq:latest", *,\
+                           user: str="guest", password: str="guest", virtual_host: str="/",\
+                           enable_management: bool=False, **kwargs)
 
     A service that runs a rabbitmq queue. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
     :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
 
     :param docker_client: The docker client to used to pull and create the RabbitMQ container.
-    :type docker_client: :class:`~docker.client.DockerClient`
 
-    :param str image: The image name to create a container of.
+    :param image: The image name to create a container of.
 
-    :param str user: The username to of the default credentials.
-    :param str password: The username to set as the default credentials.
+    :param user: The username to of the default credentials.
+    :param password: The username to set as the default credentials.
 
-    :param str virtual_host: The virtual host to use in multi-tenant system. For more information see the
+    :param virtual_host: The virtual host to use in multi-tenant system. For more information see the
      `appropriate documentation <https://www.rabbitmq.com/vhosts.html>`_.
+    :param enable_management: If set to true, rabbitMQ management will be automatically enabled for the service.
 
     :param \*\*kwargs: Additional keyword arguments passed to :class:`~subclasses.SingleContainerService`.
 
@@ -55,7 +55,7 @@ official docker container, with `Pika <https://pika.readthedocs.io/en/stable/>`_
 
             The RabbitMQService must be running to enable management.
 
-    .. method:: management_url()
+    .. method:: management_url()->str
 
         Returns the localhost RabbitMQ Management URL.
 
@@ -63,7 +63,7 @@ official docker container, with `Pika <https://pika.readthedocs.io/en/stable/>`_
 
             Before connecting, make sure management is enabled using :meth:`enable_management`.
 
-    .. method:: reset_state(force_queue_deletion=False)
+    .. method:: reset_state(force_queue_deletion: bool=False)
 
         Remove all declared RabbitMQ queues.
 
@@ -75,12 +75,3 @@ official docker container, with `Pika <https://pika.readthedocs.io/en/stable/>`_
         .. note::
 
             Before connecting, management must be enabled using :meth:`enable_management`.
-
-    .. method:: run(docker_client, *, enable_management=False, **kwargs)
-
-        Convenience method to run the service. Used as a context manager.
-
-        :param bool enable_management: If True, management will be automatically enabled after starting the service.
-
-        For more info about this method and it's possible keyword arguments,
-        see :meth:`RunMixin.run <subclasses.RunMixin.run>`.

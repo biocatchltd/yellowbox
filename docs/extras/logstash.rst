@@ -25,7 +25,7 @@ An emulated, lightweight server that resembles Logstash.
         assert ls.records[0]["record"] == "value"
 
 
-.. class:: FakeLogstashService(port=0)
+.. class:: FakeLogstashService(port: int=0)
 
     Implements a fake logging service that closely resembles Logstash.
 
@@ -34,7 +34,7 @@ An emulated, lightweight server that resembles Logstash.
 
     Inherits from :class:`~service.YellowService`.
 
-    :param int port: Port to bind the server to. Default is random port.
+    :param port: Port to bind the server to. Default is random port.
 
     .. attribute:: records
         :type: list[dict[str, ...]]
@@ -102,32 +102,28 @@ An emulated, lightweight server that resembles Logstash.
 
     Has the following additional methods:
 
-    .. method:: filter_records(level)
+    .. method:: filter_records(level: str | int)-> Iterator[dict[str, ...]]
 
         Iterate over records in the given *level* or above.
 
         :param level: Log  level to filter by.
-        :type level: :class:`str` | :class:`int`
 
         :return: An iterator over the valid records.
-        :rtype: Iterator[dict[str, ...]]
 
-    .. method:: assert_logs(level)
+    .. method:: assert_logs(level: str | int)
 
         Asserts that log messages were received in the given *level* or above.
 
-        :param level: Log  level to check.
-        :type level: :class:`str` | :class:`int`
+        :param level: Log level to check.
         :raises: :exc:`AssertionError` if no logs of at least the given level were received.
 
         Resembles unittest's :meth:`~unittest.TestCase.assertLogs`.
 
-    .. method:: assert_no_logs(level)
+    .. method:: assert_no_logs(level: str | int)
 
         Asserts that no log messages were received in the given *level* or above.
 
         :param level: Log  level to check.
-        :type level: :class:`str` | :class:`int`
         :raises: :exc:`AssertionError` if any logs of at least the given level were received.
 
         Resembles unittest's :meth:`~unittest.TestCase.assertNoLogs`.

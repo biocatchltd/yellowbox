@@ -30,7 +30,7 @@ manager.
     class AerospikeService(SingleContainerService, RunMixin):
         ...
 
-Since the superclass requires a container, we'll create it in out initializer for the class. We can use Yellowbox's
+Since the superclass requires a container, we'll create it in our initializer for the class. We can use Yellowbox's
 utility function :func:`~containers.create_and_pull` to easily create the container from an image name, and pass that
 container to the superclass initializer.
 
@@ -51,7 +51,7 @@ container to the superclass initializer.
     When you need to pull multiple images, you can use the :func:`~containers.SafeContainerCreator` function to ensure
     that they are pulled and created safely.
 
-We'll also need to implement :class:`~sublasses.SingleContainerService`'s sing le abstract method
+We'll also need to implement :class:`~sublasses.SingleContainerService`'s single abstract method
 :meth:`~sublasses.SingleContainerService.start`. For now, we'll just delegate to ``super().start()``, which will
 automatically start the container.
 
@@ -81,11 +81,11 @@ we might run into an issue.
         ...
 
     with docker_client() as dc:
-    with AerospikeService.run(dc, remove=False) as aerospike_service:
-        config = {
-            'hosts': [('127.0.0.1', ...)]
-        }
-        client = aerospike.client(config).connect()  # <-- this will fail with a generic connection error
+        with AerospikeService.run(dc, remove=False) as aerospike_service:
+            config = {
+                'hosts': [('127.0.0.1', ...)]
+            }
+            client = aerospike.client(config).connect()  # <-- this will fail with a generic connection error
 
 What's happening? Did the startup fail? Not Exactly. Consider that the above script will work if we change the start
 method to be:
@@ -102,10 +102,10 @@ Docker can **start a container**, but we need to wait until it's startup is done
 sleep for a while for the service to start up, then we'll be able to connect to it. In general,
 :meth:`service.YellowService.start` should block until the underlying service's startup is complete.
 
-Of course we don't want to actually sleep, we might sleep for too long and waste time, or worse, we might not sleep
-enough, and still have connection issues. So instead. after we start the container, we'll continually attempt to connect
-to the service until we succeed. In order to do this, we'll need to implement a way to connect to the service. Let's
-start by adding a method that gets the connection info for the service. We can use the utility function
+Of course we don't want to actually sleep, we might sleep for too long and waste time, or worse, we might not sleep for
+long enough, and still have connection issues. So instead. after we start the container, we'll continually attempt to
+connect to the service until we succeed. In order to do this, we'll need to implement a way to connect to the service.
+Let's start by adding a method that gets the connection info for the service. We can use the utility function
 :func:`~containers.get_ports` to get the external ports a service exposes.
 
 .. code-block::
@@ -205,9 +205,9 @@ method to connect to it from the host machine.
 Making your YellowService runnable in async
 -----------------------------------------------------------
 
-For reasons we'll explore soon, you might want to be able to start up multiple services in parallel. In order to do
+For reasons we'll explore soon, you might want to be able to start up multiple dependencies in parallel. In order to do
 this, we need to be able to start up services asynchronously, we do this by extending the
-:class:`~subclasses.AsyncRunMixin`. All the built-in yellowx-extras already do this, but in order to implement it for
+:class:`~subclasses.AsyncRunMixin`. All the built-in yellowbox-extras already do this, but in order to implement it for
 your own service, you'll need to implement the ``astart`` method. The ``astart`` method is very similar to the
 ``start`` method, with the sole difference that it waits for startup asynchronously. Following up from the previous
 example, we can implement ``astart`` as follows:
@@ -268,8 +268,8 @@ pytest-asyncio, you will run into a problem.
         async with RabbitMQService.arun(docker_client) as rabbit:
             yield rabbit
 
-Each startup may be asynchronous, but he fixtures still run sequentially. This is because of how pytest-asyncio handles
-async fixtures.
+Each startup may be asynchronous, but the fixtures are still run sequentially. This is because of how pytest-asyncio
+handles async fixtures.
 
 To remedy this, we can use the in-house `pytest-gather-fixtures <https://github.com/bentheiii/pytest-gather-fixtures>``
 library. This library allows you to run multiple fixtures in parallel.
