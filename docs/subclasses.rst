@@ -10,7 +10,7 @@ Yellowbox contains multiple :class:`~service.YellowService` subclasses for
 easier definition of services. Most of the subclasses deal with Docker containers
 required for running the service.
 
-.. class:: ContainerService(containers, remove=True)
+.. class:: ContainerService(containers: collections.abc.Sequence[docker.models.containers.Container], remove: bool=True)
 
     Abstract base class for services using one or more docker containers.
 
@@ -23,22 +23,19 @@ required for running the service.
 
     :param containers: A sequence of docker container objects, relevant for the service. The containers may be either
      stopped or started.
-    :type containers: :class:`~collections.abc.Sequence`\[:class:`docker.Container<docker.models.containers.Container>`\]
+    :param remove: Set :attr:`remove`
 
-    :param bool remove: Set :attr:`remove`
-
-
-    .. method:: start(retry_spec=None)
+    .. method:: start(retry_spec: retry.RetrySpec | None = None)
         :abstractmethod:
 
         Start the service by turning on all stopped containers. Containers are started sequentially in the order provided.
 
-        :param RetrySpec | None retry_spec: specifies the internal retry semantics for the chosen "check" function.
+        :param retry_spec: specifies the internal retry semantics for the chosen "check" function.
          It allows specifying a timeout or maximum number of attempts before startup counts as a failure. Subclasses
          should block until the service is responsive using this :class:`~retry.RetrySpec`. If ``None``, subclasses should
          use the a custom default :class:`~retry.RetrySpec`.
 
-    .. method:: stop(signal='SIGTERM')
+    .. method:: stop(signal: str | int='SIGTERM')
 
         Stop the service with the given *signal*. All containers in the service
         will receive the signal in reverse order. Any container not stopped
@@ -50,7 +47,6 @@ required for running the service.
         This method will block until all the containers are fully stopped.
 
         :param signal: The signal to send to the containers.
-        :type signal: str | int
 
         .. note::
 
@@ -68,24 +64,22 @@ required for running the service.
 
         Returns whether all containers are currently running.
 
-    .. method:: connect(network)
+    .. method:: connect(network: docker.models.networks.Network)
 
         Connect all containers to the given docker network.
 
         :param network: The network to connect to.
-        :type network: :class:`docker.Network<docker.models.networks.Network>`
 
-    .. method:: disconnect(network, **kwargs)
+    .. method:: disconnect(network: docker.models.networks.Network, **kwargs)
 
         Disconnect the service from the given network.
 
         :param network: The network to disconnect from.
-        :type network: :class:`docker.Network<docker.models.networks.Network>`
 
         :param kwargs: Forwarded to :meth:`Network.disconnect<docker.models.networks.Network.disconnect>`
          of each container in the service.
 
-.. class:: SingleEndpointService(containers, remove=True)
+.. class:: SingleEndpointService(containers: collections.abc.Sequence[docker.models.containers.Container], remove: bool=True)
 
     Abstract Base Class for services that have only a single network endpoint.
 
@@ -98,30 +92,25 @@ required for running the service.
 
     The following methods are modified:
 
-    .. method:: connect(network, **kwargs)->Sequence[str]
+    .. method:: connect(network: docker.models.networks.Network, **kwargs)->Sequence[str]
 
         Connects the endpoint container to given *network*.
 
         :param network: The network to connect to.
-        :type network: :class:`docker.Network<docker.models.networks.Network>`
-
         :param kwargs: Forwarded to :meth:`Network.connect<docker.models.networks.Network.connect>`.
 
         :returns: A list of the container's aliases within the network.
-        :rtype: :class:`~colleciont.abc.Sequence`\[:class:`str`\]
 
-    .. method:: disconnect(network, **kargs)
+    .. method:: disconnect(network: docker.models.networks.Network, **kargs)
 
         Disconnect the endpoint container from the given network.
         of each container in the service.
 
         :param network: The network to disconnect from.
-        :type network: :class:`docker.Network<docker.models.networks.Network>`
-
         :param kwargs: Forwarded to :meth:`Network.disconnect<docker.models.networks.Network.disconnect>`
 
 
-.. class:: SingleContainerService(container, remove=True)
+.. class:: SingleContainerService(container: docker.models.containers.Container, remove: bool=True)
 
     Abstract Base Class for services that use a single docker container.
 
@@ -129,9 +118,7 @@ required for running the service.
 
     :param container: A single docker Container that implements the service.
      Accepts both a started and a stopped container.
-    :type container: :class:`docker.Container<docker.models.containers.Container>`
-
-    :param bool remove: Same as in :class:`ContainerService`.
+    :param remove: Same as in :class:`ContainerService`.
 
     .. method:: container
         :property:
@@ -146,14 +133,14 @@ required for running the service.
 
     Adds the convenience method :meth:`run`.
 
-    .. method:: service_name
+    .. method:: service_name()->str
         :classmethod:
 
         :returns: The name of the service. May be overridden by subclasses. Defaults
          to ``cls.__name__``.
-        :rtype: str
 
-    .. method:: run(docker_client, *, spinner=True, retry_spec=None, **kwargs)
+    .. method:: run(docker_client: docker.client.DockerClient, *, spinner: bool=True, \
+            retry_spec: retry.RetrySpec | None =None, **kwargs)->contextlib.AbstractContextManager[Self]
         :classmethod:
 
         Convenience method to run the service. Used as a context manager.
@@ -163,14 +150,9 @@ required for running the service.
 
         :param docker_client: The docker client to use to create the containers, or to pull the docker images from
          dockerhub if it does not exist on the local machine.
-        :type docker_client: :class:`~docker.client.DockerClient`
-
         :param spinner: If True a spinner is printed to stdout while the image is being pulled and the service is
          starting.
-        :type spinner: bool
-
         :param retry_spec: Passed to :meth:`~ContainerService.start`.
-        :type retry_spec: :class:`~retry.RetrySpec` | None
 
         :param kwargs: Forwarded to the class constructor.
 
@@ -185,21 +167,21 @@ required for running the service.
         Currently, all docker commands are executed synchronously. The only asynchronous part of startup is the time
         waiting between healthcheck attempts.
 
-    .. method:: astart(retry_spec=None)
+    .. method:: astart(retry_spec: retry.RetrySpec | None =None)
         :abstractmethod:
         :async:
 
         Start the service by turning on all stopped containers and waiting for startup. Similar to
         :meth:`ContainerService.start`, but asynchronous.
 
-    .. method:: service_name
+    .. method:: service_name() -> str
         :classmethod:
 
         :returns: The name of the service. May be overridden by subclasses. Defaults
          to ``cls.__name__``.
-        :rtype: str
 
-    .. method:: arun(docker_client, *, verbose=True, retry_spec=None, **kwargs)
+    .. method:: arun(docker_client: docker.client.DockerClient, *, verbose: bool =True, \
+            retry_spec: retry.RetrySpec | None=None, **kwargs)->contextlib.AbstractAsyncContextManager[Self]
         :classmethod:
 
         Convenience method to run the service asynchronously. Used as an async context manager.
@@ -210,13 +192,10 @@ required for running the service.
 
         :param docker_client: The docker client to use to create the containers, or to pull the docker images from
          dockerhub if it does not exist on the local machine.
-        :type docker_client: :class:`~docker.client.DockerClient`
 
         :param verbose: If True a spinner is printed to stdout while the image is being pulled, and messages are printed
          while the service is starting.
-        :type verbose: bool
 
         :param retry_spec: Passed to :meth:`~ContainerService.start`.
-        :type retry_spec: :class:`~retry.RetrySpec` | None
 
         :param kwargs: Forwarded to the class constructor.

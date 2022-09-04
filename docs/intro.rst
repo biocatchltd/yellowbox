@@ -44,10 +44,7 @@ Yellowbox can be used seamlessly with `pytest <https://docs.pytest.org/>`_ fixtu
 
     from starlette.responses import PlainTextResponse
 
-    @fixure(scope='session')
-    def docker_client():
-        with _docker_client() as dc:
-            yield dc
+    # docker_client is a fixture automatically added by yellowbox
 
     @fixture(scope='session')
     def redis(docker_client):
@@ -63,7 +60,6 @@ Yellowbox can be used seamlessly with `pytest <https://docs.pytest.org/>`_ fixtu
     def math_server():
         with Webserver("math-service").start() as math_server:
             math_server.add_http_route('GET', '/api/v1/pi', PlainTextResponse("3.1415"))
-
             yield math_server
 
 

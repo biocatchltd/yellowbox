@@ -12,33 +12,30 @@ A :class:`~service.YellowService` for running Redis DB. Runs the official Redis 
 
     Requires the ``redis`` extra. For more information, see our :ref:`installation guide <installation>`.
 
-.. class:: RedisService(docker_client, image="redis:latest", redis_file=None,\
-                        **kwargs)
+.. class:: RedisService(docker_client: docker.client.DockerClient, image:str="redis:latest",\
+                        redis_file: typing.IO[bytes] | None=None, **kwargs)
 
     A service to run the redis database. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
     :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
 
     :param docker_client: The docker client to used to pull and create the Redis container.
-    :type docker_client: :class:`~docker.client.DockerClient`
 
-    :param str image: The image name to create a container of.
+    :param image: The image name to create a container of.
 
     :param redis_file: A bytes :term:`file object` for an RDB file used to load an existing Redis database. For more
      information read the official `redis manual <https://redis.io/topics/persistence>`_. Defaults to None for a fresh
      database.
-    :type redis_file: :class:`~typing.IO`\[:class:`bytes`]
 
     :param \*\*kwargs: Additional keyword arguments passed to :class:`~subclasses.SingleContainerService`.
 
     Has the following additional methods:
 
-    .. method:: set_rdb(redis_file)
+    .. method:: set_rdb(redis_file: typing.IO[bytes])
 
         Load an existing database file onto a redis service.
 
         :param redis_file: A bytes :term:`file object` for an RDB file used to load an existing Redis database. For more
          information read the official `redis manual <https://redis.io/topics/persistence>`_.
-        :type redis_file: :class:`~typing.IO`\[:class:`bytes`]
 
         .. note::
 
@@ -63,13 +60,12 @@ A :class:`~service.YellowService` for running Redis DB. Runs the official Redis 
         
         Equivalent to the redis command `FLUSHALL <https://redis.io/commands/FLUSHALL>`_.
     
-    .. method:: set_state(db_dict)
+    .. method:: set_state(db_dict: collections.abc.Mapping[str, ...])
 
         Set the database to a certain state.
 
-        :param db_dict: A Mapping of string keys used as Redis keys TO values. Values can be any of:
+        :param db_dict: A Mapping of string keys used as Redis keys to values. Values can be any of:
 
          * Primitives - :class:`str`, :class:`int`, :class:`float`, or :class:`bytes`.
          * :class:`~collections.abc.Sequence` of primitives, for Redis lists.
          * :class:`~collections.abc.Mapping` of string field names to primitives, for Redis hashmaps.
-        :type db_dict: :class:`~collections.abc.Mapping`\[:class:`str`, ...]

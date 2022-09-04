@@ -14,7 +14,7 @@ Redis server, and :meth:`~subclasses.ContainerService.start` finishes when it
 connects successfully.
 
 
-.. class:: RetrySpec(interval=2, attempts=None, timeout=None)
+.. class:: RetrySpec(interval: float=2, attempts: int | None =None, timeout: float | None=None)
 
     Specification object for repeated attempts of an arbitrary action that might fail.
 
@@ -22,31 +22,24 @@ connects successfully.
     attributes.
 
     .. attribute:: interval
-        :type: int | float
-        :value: 2
 
         Time in seconds to pause after a failed attempt. Defaults to 2.
 
 
     .. attribute:: attempts
-        :type: Optional[int]
-        :value: None
 
         Max number of attempts. If ``None``, infinite attempts are made.
 
     .. attribute:: timeout
-        :type: int | float | None
-        :value: None
 
         A timeout for all the attempts (including the interval) combined. If ``None``, function will never time out.
 
-    .. method:: retry(func, exceptions)->T
+    .. method:: retry(func: collections.abc.Callable[[], T], \
+            exceptions: tuple[typing.Type[Exception],...] | typing.Type[Exception])->T
 
         :param func: A no-argument function that may fail with an exception.
-        :type func: Callable[[], T]
-
-        :param exceptions: A list of exceptions that ``func`` can raise and that will trigger a retry.
-        :type exceptions: Tuple[Type[Exception],...] | Type[Exception]
+        :param exceptions: An exception type or tuple of exception types that ``func`` can raise and that will trigger a
+            retry.
 
         Retry the given function until it succeeds according to the :class:`RetrySpec`. Returns the result of the
         ``func`` if it completes successfully. If the maximum number of retries or the timeout is reached, raises the
@@ -54,10 +47,11 @@ connects successfully.
 
         .. note::
 
-            If you wish to retry a function that takes arguments, use :func:`functools.partial` to supply the
+            If you want to retry a function that takes arguments, use :func:`functools.partial` to supply the
             arguments.
 
-    .. method:: aretry(func, exceptions)->T
+    .. method:: aretry(func: collections.abc.Callable[[], T], \
+            exceptions: tuple[typing.Type[Exception],...] | typing.Type[Exception])->T
         :async:
 
         similar to :meth:`retry`, but waits asynchronously between attempts.

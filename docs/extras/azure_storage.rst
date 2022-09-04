@@ -22,16 +22,15 @@ to the service.
     Currently, the service only supports the default
     `Azure Storage account <https://github.com/Azure/Azurite/blob/main/README.md#user-content-default-storage-account>`_.
 
-.. class:: AzuriteService(docker_client,\
-    image="mcr.microsoft.com/azure-storage/azurite:latest", **kwargs)
+.. class:: AzuriteService(docker_client: docker.client.DockerClient,\
+    image : str="mcr.microsoft.com/azure-storage/azurite:latest", **kwargs)
 
     A service that runs an Azurite server. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
     :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
 
     :param docker_client: The docker client to used to pull and create the Azurite container.
-    :type docker_client: :class:`~docker.client.DockerClient`
 
-    :param str image: The image name to create a container of.
+    :param image: The image name to create a container of.
 
     :param \*\*kwargs: Additional keyword arguments passed to :class:`~subclasses.SingleContainerService`.
 
@@ -69,7 +68,7 @@ to the service.
 
         Returns an endpoint HTTP URL to connect to from containers in a common network with the Azurite service.
 
-    .. method:: account_credentials()
+    .. method:: account_credentials()->dict
 
         Returns a credential dict to connect to the service. The dict consists of 2 keys:
         ``"account_name"`` and ``"account_key"``, and can be used as ``credentials`` for the `azure-storage-blob

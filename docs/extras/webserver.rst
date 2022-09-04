@@ -37,12 +37,12 @@ of handling both HTTP and websocket routes.
     Also, if such an error is encountered, all future calls to any route in the service will return Error Code 500.
 
 
-.. class:: WebServer(name, port=None, **kwargs)
+.. class:: WebServer(name: str, port: int | None =None, **kwargs)
 
     A uvicorn-starlette web server that supports on-the-fly adding and removing of routes.
 
-    :param str name: The name of the server, used for logging and debugging.
-    :param int | None port: The port to bind to when serving, default will bind to an available port.
+    :param name: The name of the server, used for logging and debugging.
+    :param port: The port to bind to when serving, default will bind to an available port.
     :param \*\*kwargs: Additional keyword arguments to pass to the starlette server's `uvicorn configuration
      <https://github.com/encode/uvicorn/blob/master/uvicorn/config.py>`_.
 
@@ -63,18 +63,16 @@ of handling both HTTP and websocket routes.
 
         :raises RuntimeError: If the binding process takes more than 1 second.
 
-    .. method:: add_http_endpoint(endpoint)
+    .. method:: add_http_endpoint(endpoint: MockHTTPEndpoint) -> MockHTTPEndpoint
                 add_http_endpoint(methods, rule_string, side_effect, *, auto_read_body=True,\
-                                  forbid_implicit_head_verb = True, name=None)
+                                  forbid_implicit_head_verb = True, name=None) -> MockHTTPEndpoint
 
         Add an HTTP endpoint to the server. Can accept either a created endpoint or arguments to create one.
 
         :param endpoint: The endpoint to add, as returned by :func:`http_endpoint`.
-        :type endpoint: :class:`MockHttpEndpoint`
         :Other Parameters: Used to create a new endpoint (forwarded to :func:`http_endpoint`).
 
         :returns: The endpoint that was added, to be used as a decorator.
-        :rtype: :class:`MockHTTPEndpoint`
 
         .. code-block::
             :caption: Example with decorator syntax.
@@ -93,24 +91,23 @@ of handling both HTTP and websocket routes.
 
             assert get(server.local_url() + '/ping').text == 'pong'
 
-    .. method:: remove_http_endpoint(endpoint)
+    .. method:: remove_http_endpoint(endpoint: MockHTTPEndpoint)
 
         Remove an HTTP endpoint previously added to the server.
 
         :param endpoint: The endpoint to remove.
-        :type endpoint: :class:`MockHttpEndpoint`
 
         :raises RuntimeError: If the endpoint is not added to the server.
 
-    .. method:: patch_http_endpoint(endpoint)
+    .. method:: patch_http_endpoint(endpoint: MockHTTPEndpoint)->contextlib.AbstractContextManager[MockHTTPEndpoint]
                 patch_http_endpoint(methods, rule_string, side_effect, *, auto_read_body=True,\
-                                    forbid_implicit_head_verb = True, name=None)
+                                    forbid_implicit_head_verb = True, name=None)\
+                ->contextlib.AbstractContextManager[MockHTTPEndpoint]
 
         Add to, then remove an HTTP endpoint from the server within a context. Can accept either a created
         endpoint or arguments to create one.
 
         :param endpoint: The endpoint to add, as returned by :func:`http_endpoint`.
-        :type endpoint: :class:`MockHttpEndpoint`
         :Other Parameters: Used to create a new endpoint (forwarded to :func:`http_endpoint`).
 
         :returns: A context manager that adds and yields the endpoint upon entry, and removes it upon exit.
@@ -129,17 +126,15 @@ of handling both HTTP and websocket routes.
             # when the context is exited, the endpoint is removed
             assert get(server.local_url() + '/square/12').status_code == 404
 
-    .. method:: add_ws_endpoint(endpoint)
-                add_ws_endpoint(rule_string, side_effect, *, name=None)
+    .. method:: add_ws_endpoint(endpoint:MockWSEndpoint)->MockWSEndpoint
+                add_ws_endpoint(rule_string, side_effect, *, name=None)->MockWSEndpoint
 
         Add an HTTP endpoint to the server. Can accept either a created endpoint or arguments to create one.
 
         :param endpoint: The endpoint to add, as returned by :func:`ws_endpoint`.
-        :type endpoint: :class:`MockWSEndpoint`
         :Other Parameters: Used to create a new endpoint (forwarded to :func:`ws_endpoint`).
 
         :returns: The endpoint that was added, to be used as a decorator.
-        :rtype: :class:`MockWSEndpoint`
 
         .. code-block::
             :caption: Example with decorator syntax.
@@ -158,69 +153,65 @@ of handling both HTTP and websocket routes.
             assert ws_client.recv() == 'Speak, friend, and enter'
             ws_client.send('Mellon')
 
-    .. method:: remove_ws_endpoint(endpoint)
+    .. method:: remove_ws_endpoint(endpoint:MockWSEndpoint)
 
         Remove a websocket endpoint previously added to the server.
 
         :param endpoint: The endpoint to remove.
-        :type endpoint: :class:`MockWSEndpoint`
 
         :raises RuntimeError: If the endpoint is not added to the server.
 
-    .. method:: patch_ws_endpoint(endpoint)
-                patch_ws_endpoint(rule_string, side_effect, *, name=None)
+    .. method:: patch_ws_endpoint(endpoint:MockWSEndpoint)->contextlib.AbstractContextManager[MockWSEndpoint]
+                patch_ws_endpoint(rule_string, side_effect, *, name=None)\
+                    ->contextlib.AbstractContextManager[MockWSEndpoint]
 
         Add to, then remove a websocket endpoint from the server within a context. Can accept either a created
         endpoint or arguments to create one.
 
         :param endpoint: The endpoint to add, as returned by :func:`ws_endpoint`.
-        :type endpoint: :class:`MockWSEndpoint`
         :Other Parameters: Used to create a new endpoint (forwarded to :func:`ws_endpoint`).
 
         :returns: A context manager that adds and yields the endpoint upon entry, and removes it upon exit.
-        :rtype: :class:`ContextManager <contextlib.AbstractContextManager>`\[:class:`MockWSEndpoint`\]
 
-    .. method:: local_url(schema = 'http')
+    .. method:: local_url(schema: str|None = 'http')->str
 
         Get the URL to access the server from the local machine, with the given schema.
 
-        :param str | None schema: The schema to use. On ``None``, returns a URL without a schema.
+        :param schema: The schema to use. On ``None``, returns a URL without a schema.
         :returns: The URL of the server.
-        :rtype: :class:`str`
 
-    .. method:: container_url(schema = 'http')
+    .. method:: container_url(schema: str|None = 'http')->str
 
         Get the URL to access the server from a docker container, with the given schema.
 
-        :param str | None schema: The schema to use. On ``None``, returns a URL without a schema.
+        :param schema: The schema to use. On ``None``, returns a URL without a schema.
         :returns: The URL of the server.
-        :rtype: :class:`str`
 
-.. function:: http_endpoint(methods, rule_string, side_effect, *, auto_read_body=True,\
-                            forbid_implicit_head_verb = True, *, name=None)
-              http_endpoint(methods, rule_string, *, auto_read_body=True, forbid_implicit_head_verb = True, *, \
-                            name=None)
+.. function:: http_endpoint(methods: str | typing.Iterable[str], rule_string: str, \
+    side_effect: Response | collections.abc.Callable[[Request], \
+    typing.Awaitable[Response]], *, auto_read_body:bool=True,\
+    forbid_implicit_head_verb:bool = True, name: str|None=None)->MockHTTPEndpoint
+              http_endpoint(methods: str | typing.Iterable[str], rule_string: str, \
+    *, auto_read_body:bool=True, forbid_implicit_head_verb:bool = True, name: str|None=None)\
+    ->collections.abc.Callable[[collections.abc.Callable[[Request], typing.Awaitable[Response]]], MockHTTPEndpoint]
 
     Create an HTTP endpoint to link to a :class:`Webserver` (see :meth:`WebServer.add_http_endpoint`).
 
     :param methods: The HTTP method or methods to allow into the endpoint (case insensitive).
-    :type methods: :class:`str` | :class:`~collections.abc.Iterable`\[:class:`str`\]
-    :param str rule_string: The URL rule string as specified by `Starlette URL rule specs
+    :param rule_string: The URL rule string as specified by `Starlette URL rule specs
      <https://www.starlette.io/routing/#path-parameters>`_.
     :param side_effect: The side effect to execute when the endpoint is requested. Can either be a `Starlette response
      <https://www.starlette.io/responses/>`_, in this case the response will always be returned, or an async callable
      that accepts a positional `Starlette Request <https://www.starlette.io/requests/>`_ and returns a `Starlette
      response <https://www.starlette.io/responses/>`_. Can be delegated as a decorator.
-    :type side_effect: `Response`_ | async `Request <https://www.starlette.io/requests/#request>`_ |rarr| `Response`_
-    :param bool auto_read_body: By default, Starlette may begin to respond to requests before the request body has fully
+    :param auto_read_body: By default, Starlette may begin to respond to requests before the request body has fully
      arrived to the server. This may cause race condition issues on local hosts. This param (enabled by default) ensures
      that the entire request arrives to the server before a response is returned.
-    :param bool forbid_implicit_head_verb: By default for Starlette routes, if the ``GET`` method is allowed for a route
+    :param forbid_implicit_head_verb: By default for Starlette routes, if the ``GET`` method is allowed for a route
      , the ``HEAD`` method will also be allowed. This param (enabled by default) disables this behavior.
-    :param str | None name: The name of the endpoint. If ``None``, the name is inferred from the function name and rule
+    :param name: The name of the endpoint. If ``None``, the name is inferred from the function name and rule
      string.
     :returns: The a new HTTP endpoint that can be added to a Webservice.
-    :rtype: :class:`MockHTTPEndpoint`
 
     .. note::
         this function can be used a decorator by omitting *side_effect*.
@@ -244,8 +235,10 @@ of handling both HTTP and websocket routes.
         In order to use a "rotating" side effect (i.e. one that returns a different response per request), see
         :func:`iter_side_effects`.
 
-.. function:: ws_endpoint(rule_string, side_effect, *, name=None)
-              ws_endpoint(rule_string, *, name=None)
+.. function:: ws_endpoint(rule_string: str, side_effect: collections.abc.Callable[[Websocket], typing.Awaitable[int | None]], *, name: str=None)\
+    ->MockWSEndpoint
+              ws_endpoint(rule_string: str, *, name: str=None)\
+    ->collections.abc.Callable[[collections.abc.Callable[[Websocket], typing.Awaitable[int | None]]], MockWSEndpoint]
 
     Create a WebSocket endpoint to link to a :class:`Webserver` (see :meth:`WebServer.add_ws_endpoint`).
 
@@ -258,7 +251,6 @@ of handling both HTTP and websocket routes.
     :param str | None name: The name of the endpoint. If ``None``, the name is inferred from the function name and rule
      string.
     :returns: The a new Websocket endpoint that can be added to a Webservice.
-    :rtype: :class:`MockWSEndpoint`
 
     .. note::
         this function can be used a decorator by omitting *side_effect*.
@@ -293,7 +285,8 @@ of handling both HTTP and websocket routes.
     An HTTP endpoint that can be added to a :class:`Webserver` (see :meth:`WebServer.add_http_endpoint`). construct with
     :func:`http_endpoint`.
 
-    .. method:: patch(side_effect)
+    .. method:: patch(side_effect: Response | collections.abc.Callable[[Request], typing.Awaitable[Response]])\
+        ->contextlib.AbstractContextManager[...]
 
         Change the side effect of the endpoint. With the ability to revert it to the original side effect.
 
@@ -339,13 +332,12 @@ of handling both HTTP and websocket routes.
             Therefore, it is best practice to always either discard the return value of this function, or immediately
             enter its context
 
-    .. method:: capture_calls()
+    .. method:: capture_calls()->contextlib.AbstractContextManager[http_request_capture.RecordedHTTPRequests]
 
         Capture all calls to the endpoint within a context.
 
         :returns: context manager that begins capturing all calls to endpoint on entry and stops recording on exit, all
-         captured calls are recorded on the yielded :class:`RecordedHTTPRequests`.
-        :rtype: :class:`ContextManager <contextlib.AbstractContextManager>`\[:class:`RecordedHTTPRequests`\]
+         captured calls are recorded on the yielded :class:`http_request_capture.RecordedHTTPRequests`.
 
         .. code-block::
             :caption: Example.
@@ -373,7 +365,8 @@ of handling both HTTP and websocket routes.
     A websocket endpoint that can be added to a :class:`Webserver` (see :meth:`WebServer.add_ws_endpoint`). construct
     with :func:`ws_endpoint`.
 
-    .. method:: patch(side_effect)
+    .. method:: patch(side_effect:collections.abc.Callable[[Websocket], \
+        typing.Awaitable[int | None]])->contextlib.AbstractContextManager[...]
 
         Change the side effect of the endpoint. With the ability to revert it to the original side effect.
 
@@ -385,13 +378,12 @@ of handling both HTTP and websocket routes.
 
             See the :ref:`out-of-order warning in MockHTTPEndpoint.patch <out of order patch>`.
 
-    .. method:: capture_calls()
+    .. method:: capture_calls()->contextlib.AbstractContextManager[ws_request_capture.RecordedWSTranscripts]
 
         Capture all calls to the endpoint within a context.
 
         :returns: context manager that begins capturing all calls to endpoint on entry and stops recording on exit, all
-         captured calls are recorded on the yielded :class:`RecordedWSTranscripts`.
-        :rtype: :class:`ContextManager <contextlib.AbstractContextManager>`\[:class:`RecordedWSTranscripts`\]
+         captured calls are recorded on the yielded :class:`ws_request_capture.RecordedWSTranscripts`.
 
 .. _Response: https://www.starlette.io/responses/#response
 
@@ -430,34 +422,29 @@ of handling both HTTP and websocket routes.
             await websocket.send_text('Hello, World!')
             assert await websocket.receive_text() == 'Hello, World!'
 
-.. class:: ExpectedHTTPRequest(headers=None, headers_submap=None, path=None, path_params=None, path_params_submap=None,\
-           query_params=None, query_params_submap=None,method=None, body=None, text=None, json =...,\
-           content_predicate=None)
+.. class:: ExpectedHTTPRequest(headers: collections.abc.Mapping[str, collections.abc.Collection[str]]=None,\
+    headers_submap: collections.abc.Mapping[str, collections.abc.Collection[str]]=None,\
+    path: str | typing.Pattern[str] =None,\
+    path_params: collections.abc.Mapping[str, ...] =None,\
+    path_params_submap: collections.abc.Mapping[str, ...] =None,\
+    query_params: collections.abc.Mapping[str, collections.abc.Collection[str]]=None,\
+    query_params_submap: collections.abc.Mapping[str, collections.abc.Collection[str]]=None,\
+    method: str=None, body: bytes=None, text: str=None, json =...,\
+    content_predicate: collections.abc.Callable[[bytes], bool] | tuple[collections.abc.Callable[[bytes], T], T]=None)
 
     An expected HTTP request, used for matching a recorded request.
 
     :param headers: If specified, a recorded request must have the specified headers exactly.
-    :type headers: :class:`~collections.abc.Mapping`\[:class:`str`,
-        :class:`~collections.abc.Collection`\[:class:`str`\]\]
     :param headers_submap: If specified, a recorded request must have at least the specified headers.
-    :type headers_submap: :class:`~collections.abc.Mapping`\[:class:`str`,
-        :class:`~collections.abc.Collection`\[:class:`str`\]\]
     :param path: If specified, a recorded request must have the specified path exactly (if :class:`str`), or must match
         the specified pattern fully (if :class:`~typing.Pattern`).
-    :type path: :class:`str` | :class:`~typing.Pattern`\[:class:`str`]
     :param path_params: If specified, a recorded request must have the specified path parameters exactly.
-    :type path_params: :class:`~collections.abc.Mapping`\[:class:`str`, ...\]
     :param path_params_submap: If specified, a recorded request must have at least the specified path parameters.
-    :type path_params_submap: :class:`~collections.abc.Mapping`\[:class:`str`, ...\]
     :param query_params: If specified, a recorded request must have the specified query parameters exactly.
-    :type query_params: :class:`~collections.abc.Mapping`\[:class:`str`,
-        :class:`~collections.abc.Collection`\[:class:`str`\]\]
     :param query_params_submap: If specified, a recorded request must have at least the specified query parameters.
-    :type query_params_submap: :class:`~collections.abc.Mapping`\[:class:`str`,
-        :class:`~collections.abc.Collection`\[:class:`str`\]\]
-    :param str method: If specified, a recorded request must be of the specified HTTP method (case-insensitive).
-    :param bytes body: If specified, a recorded request must have a body equal to the one specified.
-    :param str text: If specified, a recorded request must have a body equal to the one specified with utf-8 encoding.
+    :param method: If specified, a recorded request must be of the specified HTTP method (case-insensitive).
+    :param body: If specified, a recorded request must have a body equal to the one specified.
+    :param text: If specified, a recorded request must have a body equal to the one specified with utf-8 encoding.
     :param json: If specified, a recorded request must have a body equal to the one specified with json encoding.
     :param content_predicate: If specified, may be a callable that accepts a :class:`bytes` object, in which
         case the predicate must evaluate to True when called with the request body. Alternatively, the predicate can be
@@ -471,7 +458,7 @@ of handling both HTTP and websocket routes.
 
 .. class:: http_request_capture.RecordedHTTPRequests
 
-    A :class:`list` of recorded HTTP requests. Yielded by :meth:`MockHttpEndpoint.capture_calls` to record requests.
+    A :class:`list` of recorded HTTP requests. Yielded by :meth:`MockHTTPEndpoint.capture_calls` to record requests.
 
     .. method:: assert_not_requested()
 
@@ -491,13 +478,12 @@ of handling both HTTP and websocket routes.
 
         :raises AssertionError: If no or multiple request were made.
 
-    .. method:: assert_requested_with(expected)
+    .. method:: assert_requested_with(expected: ExpectedHTTPRequest)
                 assert_requested_with(**kwargs)
 
         Assert that the latest request was made matches an expected request.
 
         :param expected: The expected request.
-        :type expected: :class:`ExpectedHTTPRequest`
         :param \*\*kwargs: Alternatively, users can skip the ``expected`` argument and specify the expected request
             parameters as keyword arguments.
         :raises AssertionError: If the last request doesn't match the expected request, or if there are no requests.
@@ -518,35 +504,32 @@ of handling both HTTP and websocket routes.
                 content_predicate = (lambda b:b.decode('utf-7'), 'hi'),
             )
 
-    .. method:: assert_requested_once_with(expected)
+    .. method:: assert_requested_once_with(expected: ExpectedHTTPRequest)
                 assert_requested_once_with(**kwargs)
 
         Assert that only one request was made, and that it matches an expected request.
 
         :param expected: The expected request.
-        :type expected: :class:`ExpectedHTTPRequest`
         :param \*\*kwargs: Alternatively, users can skip the ``expected`` argument and specify the expected request
             parameters as keyword arguments (see :ref:`the example in assert_requested_with <skip expected creation>`).
         :raises AssertionError: If there are more than one or no requests made, or if the only request does not match
             the expected request.
 
-    .. method:: assert_any_request(expected)
+    .. method:: assert_any_request(expected: ExpectedHTTPRequest)
                 assert_any_request(**kwargs)
 
         Assert that a request was made that matches an expected request.
 
         :param expected: The expected request.
-        :type expected: :class:`ExpectedHTTPRequest`
         :param \*\*kwargs: Alternatively, users can skip the ``expected`` argument and specify the expected request
             parameters as keyword arguments (see :ref:`the example in assert_requested_with <skip expected creation>`).
         :raises AssertionError: If no request that matches the expectation was made.
 
-    .. method:: assert_has_requests(*expected_requests)
+    .. method:: assert_has_requests(*expected_requests: ExpectedHTTPRequest)
 
         Assert that a set of expected requests were made, in sequential order.
 
         :param \*expected: The expected requests to match.
-        :type \*expected: :class:`ExpectedHTTPRequest`
 
         :raises AssertionError: If the expected requests were not matched in sequential order.
 
@@ -559,7 +542,7 @@ of handling both HTTP and websocket routes.
 
         A sender of a message to the recipient.
 
-    .. method:: __call__(data)
+    .. method:: __call__(data: str | bytes | typing.Pattern[str | bytes] | ...)
 
         Create an expectation of a websocket message from the given data, as sent by the given sender.
 
@@ -571,39 +554,32 @@ of handling both HTTP and websocket routes.
               match.
             * :data:`Ellipsis`: A special value that matches any payload.
 
-.. class:: ExpectedWSTranscript(messages=(...,), headers=None, headers_submap=None, path=None, path_params=None,\
-                                path_params_submap=None, query_params=None, query_params_submap=None, close=None, \
-                                accepted=None)
+.. class:: ExpectedWSTranscript(messages:collections.abc.Sequence[Sender[...]| Ellipsis]=(...,),\
+    headers: collections.abc.Mapping[str, collections.abc.Collection[str]]=None,\
+    headers_submap: collections.abc.Mapping[str, collections.abc.Collection[str]]=None,\
+    path: str | typing.Pattern[str] =None,\
+    path_params: collections.abc.Mapping[str, ...] =None,\
+    path_params_submap: collections.abc.Mapping[str, ...] =None,\
+    query_params: collections.abc.Mapping[str, collections.abc.Collection[str]]=None,\
+    query_params_submap: collections.abc.Mapping[str, collections.abc.Collection[str]]=None,\
+    close: tuple[Sender, int]=None, accepted: bool=None)
 
     An expectation of a websocket transcript. Used to match against a recorded websocket transcript.
 
     :param messages: The expected messages in the transcript, in order. Create an expected message by calling
         :class:`Sender`. The sequence may begin or end with :data:`Ellipsis` to signify that any number of messages can
         precede or follow the messages to match.
-    :type messages: :class:`~collections.abc.Sequence`\[:class:`Sender`\(...\) | :data:`Ellipsis`\]
     :param headers: If specified, a recorded request must have the specified headers exactly.
-    :type headers: :class:`~collections.abc.Mapping`\[:class:`str`,
-        :class:`~collections.abc.Collection`\[:class:`str`\]\]
     :param headers_submap: If specified, a recorded request must have at least the specified headers.
-    :type headers_submap: :class:`~collections.abc.Mapping`\[:class:`str`,
-        :class:`~collections.abc.Collection`\[:class:`str`\]\]
     :param path: If specified, a recorded request must have the specified path exactly (if :class:`str`), or must match
         the specified pattern fully (if :class:`~typing.Pattern`).
-    :type path: :class:`str` | :class:`~typing.Pattern`\[:class:`str`]
     :param path_params: If specified, a recorded request must have the specified path parameters exactly.
-    :type path_params: :class:`~collections.abc.Mapping`\[:class:`str`, ...\]
     :param path_params_submap: If specified, a recorded request must have at least the specified path parameters.
-    :type path_params_submap: :class:`~collections.abc.Mapping`\[:class:`str`, ...\]
     :param query_params: If specified, a recorded request must have the specified query parameters exactly.
-    :type query_params: :class:`~collections.abc.Mapping`\[:class:`str`,
-        :class:`~collections.abc.Collection`\[:class:`str`\]\]
     :param query_params_submap: If specified, a recorded request must have at least the specified query parameters.
-    :type query_params_submap: :class:`~collections.abc.Mapping`\[:class:`str`,
-        :class:`~collections.abc.Collection`\[:class:`str`\]\]
     :param close: If specified, the transcript closing must have been done by the specified sender, and with the
         specified code.
-    :type close: (:class:`Sender`, :class:`int`)
-    :param bool accepted: If specified, the connection must have been accepted by the server (if True), or rejected by
+    :param accepted: If specified, the connection must have been accepted by the server (if True), or rejected by
         the server (if False).
 
     .. note::
@@ -649,46 +625,42 @@ of handling both HTTP and websocket routes.
 
         :raises AssertionError: If no or multiple connections were made.
 
-    .. method:: assert_requested_with(expected)
+    .. method:: assert_requested_with(expected: ExpectedWSTranscript)
                 assert_requested_with(**kwargs)
 
         Assert that the latest connections was made matches an expected transcript.
 
         :param expected: The expected connection.
-        :type expected: :class:`ExpectedWSTranscript`
         :param \*\*kwargs: Alternatively, users can skip the ``expected`` argument and specify the expected transcript
             parameters as keyword arguments.
         :raises AssertionError: If the last transcript doesn't match the expected request, or if there are no transcript.
 
-    .. method:: assert_requested_once_with(expected)
+    .. method:: assert_requested_once_with(expected: ExpectedWSTranscript)
                 assert_requested_once_with(**kwargs)
 
         Assert that only one connection was made, and that it matches an expected transcript.
 
         :param expected: The expected connection.
-        :type expected: :class:`ExpectedWSTranscript`
         :param \*\*kwargs: Alternatively, users can skip the ``expected`` argument and specify the expected request
             parameters as keyword arguments.
         :raises AssertionError: If there are more than one or no connections made, or if the only transcript does not
             match the expectation.
 
-    .. method:: assert_any_request(expected)
+    .. method:: assert_any_request(expected: ExpectedWSTranscript)
                 assert_any_request(**kwargs)
 
         Assert that a connection was made that matches an expected transcript.
 
         :param expected: The expected connection.
-        :type expected: :class:`ExpectedWSTranscript`
         :param \*\*kwargs: Alternatively, users can skip the ``expected`` argument and specify the expected request
             parameters as keyword arguments.
         :raises AssertionError: If no connection that matches the expectation was made.
 
-.. function:: iter_side_effects(side_effects)
+.. function:: iter_side_effects(side_effects: collections.abc.Iterable)->collections.abc.Callable
 
     Combine multiple endpoint side effects into one, so that each subsequent call uses the next side effect.
 
     :param side_effects: iterable of the side effects to combine.
-    :type side_effects: :class:`~collections.abc.Iterable`
 
     :return: A function that can be used as an endpoint side effect.
 
@@ -721,7 +693,9 @@ of handling both HTTP and websocket routes.
             assert get(server.local_url()+'/').text == 'im tired now'
             ...
 
-.. function:: verbose_http_side_effect(side_effect, format_function = ..., file=...)
+.. function:: verbose_http_side_effect(side_effect, \
+    format_function: collections.abc.Callable[[MockHTTPEndpoint, Request, Response], str] = ...,\
+    file:typing.IO[str]=...)->collections.abc.Callable
 
     Wraps an HTTP side effect that prints the request and response to a file.
 
@@ -730,6 +704,5 @@ of handling both HTTP and websocket routes.
     :param format_function: A function that takes an endpoint, request and response and returns a string.
         The default function will return a string consisting of the time, webserver and endpoint name, the client
         address, the HTTP method, the relative path with the query string, the status code and length of the response.
-    :type format_function: Callable[[MockHTTPEndpoint, Request, Response], str]
 
     :param file: The file to write the messages to. defaults to stdout.

@@ -13,21 +13,20 @@ integration with ``sqlalchemy``.
 
     Requires the ``postgresql`` extra. For more information, see our :ref:`installation guide <installation>`.
 
-.. class:: PostgreSQLService(docker_client, image="postgres:latest", *, user='postgres', password='guest', \
-        default_db=None, **kwargs)
+.. class:: PostgreSQLService(docker_client: docker.client.DockerClient, image: str="postgres:latest", *, user: str='postgres', password: str='guest', \
+        default_db: str | None =None, **kwargs)
 
     A service that runs a PostgreSQL database. Inherits from :class:`~subclasses.SingleContainerService` and
     :class:`~extras.sql_base.SQLService`.
 
     :param docker_client: The docker client to used to pull and create the Postgresql container.
-    :type docker_client: :class:`~docker.client.DockerClient`
 
-    :param str image: The image name to create a container of.
+    :param image: The image name to create a container of.
 
-    :param str user: The name of the default user for the database.
-    :param str password: The password for the default user.
+    :param user: The name of the default user for the database.
+    :param password: The password for the default user.
 
-    :param str | None default_db: The name of the default database. If :data:`None`, uses the same name as the
+    :param default_db: The name of the default database. If :data:`None`, uses the same name as the
      default user.
 
     :param \*\*kwargs: Additional keyword arguments passed to :class:`~extras.sql_base.SQLService`.
