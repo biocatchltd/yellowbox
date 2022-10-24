@@ -13,6 +13,7 @@ In order to run specific extras (like redis, or webserver), you will also need t
 Current extras are:
 
     * :mod:`azure (for running an Azurite container) <extras.azure_storage>`
+    * :mod:`gcs (for running a fake google cloud storage) <extras.fake_gcs>`
     * :mod:`kafka (for running a Kafka message broker) <extras.kafka>`
     * :mod:`postgresql (for running a postgreSQL) <extras.postgresql>`
     * :mod:`rabbit (for running a RabbitMQ message queue) <extras.rabbit_mq>`

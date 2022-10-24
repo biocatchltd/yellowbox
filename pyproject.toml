@@ -48,6 +48,8 @@ sphinx-rtd-theme = "*"
 pytest-asyncio = "^0.18.2"
 coverage = "^6.3.2"
 types-Deprecated = "^1.2.7"
+google-cloud-storage = "^2.5.0"
+gcloud-aio-storage = "^7.0.1"
 
 [tool.poetry.extras]
 azure = ["azure-storage-blob", "cffi"]
@@ -59,6 +61,7 @@ redis = ["redis"]
 vault = ["hvac"]
 webserver = ["starlette", "uvicorn", "websockets"]
 websocket = ["simple_websocket_server", "websocket_client"]
+gcs = []  # empty for now, but we want to maintain forwards compatiblity in case we even want to add extras here
 
 dev = ["redis", "pika", "kafka-python", "azure-storage-blob", "cffi", "sqlalchemy", "psycopg2",
     "simple_websocket_server", "websocket_client", "starlette", "python-igraph", "uvicorn", "websockets", "hvac",
