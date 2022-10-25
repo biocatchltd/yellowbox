@@ -38,7 +38,7 @@ to the service.
 
     .. method:: client_port()->int
 
-        Returns the port to be used when connecting to Azurite.
+        Returns the port to be used when connecting to Azurite from the docker host.
 
     .. method:: connection_string()->str
 
