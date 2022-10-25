@@ -59,7 +59,7 @@ def test_vault_login(service, secret_prefix, user_prefix):
     })
 
     client = hvac.Client(service.local_url())
-    client.auth_userpass(user_prefix + 'james_bond', 'swordfish')
+    client.auth.userpass.login(user_prefix + 'james_bond', 'swordfish')
     assert client.is_authenticated()
 
     assert client.secrets.kv.read_secret(secret_prefix + 'foo')['data']['data'] == {'smee': {'lee': 23}}
@@ -77,7 +77,7 @@ def test_vault_reuse_policy(service, secret_prefix, user_prefix):
     })
 
     client = hvac.Client(service.local_url())
-    client.auth_userpass(user_prefix + 'bames_jond', 'swordfish')
+    client.auth.userpass.login(user_prefix + 'bames_jond', 'swordfish')
     assert client.is_authenticated()
 
     assert client.secrets.kv.read_secret(secret_prefix + 'foo')['data']['data'] == {'smee': {'lee': 23}}
