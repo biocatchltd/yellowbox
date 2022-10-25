@@ -1,16 +1,13 @@
-import os
 from contextlib import contextmanager
-from typing import Optional, Dict, Any, Iterable
+from typing import Any, Dict, Iterable, Optional
 
 import requests
 from docker import DockerClient
-from yellowbox.utils import docker_host_name
-
-from yellowbox.retry import RetrySpec
 
 from yellowbox.containers import create_and_pull, get_ports
-
-from yellowbox.subclasses import AsyncRunMixin, SingleContainerService, RunMixin
+from yellowbox.retry import RetrySpec
+from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
+from yellowbox.utils import docker_host_name
 
 FAKE_GCS_DEFAULT_PORT = 4443
 
@@ -29,7 +26,9 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
     def client_port(self):
         return get_ports(self.container)[FAKE_GCS_DEFAULT_PORT]
 
-    def local_url(self, scheme: Optional[str] = ...):
+    def local_url(self,
+                  scheme: Optional[str] = ...  # type: ignore[assignment]
+                  ):
         ret = f'localhost:{self.client_port()}'
         if scheme is ...:
             scheme = self.scheme
@@ -37,7 +36,9 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
             ret = f'{self.scheme}://{ret}'
         return ret
 
-    def container_url(self, hostname: str, scheme: Optional[str] = ...):
+    def container_url(self, hostname: str,
+                      scheme: Optional[str] = ...  # type: ignore[assignment]
+                      ):
         ret = f'{hostname}:{FAKE_GCS_DEFAULT_PORT}'
         if scheme is ...:
             scheme = self.scheme
@@ -45,7 +46,9 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
             ret = f'{self.scheme}://{ret}'
         return ret
 
-    def host_url(self, scheme: Optional[str] = ...):
+    def host_url(self,
+                 scheme: Optional[str] = ...  # type: ignore[assignment]
+                 ):
         ret = f'{docker_host_name}:{self.client_port()}'
         if scheme is ...:
             scheme = self.scheme

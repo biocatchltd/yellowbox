@@ -1,13 +1,12 @@
-from pytest import fixture, mark, MonkeyPatch, raises
-from yellowbox.networks import temp_network, connect
+from aiohttp import ClientSession, TCPConnector
+from gcloud.aio.storage.storage import Storage
+from google.auth.credentials import AnonymousCredentials
+from google.cloud import storage
+from pytest import MonkeyPatch, fixture, mark, raises
 
 from tests.util import unique_name_generator
 from yellowbox.extras.fake_gcs import FakeGoogleCloudStorage
-
-from google.auth.credentials import AnonymousCredentials
-from google.cloud import storage
-from aiohttp import ClientSession, TCPConnector
-from gcloud.aio.storage.storage import Storage
+from yellowbox.networks import connect, temp_network
 
 
 @mark.parametrize('spinner', [True, False])

@@ -8,9 +8,9 @@ Before submitting your PR. You need to make sure it would pass some basic automa
 ```shell script
 #!/bin/bash
 # install poetry
-sh scripts/install.sh
-# IMPORTANT: If you added additional extras to the project, you must also add them to
-# `scripts/install.sh`. 
+python -m pip install poetry==1.1.15
+python -m poetry update --lock
+python -m poetry install -E dev
 # run linting, linting will only be properly performed for python 3.7 but should also pass for python 3.8
 sh scripts/lint.sh
 # run testing
