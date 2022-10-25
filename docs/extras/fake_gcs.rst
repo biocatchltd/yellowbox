@@ -63,3 +63,48 @@ to the service.
 
         :param scheme: If used, will format the scheme of the url with the one provided, default is to use the scheme
            given to the service during construction. If `None`, the url will not include a scheme.
+
+    .. method:: patch_gcloud_aio()->contextlib.AbstractContextManager
+
+        Patches the global variables in the `gcloud-aio-storage\
+        <https://github.com/talkiq/gcloud-aio/blob/master/storage/README.rst>`_ module, making new storage clients
+        target `self` as an emulator. Returns a context manager that changes the global variables and restores them on
+        exit.
+
+        :raises ImportError: if gcloud-aio-storage is not installed
+
+        .. code-block::
+            :caption: Example
+
+            cgs: FakeGoogleCloudStorage
+            with cgs.patch_gcloud_aio():
+                async with ClientSession(connector=TCPConnector(ssl=False)) as session:
+                    storage = Storage(session=session)  # this storage will connect to gcs
+
+        .. warning::
+
+            This feature is temperamental as it effectively changes consts in an external module. No storage client
+            created inside the context should exist outside of it and vice-versa.
+
+    .. method:: create_bucket(bucket_name: str) -> dict[str, typing.Any]
+
+        Creates a new bucket in the emulator. Returns the parsed response from the container (supposed to follow the
+        `google api <https://cloud.google.com/storage/docs/json_api/v1/buckets/insert#response>`_)
+
+        :param bucket_name: The name of the bucket to create
+
+    .. method:: clear_bucket(bucket_name: str, prefix: str | None = None) -> collections.abc.Iterable[str]
+
+        Removes all objects in a bucket. Returns an iterable of the names of all objects deleted.
+
+        :param bucket_name: The name of the bucket to clear.
+        :param prefix: If specified, will only delete object with the specified prefix.
+
+    .. method:: delete_bucket(bucket_name: str, force: bool = False, missing_ok: bool = False)
+
+        Deletes a bucket in the emulator.
+
+        :param bucket_name: The name of the bucket to delete
+        :param force: If set to `True`, will also delete all objects in the bucket beforehand. Deleting a non-empty
+            bucket without `force=True` will raise an exception.
+        :param missing_ok: If set to `True`, will not raise an exception if the bucket does not exist.

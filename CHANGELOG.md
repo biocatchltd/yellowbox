@@ -1,4 +1,8 @@
 # Yellowbox Changelog
+## 0.7.5
+### Added
+* support for python 3.11
+* added the `fake_gcs` extra, to set up a fake google cloud storage container.
 ## 0.7.4
 ### Fixed
 * all dependencies have been unlocked for major changes (`^X` => `>=X`)
