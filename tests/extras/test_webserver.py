@@ -1,6 +1,6 @@
 import json
-import re
 import logging
+import re
 from io import StringIO
 from time import sleep
 from typing import Callable
