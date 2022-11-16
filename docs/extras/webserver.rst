@@ -37,7 +37,7 @@ of handling both HTTP and websocket routes.
     Also, if such an error is encountered, all future calls to any route in the service will return Error Code 500.
 
 
-.. class:: WebServer(name: str, port: int | None =None, **kwargs)
+.. class:: WebServer(name: str, port: int = 0, **kwargs)
 
     A uvicorn-starlette web server that supports on-the-fly adding and removing of routes.
 
@@ -54,10 +54,10 @@ of handling both HTTP and websocket routes.
         * ``log_config``: Changed to None, to avoid all of uvicorn's logs.
 
     .. property:: port
-        :type: int | None
+        :type: int
 
         The port the server is bound to. If the port was specified in construction, this will be the same. Otherwise, if
-        the server was not started, this will be ``None``. If the server is started and bound to a port, this will be
+        the server was not started, this will be ``0``. If the server is started and bound to a port, this will be
         the port it is bound to. If the server is started but not yet bound to a port, this property will block for at
         most 1 second, waiting for the binding to complete.
 

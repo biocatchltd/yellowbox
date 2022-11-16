@@ -30,12 +30,12 @@ class WebServer(YellowService):
     """
     An easy-to-modify HTTP and websocket server, wrapping a starlette application
     """
-    _PORT_ACCESS_MAX_RETRIES = 100  # the maximum number of attempts to make when accessing a binding port. Each attempt
-    # has an interval of 0.01 seconds
+    _PORT_ACCESS_MAX_RETRIES = 100  # the maximum number of attempts to make when accessing a binding port.
+    _PORT_ACCESS_INTERVAL = 0.01  # retry interval between attempts when accessing a binding port.
 
     _CLASS_ENDPOINT_TEMPLATES: Mapping[str, Union[HTTPEndpointTemplate, WSEndpointTemplate]] = {}
 
-    def __init__(self, name: str, port: Optional[int] = None, **kwargs):
+    def __init__(self, name: str, port: int = 0, **kwargs):
         """
         Args:
             name: the name of the service
@@ -62,14 +62,14 @@ class WebServer(YellowService):
         self._serve_thread = Thread(name=f'{name}_thread', target=self._server.run)
 
     @property
-    def port(self) -> Optional[int]:
+    def port(self) -> int:
         """
         Returns:
             The port the service is bound to, if the service is binding to anything.
 
         Notes:
-            Will only return None if the port was not provided during construction and the service thread is not running
-            If the service is starting up, this property will block until the port is binded, or raise an error if
+            Will only return 0 if the port was not provided during construction and the service thread is not running
+            If the service is starting up, this property will block until the port is bound, or raise an error if
             blocked for longer than 1 second.
         """
         if self._port or not self._serve_thread.is_alive():
@@ -81,7 +81,7 @@ class WebServer(YellowService):
                 if sockets:
                     socket = sockets[0]
                     break
-            sleep(0.01)
+            sleep(self._PORT_ACCESS_INTERVAL)
         else:
             raise RuntimeError('timed out when getting binding port')
         self._port = socket.getsockname()[1]

@@ -64,7 +64,7 @@ async def test_connection_works_async(http_gcs, bucket_name):
     with http_gcs.patch_gcloud_aio():
         async with ClientSession(connector=TCPConnector(ssl=False)) as session:
             storage = Storage(session=session)
-            await storage.upload(bucket_name, "a/b/c", "maya hee")
+            # await storage.upload(bucket_name, "a/b/c", "maya hee")
             data = await storage.download(bucket_name, "a/b/c", )
             assert data == b'maya hee'
 

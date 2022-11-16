@@ -1,5 +1,6 @@
 import json
 import re
+import logging
 from io import StringIO
 from time import sleep
 from typing import Callable
@@ -50,6 +51,13 @@ def ws_client_factory(server) -> Callable[[str], WSClient]:
 
 def test_make_server(server):
     pass
+
+
+def test_make_server_with_startup_logs():
+    logging.getLogger().setLevel(10)
+
+    with WebServer('test').start():
+        pass
 
 
 def test_capture(server, client):
