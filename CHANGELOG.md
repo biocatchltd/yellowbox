@@ -1,4 +1,10 @@
 # Yellowbox Changelog
+## 0.7.6
+### Changed
+* `None` is no longer an acceptable port for webserver
+* Changed webserver's default port from `None` to `0`.
+### Fixed
+* fixed issue when starting up webserver with the uvicorn debugger enabled
 ## 0.7.5
 ### Added
 * support for python 3.11
