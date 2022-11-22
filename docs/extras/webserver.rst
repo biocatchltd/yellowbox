@@ -285,6 +285,9 @@ of handling both HTTP and websocket routes.
     An HTTP endpoint that can be added to a :class:`Webserver` (see :meth:`WebServer.add_http_endpoint`). construct with
     :func:`http_endpoint`.
 
+    .. attribute:: side_effect
+        The current side effect of the endpoint
+
     .. method:: patch(side_effect: Response | collections.abc.Callable[[Request], typing.Awaitable[Response]])\
         ->contextlib.AbstractContextManager[...]
 
@@ -364,6 +367,9 @@ of handling both HTTP and websocket routes.
 
     A websocket endpoint that can be added to a :class:`Webserver` (see :meth:`WebServer.add_ws_endpoint`). construct
     with :func:`ws_endpoint`.
+
+    .. attribute:: side_effect
+        The current side effect of the endpoint
 
     .. method:: patch(side_effect:collections.abc.Callable[[Websocket], \
         typing.Awaitable[int | None]])->contextlib.AbstractContextManager[...]
@@ -691,6 +697,29 @@ of handling both HTTP and websocket routes.
 
             assert get(server.local_url()+'/').text == 'im tired now'
             assert get(server.local_url()+'/').text == 'im tired now'
+            ...
+
+    .. note::
+
+        To reuse an existing side effect, you can use the :attr:`~MockHTTPEndpoint.side_effect` attribute.
+
+        .. code-block::
+            :caption: Example of side effects reuse
+
+            endpoint = server.add_http_endpoint('GET', '/', PlainTextResponse("Go!"))
+            side_effect = iter_side_effects(itertools.chain(
+                [
+                    PlainTextResponse('Ready...'),
+                    PlainTextResponse('Set...'),
+                ],
+                itertools.cycle([endpoint.side_effect])
+            ))
+            assert get(server.local_url()+'/').text == 'Ready...'
+            assert get(server.local_url()+'/').text == 'Set...'
+
+            assert get(server.local_url()+'/').text == 'Go!'
+            assert get(server.local_url()+'/').text == 'Go!'
+            assert get(server.local_url()+'/').text == 'Go!'
             ...
 
 .. function:: verbose_http_side_effect(side_effect, \
