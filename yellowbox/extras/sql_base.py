@@ -11,7 +11,7 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 from yellowbox import RetrySpec
 from yellowbox.containers import get_ports
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleEndpointService
-from yellowbox.utils import docker_host_name
+from yellowbox.utils import docker_host_name, DOCKER_EXPOSE_HOST
 
 if TYPE_CHECKING:  # pragma: no cover
     class AsDefault(Enum):
@@ -60,7 +60,7 @@ def _options_to_string(options: Optional[ConnectionOptions]) -> str:
 
 
 class SQLService(SingleEndpointService, RunMixin, AsyncRunMixin, ):
-    LOCAL_HOSTNAME = 'localhost'
+    LOCAL_HOSTNAME = DOCKER_EXPOSE_HOST
     INTERNAL_PORT: int
     DIALECT: str
     DEFAULT_START_RETRYSPEC = RetrySpec(attempts=20)

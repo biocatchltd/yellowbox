@@ -13,6 +13,8 @@ from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 
 __all__ = ['RabbitMQService', 'RABBIT_DEFAULT_PORT', 'RABBIT_HTTP_API_PORT']
 
+from yellowbox.utils import DOCKER_EXPOSE_HOST
+
 RABBIT_DEFAULT_PORT = 5672
 RABBIT_HTTP_API_PORT = 15672
 
@@ -44,7 +46,7 @@ class RabbitMQService(SingleContainerService, RunMixin, AsyncRunMixin):
     def connection(self, **kwargs):
         credentials = PlainCredentials(self.user, self.password)
         connection_params = ConnectionParameters(
-            'localhost', self.connection_port(),
+            DOCKER_EXPOSE_HOST, self.connection_port(),
             credentials=credentials, virtual_host=self.virtual_host,
             **kwargs
         )
@@ -69,7 +71,7 @@ class RabbitMQService(SingleContainerService, RunMixin, AsyncRunMixin):
 
     def management_url(self):
         try:
-            return f"http://localhost:{get_ports(self.container)[RABBIT_HTTP_API_PORT]}/"
+            return f"http://{DOCKER_EXPOSE_HOST}:{get_ports(self.container)[RABBIT_HTTP_API_PORT]}/"
         except KeyError as exc:
             raise RuntimeError("Management is not enabled.") from exc
 

@@ -1,4 +1,9 @@
 # Yellowbox Changelog
+## 0.7.7
+### Fixed
+* all connections to localhost are now patched appropriately for WSL2 (experimental)
+### Internal
+* simplified the azure-storage dependency
 ## 0.7.6
 ### Changed
 * `None` is no longer an acceptable port for webserver

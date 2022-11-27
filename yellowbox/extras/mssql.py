@@ -16,7 +16,6 @@ class MSSQLService(SQLService, SingleContainerService):
 
     INTERNAL_PORT = 1433
     DIALECT = 'mssql'
-    LOCAL_HOSTNAME = '127.0.0.1'
 
     def __init__(self, docker_client: DockerClient, image='mcr.microsoft.com/mssql/server:latest', *,
                  admin_password: str = 'Swordfish1!', product: str = 'Developer', accept_eula: Optional[str] = None,

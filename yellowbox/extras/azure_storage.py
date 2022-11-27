@@ -14,10 +14,11 @@ from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 
 __all__ = ['AzuriteService', 'BlobStorageService']
 
+from yellowbox.utils import DOCKER_EXPOSE_HOST
+
 BLOB_STORAGE_DEFAULT_PORT = 10000
 DEFAULT_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 DEFAULT_ACCOUNT_NAME = "devstoreaccount1"
-STORAGE_URL_FORMAT = "http://127.0.0.1:{port}/{account}"
 
 
 class _ResourceNotReady(Exception):
@@ -70,7 +71,7 @@ class AzuriteService(SingleContainerService, RunMixin, AsyncRunMixin):
     @property
     def endpoint_url(self):
         """URL for the endpoint from docker host"""
-        return f'http://localhost:{self.client_port()}/{self.account_name}'
+        return f'http://{DOCKER_EXPOSE_HOST}:{self.client_port()}/{self.account_name}'
 
     @property
     def container_endpoint_url(self):

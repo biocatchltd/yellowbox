@@ -9,7 +9,7 @@ from requests.exceptions import ConnectionError
 from yellowbox.containers import create_and_pull, get_ports
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
-from yellowbox.utils import docker_host_name
+from yellowbox.utils import docker_host_name, DOCKER_EXPOSE_HOST
 
 __all__ = ['VAULT_DEFAULT_PORT', 'DEV_POLICY', 'VaultService']
 
@@ -49,7 +49,7 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
         return get_ports(self.container)[VAULT_DEFAULT_PORT]
 
     def local_url(self):
-        return f'http://127.0.0.1:{self.client_port()}'
+        return f'http://{DOCKER_EXPOSE_HOST}:{self.client_port()}'
 
     def container_url(self):
         return f'http://{docker_host_name}:{self.client_port()}'
