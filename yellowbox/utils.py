@@ -3,7 +3,7 @@ import platform
 import sys
 from contextlib import AbstractContextManager, closing, contextmanager, nullcontext
 from socket import AF_INET, SO_REUSEADDR, SOCK_STREAM, SOL_SOCKET, socket
-from typing import Callable, TypeVar, Optional
+from typing import Callable, Optional, TypeVar
 
 from yaspin import yaspin
 
@@ -49,6 +49,7 @@ else:
 # DO NOT manually change this const, instead call update_docker_expose_host
 DOCKER_EXPOSE_HOST = ""
 
+
 def update_docker_expose_host(value: Optional[str], print_file):
     """
     update the global docker expose host, attempting to infer from the environment
@@ -81,10 +82,12 @@ def update_docker_expose_host(value: Optional[str], print_file):
                         return ret
                 else:
                     print(
-                        f"could not resolve DOCKER_EXPOSE_HOST from resolution file, using default",
+                        "could not resolve DOCKER_EXPOSE_HOST from resolution file, using default",
                         file=print_file,
                     )
         return "127.0.0.1"
 
     DOCKER_EXPOSE_HOST = _helper()
+
+
 update_docker_expose_host(os.getenv("YELLOWBOX_DOCKER_EXPOSE_HOST"), sys.stderr)
