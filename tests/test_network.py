@@ -4,7 +4,7 @@ from docker.models.containers import Container
 from yellowbox import connect, temp_network
 from yellowbox.containers import get_aliases
 from yellowbox.extras.redis import REDIS_DEFAULT_PORT, RedisService
-from yellowbox.utils import docker_host_name, DOCKER_EXPOSE_HOST
+from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
 
 
 def test_no_connect(docker_client: DockerClient, create_and_pull):

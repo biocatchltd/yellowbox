@@ -7,7 +7,7 @@ from docker import DockerClient
 from yellowbox.containers import create_and_pull, get_ports
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
-from yellowbox.utils import docker_host_name, DOCKER_EXPOSE_HOST
+from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
 
 FAKE_GCS_DEFAULT_PORT = 4443
 

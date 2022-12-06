@@ -11,7 +11,7 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 from yellowbox import RetrySpec
 from yellowbox.containers import get_ports
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleEndpointService
-from yellowbox.utils import docker_host_name, DOCKER_EXPOSE_HOST
+from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
 
 if TYPE_CHECKING:  # pragma: no cover
     class AsDefault(Enum):

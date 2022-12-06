@@ -33,6 +33,7 @@ def get_free_port():
         s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         return s.getsockname()[1]
 
+
 uname = platform.uname().release.lower()
 
 if platform.system() == "Linux" and ('microsoft' not in uname):  # catch WSL

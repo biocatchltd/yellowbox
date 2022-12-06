@@ -6,7 +6,7 @@ from yellowbox.extras.azure_storage import (
     BLOB_STORAGE_DEFAULT_PORT, DEFAULT_ACCOUNT_KEY, DEFAULT_ACCOUNT_NAME, AzuriteService
 )
 from yellowbox.networks import connect, temp_network
-from yellowbox.utils import docker_host_name, DOCKER_EXPOSE_HOST
+from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
 
 
 @mark.parametrize('spinner', [True, False])
@@ -18,7 +18,9 @@ def test_make_azure_storage(docker_client, spinner):
 def test_sanity(docker_client):
     with AzuriteService.run(docker_client) as service:
         port = service.client_port()
-        with BlobServiceClient(f"http://{DOCKER_EXPOSE_HOST}:{port}/{DEFAULT_ACCOUNT_NAME}", DEFAULT_ACCOUNT_KEY) as client:
+        with BlobServiceClient(
+                f"http://{DOCKER_EXPOSE_HOST}:{port}/{DEFAULT_ACCOUNT_NAME}", DEFAULT_ACCOUNT_KEY
+        ) as client:
             with client.create_container("test") as container:
                 container.upload_blob("file_1", b"data")
                 downloader = container.download_blob("file_1")
@@ -29,7 +31,9 @@ def test_sanity(docker_client):
 async def test_sanity_async(docker_client):
     async with AzuriteService.arun(docker_client) as service:
         port = service.client_port()
-        with BlobServiceClient(f"http://{DOCKER_EXPOSE_HOST}:{port}/{DEFAULT_ACCOUNT_NAME}", DEFAULT_ACCOUNT_KEY) as client:
+        with BlobServiceClient(
+                f"http://{DOCKER_EXPOSE_HOST}:{port}/{DEFAULT_ACCOUNT_NAME}", DEFAULT_ACCOUNT_KEY
+        ) as client:
             with client.create_container("test") as container:
                 container.upload_blob("file_1", b"data")
                 downloader = container.download_blob("file_1")
