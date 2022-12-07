@@ -10,7 +10,7 @@ from yellowbox.containers import SafeContainerCreator, get_ports
 from yellowbox.networks import anonymous_network
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleEndpointService
-from yellowbox.utils import get_free_port
+from yellowbox.utils import DOCKER_EXPOSE_HOST, get_free_port
 
 __all__ = ['KafkaService']
 
@@ -72,14 +72,22 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
         port = self.connection_port()
         return cast(
             'ContextManager[KafkaConsumer]',
-            closing(KafkaConsumer(bootstrap_servers=[f'localhost:{port}'], security_protocol="PLAINTEXT", **kwargs))
+            closing(KafkaConsumer(
+                bootstrap_servers=[f'{DOCKER_EXPOSE_HOST}:{port}'],
+                security_protocol="PLAINTEXT",
+                **kwargs
+            ))
         )
 
     def producer(self, **kwargs) -> ContextManager[KafkaProducer]:
         port = self.connection_port()
         return cast(
             'ContextManager[KafkaProducer]',
-            closing(KafkaProducer(bootstrap_servers=[f'localhost:{port}'], security_protocol="PLAINTEXT", **kwargs))
+            closing(KafkaProducer(
+                bootstrap_servers=[f'{DOCKER_EXPOSE_HOST}:{port}'],
+                security_protocol="PLAINTEXT",
+                **kwargs
+            ))
         )
 
     def start(self, retry_spec: Optional[RetrySpec] = None):

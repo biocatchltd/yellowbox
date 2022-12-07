@@ -7,7 +7,7 @@ from docker import DockerClient
 from yellowbox.containers import create_and_pull, get_ports
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
-from yellowbox.utils import docker_host_name
+from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
 
 FAKE_GCS_DEFAULT_PORT = 4443
 
@@ -29,7 +29,7 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
     def local_url(self,
                   scheme: Optional[str] = ...  # type: ignore[assignment]
                   ):
-        ret = f'localhost:{self.client_port()}'
+        ret = f'{DOCKER_EXPOSE_HOST}:{self.client_port()}'
         if scheme is ...:
             scheme = self.scheme
         if scheme:

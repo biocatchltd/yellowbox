@@ -202,6 +202,27 @@ method to connect to it from the host machine.
     slower machines like CI/CD pipelines). In these cases, we may increase the retry_spec to a higher value, to afford
     the service more time to start up.
 
+.. note:: Avoid localhost
+
+    Having your client methods (like the one above) connect to localhost is tempting, but sometimes won't work. When
+    using WSL2, for example, docker container ports are exposed on a different network than the process'. To fix this,
+    you can use *yellowbox.utils.DOCKER_EXPOSE_HOST*, which will always point to the correct host for exposed ports.
+
+    .. code-block::
+        :emphasize-lines: 1, 9
+
+        from yellowbox.utils import DOCKER_EXPOSE_HOST
+
+        ...
+
+        class AerospikeService(SingleContainerService, RunMixin):
+            ...
+            def client(self):
+                config = {
+                    'hosts': [(DOCKER_EXPOSE_HOST, self.client_port())]
+                }
+                return aerospike.client(config).connect()
+
 Making your YellowService runnable in async
 -----------------------------------------------------------
 
@@ -213,12 +234,13 @@ your own service, you'll need to implement the ``astart`` method. The ``astart``
 example, we can implement ``astart`` as follows:
 
 .. code-block::
-    :emphasize-lines: 8, 19-23
+    :emphasize-lines: 9, 20-24
 
     import aerospike
 
     from yellowbox.containers import create_and_pull, get_ports
     from yellowbox.subclasses import SingleContainerService, RunMixin, AsyncRunMixin
+    from yellowbox.utils import DOCKER_EXPOSE_HOST
 
     INTERNAL_AEROSPOKE_PORT = 3000
 
@@ -244,7 +266,7 @@ example, we can implement ``astart`` as follows:
 
         def client(self):
             config = {
-                'hosts': [('127.0.0.1', self.client_port())]
+                'hosts': [(DOCKER_EXPOSE_HOST, self.client_port())]
             }
             return aerospike.client(config).connect()
 
@@ -271,7 +293,7 @@ pytest-asyncio, you will run into a problem.
 Each startup may be asynchronous, but the fixtures are still run sequentially. This is because of how pytest-asyncio
 handles async fixtures.
 
-To remedy this, we can use the in-house `pytest-gather-fixtures <https://github.com/bentheiii/pytest-gather-fixtures>``
+To remedy this, we can use the in-house `pytest-gather-fixtures <https://github.com/bentheiii/pytest-gather-fixtures>`_
 library. This library allows you to run multiple fixtures in parallel.
 
 .. code-block::

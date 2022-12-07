@@ -10,6 +10,8 @@ from yellowbox.subclasses import AsyncRunMixin, SingleContainerService
 
 __all__ = ['RedisService', 'REDIS_DEFAULT_PORT', 'DEFAULT_RDB_PATH', 'append_state']
 
+from yellowbox.utils import DOCKER_EXPOSE_HOST
+
 REDIS_DEFAULT_PORT = 6379
 DEFAULT_RDB_PATH = "/data/dump.rdb"
 
@@ -48,7 +50,7 @@ class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
 
     def client(self, *, client_cls: Callable[..., _T] = Redis, **kwargs) -> _T:  # type: ignore
         port = self.client_port()
-        return client_cls(host='localhost', port=port, **kwargs)
+        return client_cls(host=DOCKER_EXPOSE_HOST, port=port, **kwargs)
 
     def start(self, retry_spec: Optional[RetrySpec] = None):
         super().start()
