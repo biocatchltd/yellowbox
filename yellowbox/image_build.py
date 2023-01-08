@@ -23,7 +23,7 @@ def build_image(docker_client: DockerClient, image_name: str, remove_image: bool
     At the end, deletes the image (using rmi command)
     Args:
         docker_client: DockerClient to be used to create the image
-        image_name: Name of the image to be created
+        image_name: Name of the image to be created. If no tag is provided, the tag "test" will be added.
         remove_image: boolean, whether or not to delete the image at the end, default as True
         file: a file-like object (stream); defaults to the current sys.stderr. if set to None, will disable printing
         spinner: boolean, whether or not to use spinner (default as True), note that this param is set to False in
@@ -33,7 +33,10 @@ def build_image(docker_client: DockerClient, image_name: str, remove_image: bool
         file = open(os.devnull, 'w')
     else:
         spinner = False  # spinner splits into multiple lines in case stream is being printed at the same time
-    image_tag = f'{image_name}:test'
+    if ":" in image_name:
+        image_tag = image_name
+    else:
+        image_tag = f'{image_name}:test'
     yaspin_spinner = _get_spinner(spinner)
     with yaspin_spinner(f'Creating image {image_tag}...'):
         kwargs = {'tag': image_tag, 'rm': True, 'forcerm': True, **kwargs}

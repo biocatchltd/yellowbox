@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## 0.7.8
+### Added
+* image names in docker-build can now be manually tagged
 ## 0.7.7
 ### Fixed
 * all connections to localhost are now patched appropriately for WSL2 (experimental)
