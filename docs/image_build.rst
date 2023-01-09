@@ -12,7 +12,8 @@
     Builds a docker image from a Dockerfile. Returns a context manager that optionally deletes the image when it exits.
 
     :param docker_client: A docker client to use to build the image.
-    :param image_name: The name of the image to build, untagged.
+    :param image_name: The name of the image to build.  If no tag is provided, the tag "test" will be added to the
+        final image.
     :param remove_image: Whether to remove the image after exiting the context.
     :param file: The file to write build output to. Set to ``None`` to disable printing the output, and to enable the
         spinner.

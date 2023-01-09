@@ -14,10 +14,11 @@ FAKE_GCS_DEFAULT_PORT = 4443
 
 class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
     def __init__(self, docker_client: DockerClient,
-                 image: str = "fsouza/fake-gcs-server:latest",
+                 image: str = "fsouza/fake-gcs-server:1.42",
                  scheme: str = 'https',
                  command: str = '',
                  **kwargs):
+        # note that fake-gcs-server 1.43.0 has a bug https://github.com/fsouza/fake-gcs-server/issues/1034
         command = f'-scheme {scheme} {command}'
         self.scheme = scheme
         container = create_and_pull(docker_client, image, command, publish_all_ports=True)
