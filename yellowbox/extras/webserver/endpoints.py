@@ -10,7 +10,8 @@ from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
 from starlette.routing import BaseRoute, Route
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR, WS_1011_INTERNAL_ERROR
-from starlette.websockets import WebSocket
+from starlette.websockets import WebSocket, WebSocketDisconnect
+from websockets.exceptions import ConnectionClosed
 
 from yellowbox.extras.webserver.http_request_capture import RecordedHTTPRequest, RecordedHTTPRequests
 from yellowbox.extras.webserver.ws_request_capture import RecordedWSTranscripts, RecorderEndpoint
@@ -221,13 +222,14 @@ class MockWSEndpoint:
     A mock websocket endpoint for a webserver
     """
 
-    def __init__(self, name: str, rule_string: str, side_effect: WS_SIDE_EFFECT):
+    def __init__(self, name: str, rule_string: str, side_effect: WS_SIDE_EFFECT, allow_abrupt_disconnect: bool = True):
         """
         Args:
             name: the name of the endpoint
             rule_string: the rule-string of the endpoint, as specified by starlette routes
             side_effect: the side effect of the endpoint. This should be an async callable that accepts a starlette
              websocket and optionally returns an int to close the connection with that code.
+            allow_abrupt_disconnect: whether to consider the client abruptly hanging up on the endpoint an error
         """
         self._request_captures: List[RecordedWSTranscripts] = []
         self.owner: Optional[WebServer] = None
@@ -235,6 +237,7 @@ class MockWSEndpoint:
         self.rule_string = rule_string
         self.__name__ = name
         self.side_effect = bind_side_effect(self, side_effect)
+        self.allow_abrupt_disconnect = allow_abrupt_disconnect
 
         # this will be the endpoint handed to the starlette.WebSocketRoute. By storing it as an
         # attribute of the endpoint, we will be able to better locate routes relating to the endpoint
@@ -251,10 +254,13 @@ class MockWSEndpoint:
         try:
             code = await self.side_effect(websocket)
         except Exception as ex:
-            print(f'uncaught exception when handling ws: {websocket.url} [{self.owner.__name__}/{self.__name__}]:')
-            print_exc()
-            self.owner._pending_exception = ex
-            await websocket.close(WS_1011_INTERNAL_ERROR)
+            if self.allow_abrupt_disconnect and isinstance(ex, (WebSocketDisconnect, ConnectionClosed)):
+                pass
+            else:
+                print(f'uncaught exception when handling ws: {websocket.url} [{self.owner.__name__}/{self.__name__}]:')
+                print_exc()
+                self.owner._pending_exception = ex
+                await websocket.close(WS_1011_INTERNAL_ERROR)
         else:
             if code is not None:
                 await websocket.close(code)
@@ -288,14 +294,16 @@ class MockWSEndpoint:
 
 
 @overload
-def ws_endpoint(rule_string: str, *, name: str = None) -> Callable[[WS_SIDE_EFFECT], MockWSEndpoint]: pass
+def ws_endpoint(rule_string: str, *, name: str = None, allow_abrupt_disconnect: bool = True) \
+        -> Callable[[WS_SIDE_EFFECT], MockWSEndpoint]: pass
 
 
 @overload
-def ws_endpoint(rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None) -> MockWSEndpoint: pass
+def ws_endpoint(rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None,
+                allow_abrupt_disconnect: bool = True) -> MockWSEndpoint: pass
 
 
-def ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None, *, name: str = None):
+def ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None, *, name: str = None, **kwargs):
     """
     Create a mock websocket endpoint.
     Args:
@@ -329,7 +337,7 @@ def ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None, 
                 pass
         if name is None:
             name = rule_string
-        return MockWSEndpoint(name, rule_string, func)
+        return MockWSEndpoint(name, rule_string, func, **kwargs)
 
     if side_effect is None:
         return ret

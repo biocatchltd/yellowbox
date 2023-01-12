@@ -1,7 +1,14 @@
 # Yellowbox Changelog
 ## 0.7.9
+### Fixed
+* Fixed issue in webserver where if a client connection would disconnect abrubtly, the entire 
+  server would stop working. This is probably not the expected behaviour of the mocked service so it
+  has been changed to ignore these events. 
 ### Added
 * `AzuriteService` added `host_connection_string` and `host_endpoint_url` properties
+* `allow_abrubt_disconnect` for websocket webserver endpoints.
+### Internal
+* use `black` for formatting
 ## 0.7.8
 ### Added
 * image names in docker-build can now be manually tagged

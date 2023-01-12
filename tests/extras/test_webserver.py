@@ -6,7 +6,7 @@ from time import sleep
 from typing import Callable
 
 from httpx import Client, HTTPError, get
-from pytest import fixture, raises
+from pytest import fixture, raises, mark
 from starlette.datastructures import QueryParams
 from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse, Response
@@ -290,6 +290,30 @@ def test_ws_path(server, ws_calc, ws_client_factory):
     assert json.loads(ws_client.recv()) == 150
     ws_client.send('{"op":"done"}')
     assert_ws_closed(ws_client)
+
+
+@mark.parametrize('close_kind', ['close', 'shutdown', 'abort'])
+@mark.parametrize('close_on', ['send', 'recv'])
+def test_ws_abrupt_shutdown(server, ws_calc, ws_client_factory, close_kind, close_on):
+    ws_client1 = ws_client_factory('/12/calc')
+    assert json.loads(ws_client1.recv()) == 12
+    if close_on == "recv":
+        ws_client1.send('{"op":"add", "value": 3}')
+    if close_kind == 'close':
+        ws_client1.close()
+    elif close_kind == 'shutdown':
+        ws_client1.shutdown()
+    else:
+        ws_client1.abort()
+
+    ws_client2 = ws_client_factory('/14/calc')
+    assert json.loads(ws_client2.recv()) == 14
+    ws_client2.send('{"op":"add", "value": 3}')
+    assert json.loads(ws_client2.recv()) == 17
+    ws_client2.send('{"op":"mul", "value": 10}')
+    assert json.loads(ws_client2.recv()) == 170
+    ws_client2.send('{"op":"done"}')
+    assert_ws_closed(ws_client2)
 
 
 @fixture
