@@ -6,7 +6,7 @@ from time import sleep
 from typing import Callable
 
 from httpx import Client, HTTPError, get
-from pytest import fixture, raises, mark
+from pytest import fixture, mark, raises
 from starlette.datastructures import QueryParams
 from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse, Response
