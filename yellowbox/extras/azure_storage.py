@@ -84,7 +84,7 @@ class AzuriteService(SingleContainerService, RunMixin, AsyncRunMixin):
 
     @property
     def container_endpoint_url(self):
-        """URL for the endpoint from another container ofer a common network"""
+        """URL for the endpoint from another container over a common network"""
         return f'http://{short_id(self.container)}:{BLOB_STORAGE_DEFAULT_PORT}/{self.account_name}'
 
     @property
