@@ -84,13 +84,13 @@ def class_http_endpoint(methods: METHODS, rule_string: str, side_effect: Optiona
 
 
 @overload
-def class_ws_endpoint(rule_string: str, *, name: Optional[str] = None)\
+def class_ws_endpoint(rule_string: str, *, name: Optional[str] = None, allow_abrupt_disconnect: bool = True)\
         -> Callable[[Any], WSEndpointTemplate]: pass
 
 
 @overload
 def class_ws_endpoint(rule_string: str, side_effect: WS_SIDE_EFFECT, *,
-                      name: Optional[str] = None) -> WSEndpointTemplate: pass
+                      name: Optional[str] = None, allow_abrupt_disconnect: bool = True) -> WSEndpointTemplate: pass
 
 
 def class_ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None, **kwargs):

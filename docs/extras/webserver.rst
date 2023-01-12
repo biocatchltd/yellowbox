@@ -127,7 +127,7 @@ of handling both HTTP and websocket routes.
             assert get(server.local_url() + '/square/12').status_code == 404
 
     .. method:: add_ws_endpoint(endpoint:MockWSEndpoint)->MockWSEndpoint
-                add_ws_endpoint(rule_string, side_effect, *, name=None)->MockWSEndpoint
+                add_ws_endpoint(rule_string, side_effect, *, name=None, allow_abrupt_disconnect=True)->MockWSEndpoint
 
         Add an HTTP endpoint to the server. Can accept either a created endpoint or arguments to create one.
 
@@ -162,7 +162,7 @@ of handling both HTTP and websocket routes.
         :raises RuntimeError: If the endpoint is not added to the server.
 
     .. method:: patch_ws_endpoint(endpoint:MockWSEndpoint)->contextlib.AbstractContextManager[MockWSEndpoint]
-                patch_ws_endpoint(rule_string, side_effect, *, name=None)\
+                patch_ws_endpoint(rule_string, side_effect, *, name=None, allow_abrupt_disconnect=True)\
                     ->contextlib.AbstractContextManager[MockWSEndpoint]
 
         Add to, then remove a websocket endpoint from the server within a context. Can accept either a created
@@ -235,9 +235,9 @@ of handling both HTTP and websocket routes.
         In order to use a "rotating" side effect (i.e. one that returns a different response per request), see
         :func:`iter_side_effects`.
 
-.. function:: ws_endpoint(rule_string: str, side_effect: collections.abc.Callable[[Websocket], typing.Awaitable[int | None]], *, name: str=None)\
-    ->MockWSEndpoint
-              ws_endpoint(rule_string: str, *, name: str=None)\
+.. function:: ws_endpoint(rule_string: str, side_effect: collections.abc.Callable[[Websocket], typing.Awaitable[int | None]],\
+    *, name: str=None, allow_abrupt_disconnect: bool=True) ->MockWSEndpoint
+              ws_endpoint(rule_string: str, *, name: str=None, allow_abrupt_disconnect: bool=True)\
     ->collections.abc.Callable[[collections.abc.Callable[[Websocket], typing.Awaitable[int | None]]], MockWSEndpoint]
 
     Create a WebSocket endpoint to link to a :class:`Webserver` (see :meth:`WebServer.add_ws_endpoint`).
@@ -250,6 +250,8 @@ of handling both HTTP and websocket routes.
     :type side_effect: async `WebSocket <https://www.starlette.io/websockets/#websocket>`_ |rarr| (int | None)
     :param str | None name: The name of the endpoint. If ``None``, the name is inferred from the function name and rule
      string.
+    :param allow_abrupt_disconnect: Whether to automatically ignore and close websocket connections that the client
+     closes before the server expects.
     :returns: The a new Websocket endpoint that can be added to a Webservice.
 
     .. note::
@@ -397,8 +399,8 @@ of handling both HTTP and websocket routes.
                                   forbid_implicit_head_verb = True, name=None)
               class_http_endpoint(methods, rule_string, *, auto_read_body=True, forbid_implicit_head_verb = True, \
                                   name=None)
-              class_ws_endpoint(rule_string, side_effect, *, name=None)
-              class_ws_endpoint(rule_string, *, name=None)
+              class_ws_endpoint(rule_string, side_effect, *, name=None, allow_abrupt_disconnect=True)
+              class_ws_endpoint(rule_string, *, name=None, allow_abrupt_disconnect=True)
 
     Create an endpoint template. Declare this in a :class:`WebServer` subclass body to automatically add an
     endpoint to all instances of the subclass.

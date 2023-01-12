@@ -171,7 +171,8 @@ class WebServer(YellowService):
         ...
 
     @overload
-    def add_ws_endpoint(self, rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None) -> MockWSEndpoint:
+    def add_ws_endpoint(self, rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None,
+                        allow_abrupt_disconnect: bool = True) -> MockWSEndpoint:
         ...
 
     def add_ws_endpoint(self, *args, **kwargs):
@@ -223,8 +224,8 @@ class WebServer(YellowService):
         ...
 
     @overload
-    def patch_ws_endpoint(self, rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None)\
-            -> ContextManager[MockWSEndpoint]:
+    def patch_ws_endpoint(self, rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None,
+                          allow_abrupt_disconnect: bool = True) -> ContextManager[MockWSEndpoint]:
         ...
 
     @contextmanager  # type:ignore[misc]
