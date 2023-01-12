@@ -7,8 +7,6 @@
 ### Added
 * `AzuriteService` added `host_connection_string` and `host_endpoint_url` properties
 * `allow_abrubt_disconnect` for websocket webserver endpoints.
-### Internal
-* use `black` for formatting
 ## 0.7.8
 ### Added
 * image names in docker-build can now be manually tagged
