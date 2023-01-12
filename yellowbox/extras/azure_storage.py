@@ -14,7 +14,7 @@ from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 
 __all__ = ['AzuriteService', 'BlobStorageService']
 
-from yellowbox.utils import DOCKER_EXPOSE_HOST
+from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
 
 BLOB_STORAGE_DEFAULT_PORT = 10000
 DEFAULT_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
@@ -69,14 +69,28 @@ class AzuriteService(SingleContainerService, RunMixin, AsyncRunMixin):
             f"BlobEndpoint={self.container_endpoint_url};")
 
     @property
+    def host_connection_string(self):
+        """Connection string to connect across containers through the docker host"""
+        return (
+            f"DefaultEndpointsProtocol=http;"
+            f"AccountName={self.account_name};"
+            f"AccountKey={self.account_key};"
+            f"BlobEndpoint={self.host_endpoint_url};")
+
+    @property
     def endpoint_url(self):
         """URL for the endpoint from docker host"""
         return f'http://{DOCKER_EXPOSE_HOST}:{self.client_port()}/{self.account_name}'
 
     @property
     def container_endpoint_url(self):
-        """URL for the endpoint from another container"""
+        """URL for the endpoint from another container over a common network"""
         return f'http://{short_id(self.container)}:{BLOB_STORAGE_DEFAULT_PORT}/{self.account_name}'
+
+    @property
+    def host_endpoint_url(self):
+        """URL for the endpoint from another container through the docker host"""
+        return f'http://{docker_host_name}:{self.client_port()}/{self.account_name}'
 
     @property
     def account_credentials(self):

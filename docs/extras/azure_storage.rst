@@ -48,7 +48,10 @@ to the service.
         `specification <https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string#connect-to-the-emulator-account-using-the-shortcut>`_.
 
         .. note::
-            To connect from a different container, see :meth:`container_connection_string`.
+            To connect from a different container over a network, see :meth:`container_connection_string`.
+
+        .. note::
+            To connect from a container through the docker host, see :meth:`host_connection_string`
 
     .. method:: container_connection_string()->str
 
@@ -60,6 +63,22 @@ to the service.
         .. note::
             To connect from the local host, see :meth:`connection_string`.
 
+        .. note::
+            To connect from a container through the docker host, see :meth:`host_connection_string`
+
+    .. method:: host_connection_string()->str
+
+        Returns a connection string to connect from containers to the Azurite service, through the docker host.
+
+        The connection string is formatted according to Microsoft's
+        `specification <https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string#connect-to-the-emulator-account-using-the-shortcut>`_.
+
+        .. note::
+            To connect from the local host, see :meth:`connection_string`.
+
+        .. note::
+            To connect containers over a network, see :meth:`container_connection_string`.
+
     .. method:: endpoint_url() -> str
 
         Returns an endpoint HTTP URL to connect from docker host.
@@ -67,6 +86,10 @@ to the service.
     .. method:: container_endpoint_url() -> str
 
         Returns an endpoint HTTP URL to connect to from containers in a common network with the Azurite service.
+
+    .. method:: host_endpoint_url() -> str
+
+        Returns an endpoint HTTP URL to connect to from containers to the Azurite service, through the docker host.
 
     .. method:: account_credentials()->dict
 

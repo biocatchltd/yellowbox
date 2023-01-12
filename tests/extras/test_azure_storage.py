@@ -97,3 +97,18 @@ def test_container_connection_string(docker_client, create_and_pull, azurite_ser
         container.start()
         return_status = container.wait()
         assert return_status["StatusCode"] == 0
+
+
+def test_host_connection_string(docker_client, create_and_pull, azurite_service, container_name):
+    client = BlobServiceClient.from_connection_string(azurite_service.connection_string)
+    client.create_container(container_name)
+    container = create_and_pull(
+        docker_client, "mcr.microsoft.com/azure-cli:latest",
+        ["az", "storage", "blob", "list", "--connection-string",
+         azurite_service.host_connection_string, "--container-name", container_name
+         ],
+        detach=True,
+    )
+    container.start()
+    return_status = container.wait()
+    assert return_status["StatusCode"] == 0
