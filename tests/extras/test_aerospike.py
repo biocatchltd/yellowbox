@@ -1,5 +1,4 @@
-import aerospike
-from pytest import fixture, mark, raises
+from pytest import fixture, mark
 
 from yellowbox.extras.aerospike import AerospikeService
 

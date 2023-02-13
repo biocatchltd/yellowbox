@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional
 
-from docker import DockerClient
 import aerospike
+from docker import DockerClient
 
 from yellowbox import RunMixin
 from yellowbox.containers import create_and_pull, get_ports
@@ -31,7 +31,7 @@ class AerospikeService(SingleContainerService, RunMixin, AsyncRunMixin):
                 }
             }
         }
-        self.client = None
+        self.client: Optional[aerospike.Client] = None
         super().__init__(container, **kwargs)
 
     def client_port(self):
@@ -40,17 +40,16 @@ class AerospikeService(SingleContainerService, RunMixin, AsyncRunMixin):
     def add_to_config(self, config: Dict[str, Any]):
         self.config.update(config)
 
+    def _create_client(self):
+        # it works even without the connect() method, not sure why it is needed
+        return aerospike.client(self.config).connect()
+
     def start(self, retry_spec: Optional[RetrySpec] = None, **kwargs):
         super().start()
         self.add_to_config({'hosts': [(DOCKER_EXPOSE_HOST, self.client_port())], **kwargs})
         retry_spec = retry_spec or RetrySpec(attempts=15)
-
-        def create_client():
-            # it works even without the connect() method, not sure why it is needed
-            return aerospike.client(self.config).connect()
-
         # for some reason it takes time before the container is ready to get a connection
-        self.client = retry_spec.retry(create_client, AerospikeError)
+        self.client = retry_spec.retry(self._create_client, AerospikeError)
         retry_spec.retry(self.client.is_connected, AerospikeError)
         self.started = True
         return self
@@ -59,8 +58,8 @@ class AerospikeService(SingleContainerService, RunMixin, AsyncRunMixin):
         super().start()
         self.add_to_config({'hosts': [(DOCKER_EXPOSE_HOST, self.client_port())], **kwargs})
         retry_spec = retry_spec or RetrySpec(attempts=15)
-        await retry_spec.aretry(self.client, AerospikeError)
-        await retry_spec.aretry(self.client().is_connected, AerospikeError)
+        self.client = await retry_spec.aretry(self._create_client, AerospikeError)
+        await retry_spec.aretry(self.client.is_connected, AerospikeError)
         self.started = True
 
     def stop(self, signal='SIGKILL'):
