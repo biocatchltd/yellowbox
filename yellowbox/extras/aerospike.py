@@ -28,7 +28,19 @@ class AerospikeService(SingleContainerService, RunMixin, AsyncRunMixin):
                 },
                 'apply': {
                     'durable_delete': True
-                }
+                },
+                'operate': {
+                    'durable_delete': True
+                },
+                'remove': {
+                    'durable_delete': True
+                },
+                'batch': {
+                    'durable_delete': True
+                },
+                'scan': {
+                    'durable_delete': True
+                },
             }
         }
         self.client: Optional[aerospike.Client] = None
@@ -41,8 +53,7 @@ class AerospikeService(SingleContainerService, RunMixin, AsyncRunMixin):
         self.config.update(config)
 
     def _create_client(self):
-        # it works even without the connect() method, not sure why it is needed
-        return aerospike.client(self.config).connect()
+        return aerospike.client(self.config)
 
     def start(self, retry_spec: Optional[RetrySpec] = None, **kwargs):
         super().start()
