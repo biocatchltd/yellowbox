@@ -155,7 +155,7 @@ def test_remote_connection_string(docker_client, create_and_pull, service, engin
         container = create_and_pull(
             docker_client,
             "python:latest",
-            'sh -c "pip install sqlalchemy psycopg2 && python ./main.py"',
+            'sh -c "pip install sqlalchemy==1.4.46 psycopg2 && python ./main.py"',
             detach=True,
         )
         upload_file(
@@ -187,7 +187,7 @@ def test_remote_connection_string_host(docker_client, create_and_pull, service, 
     container = create_and_pull(
         docker_client,
         "python:latest",
-        'sh -c "pip install sqlalchemy psycopg2 && python ./main.py"',
+        'sh -c "pip install sqlalchemy==1.4.46 psycopg2 && python ./main.py"',
         detach=True,
     )
     upload_file(
