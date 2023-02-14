@@ -1,5 +1,7 @@
 # Yellowbox Changelog
-## 0.7.9
+## 0.8.0
+### Added
+* added the `Aerospike` extra, to set up an aerospike enterprise container.
 ### Fixed
 * Fixed issue in webserver where if a client connection would disconnect abrubtly, the entire 
   server would stop working. This is probably not the expected behaviour of the mocked service so it

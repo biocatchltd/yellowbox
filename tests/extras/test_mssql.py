@@ -165,7 +165,7 @@ def test_remote_connection_string(service, db, engine, create_and_pull, docker_c
         container = create_and_pull(
             docker_client,
             "laudio/pyodbc:latest",
-            'sh -c "pip install sqlalchemy pyodbc && python ./main.py"',
+            'sh -c "pip install sqlalchemy==1.4.46 pyodbc && python ./main.py"',
             detach=True,
         )
         upload_file(
@@ -200,7 +200,7 @@ def test_remote_connection_string_host(service, db, engine, create_and_pull, doc
     container = create_and_pull(
         docker_client,
         "laudio/pyodbc:latest",
-        'sh -c "pip install sqlalchemy pyodbc && python ./main.py"',
+        'sh -c "pip install sqlalchemy==1.4.46 pyodbc && python ./main.py"',
         detach=True,
     )
     upload_file(
