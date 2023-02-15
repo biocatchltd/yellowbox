@@ -120,8 +120,7 @@ required for running the service.
      Accepts both a started and a stopped container.
     :param remove: Same as in :class:`ContainerService`.
 
-    .. method:: container
-        :property:
+    .. property:: container
 
         :type: :class:`docker.Container<docker.models.containers.Container>`
 
