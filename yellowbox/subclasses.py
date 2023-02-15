@@ -88,6 +88,7 @@ class SingleEndpointService(ContainerService):
     def _single_endpoint(self) -> Container:
         pass
 
+    @property
     def _endpoint_containers(self) -> Sequence[Container]:
         return self._single_endpoint,
 

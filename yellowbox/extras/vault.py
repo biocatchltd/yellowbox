@@ -95,7 +95,8 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
             client.sys.enable_auth_method('userpass')
         self.started = True
 
-    def set_users(self, userpass: Iterable[Tuple[str, str]], policy_name='dev', policy: Optional[Mapping] = DEV_POLICY):
+    def set_users(self, userpass: Iterable[Tuple[str, str]], policy_name='dev',
+                  policy: Optional[Mapping] = DEV_POLICY) -> None:
         """
         Create and set users with policies
         Args:
@@ -110,7 +111,7 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
             for username, password in userpass:
                 client.auth.userpass.create_or_update_user(username, password, policies=[policy_name])
 
-    def set_secrets(self, secrets: Mapping[str, Mapping[str, Any]]):
+    def set_secrets(self, secrets: Mapping[str, Mapping[str, Any]]) -> None:
         """
         Create and set secrets in the vault
         Args:
@@ -120,7 +121,7 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
             for k, v in secrets.items():
                 client.secrets.kv.create_or_update_secret(k, v)
 
-    def clear_secrets(self, root_path='/'):
+    def clear_secrets(self, root_path='/') -> None:
         """
         permanently remove all secrets and subdirectories from a directory in vault
         Args:
@@ -132,7 +133,7 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
             raise ValueError('path must end with slash "/"')
         client: hvac.Client
         with self.client() as client:
-            def clear_recursive(path):
+            def clear_recursive(path) -> None:
                 secret_names: List[str] = client.secrets.kv.list_secrets(path)['data']['keys']
                 for name in secret_names:
                     if name.endswith('/'):

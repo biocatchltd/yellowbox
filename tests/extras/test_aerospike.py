@@ -16,7 +16,7 @@ async def test_make_aerospike_async(docker_client):
 
 
 @fixture(scope='module')
-def aerospike_client(docker_client, request):
+def aerospike_client(docker_client):
     with AerospikeService.run(docker_client) as service:
         yield service
 

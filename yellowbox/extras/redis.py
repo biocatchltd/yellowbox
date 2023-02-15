@@ -1,4 +1,4 @@
-from typing import IO, Callable, ContextManager, Mapping, Optional, Sequence, TypeVar, Union
+from typing import IO, Any, Callable, ContextManager, Mapping, Optional, Sequence, TypeVar, Union, overload
 
 from docker import DockerClient
 from redis import ConnectionError as RedisConnectionError, Redis
@@ -48,7 +48,15 @@ class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
     def client_port(self):
         return get_ports(self.container)[REDIS_DEFAULT_PORT]
 
-    def client(self, *, client_cls: Callable[..., _T] = Redis, **kwargs) -> _T:  # type: ignore
+    @overload
+    def client(self, *, client_cls: Callable[..., _T], **kwargs) -> _T:
+        ...
+
+    @overload
+    def client(self, **kwargs) -> Redis:
+        ...
+
+    def client(self, *, client_cls=Redis, **kwargs) -> Any:  # type: ignore
         port = self.client_port()
         return client_cls(host=DOCKER_EXPOSE_HOST, port=port, **kwargs)
 
@@ -69,12 +77,12 @@ class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
             await retry_spec.aretry(client.ping, RedisConnectionError)
         self.started = True
 
-    def reset_state(self):
+    def reset_state(self) -> None:
         client: Redis
         with self.client() as client:
             client.flushall()
 
-    def set_state(self, db_dict: RedisState):
+    def set_state(self, db_dict: RedisState) -> None:
         client_cm: ContextManager[Redis] = self.client()
         with client_cm as client:
             client.flushall()
