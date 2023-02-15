@@ -43,6 +43,7 @@ intersphinx_mapping = {
     'kafka-python': ('https://kafka-python.readthedocs.io/en/master/', None),
     'hvac': ('https://hvac.readthedocs.io/en/stable/', None),
     'requests': ('https://requests.readthedocs.io/en/master/', None),
+    'aerospike': ('https://aerospike-python-client.readthedocs.io/en/latest/',None)
 }
 
 python_use_unqualified_type_names = True

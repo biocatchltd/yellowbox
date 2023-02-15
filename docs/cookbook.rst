@@ -19,6 +19,11 @@ your own. Let's for example create an Aerospike service. We'll use the `official
     * If your service requires multiple docker containers, and outside clients will be able to interface with more than
       one of them, use :class:`~subclasses.ContainerService`.
 
+.. note::
+
+    Since this section was written, :mod:`official support <extras.aerospike>` for aerospike was added. However this guide
+    still serves as a useful example for any service you'd like to add.
+
 Since the Aerospike service is a single container, we'll use the :class:`~subclasses.SingleContainerService` superclass.
 We'll also include the :class:`~subclasses.RunMixin` mixin, which will allow us to run the service like a context
 manager.

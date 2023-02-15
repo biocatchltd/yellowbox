@@ -1,4 +1,9 @@
 # Yellowbox Changelog
+## 0.8.1
+### Added
+* documentation to the aerospike service
+### Changed
+* revamped aerospike service
 ## 0.8.0
 ### Added
 * added the `Aerospike` extra, to set up an aerospike enterprise container.

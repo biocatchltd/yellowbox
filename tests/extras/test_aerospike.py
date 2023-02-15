@@ -16,7 +16,7 @@ async def test_make_aerospike_async(docker_client):
 
 
 @fixture(scope='module')
-def aerospike_client(docker_client):
+def aerospike_client(docker_client, request):
     with AerospikeService.run(docker_client) as service:
         yield service
 
@@ -25,9 +25,9 @@ def aerospike_client(docker_client):
 async def test_connection_works_async(aerospike_client):
     key = (aerospike_client.namespace, 'set1', 'record1')
     bins = {'a': '12'}
-    client = aerospike_client.client
-    client.put(key, bins)
-    (_, meta, resp) = client.select(key, ['a'])
+    with aerospike_client.client() as client:
+        client.put(key, bins)
+        (_, meta, resp) = client.select(key, ['a'])
     assert resp == bins
     assert meta['ttl']
     assert meta['gen']
