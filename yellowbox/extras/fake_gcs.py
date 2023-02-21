@@ -1,7 +1,7 @@
 from contextlib import contextmanager
+from os import environ, getenv
 from typing import Any, Dict, Iterable, Optional
 from warnings import warn
-from os import getenv, environ
 
 import requests
 from docker import DockerClient
