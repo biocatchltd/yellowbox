@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## Next
+### Fixed
+* support for sqlalchemy2
 ## 0.8.1
 ### Added
 * documentation to the aerospike service
