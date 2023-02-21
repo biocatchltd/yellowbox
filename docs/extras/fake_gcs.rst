@@ -71,6 +71,10 @@ to the service.
         target `self` as an emulator. Returns a context manager that changes the global variables and restores them on
         exit.
 
+        .. note::
+
+            This method is not required when using gcloud-aio-storage 8.0.0 or upwards.
+
         :raises ImportError: if gcloud-aio-storage is not installed
 
         .. code-block::
