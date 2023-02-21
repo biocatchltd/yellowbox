@@ -1,5 +1,7 @@
 from contextlib import contextmanager
+from os import environ, getenv
 from typing import Any, Dict, Iterable, Optional
+from warnings import warn
 
 import requests
 from docker import DockerClient
@@ -74,6 +76,19 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
 
     @contextmanager
     def patch_gcloud_aio(self):
+        from gcloud.aio.storage import __version__ as gcloud_aio_version
+        if not gcloud_aio_version.startswith("7."):
+            # for newer gcloud_aio, we can just adjust the environment
+            warn("newer gcloud versions should be patched directly with by setting the environent variable "
+                 "STORAGE_EMULATOR_HOST to service.local_url()")
+            prev_env = getenv('STORAGE_EMULATOR_HOST')
+            environ['STORAGE_EMULATOR_HOST'] = self.local_url(None)
+            yield
+            if prev_env is None:
+                del environ['STORAGE_EMULATOR_HOST']
+            else:
+                environ['STORAGE_EMULATOR_HOST'] = prev_env
+            return
         import gcloud.aio.storage.storage as gcloud_module
         previous_state = (gcloud_module.API_ROOT, gcloud_module.API_ROOT_UPLOAD, gcloud_module.VERIFY_SSL,
                           gcloud_module.STORAGE_EMULATOR_HOST)

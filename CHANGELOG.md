@@ -1,4 +1,8 @@
 # Yellowbox Changelog
+## Next
+### Fixed
+* support for gcloud-aio-storage 8.0.0
+* support for sqlalchemy2
 ## 0.8.1
 ### Added
 * documentation to the aerospike service
