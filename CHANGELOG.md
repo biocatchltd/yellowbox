@@ -1,5 +1,5 @@
 # Yellowbox Changelog
-## Next
+## 0.8.2
 ### Fixed
 * support for gcloud-aio-storage 8.0.0
 * support for sqlalchemy2
