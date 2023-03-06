@@ -2,12 +2,74 @@ import json
 
 from httpx import Client
 from pytest import raises
+from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
+from starlette.websockets import WebSocket
 from websocket import create_connection as create_ws_connection
 
-from tests.extras.test_webserver import do_some_math
-from yellowbox.extras.webserver import WebServer, class_ws_endpoint
-from yellowbox.extras.webserver.class_endpoint import class_http_endpoint
+from tests.extras.test_webserver.util import do_some_math
+from yellowbox.extras.webserver import (
+    MockHTTPEndpoint, MockWSEndpoint, WebServer, class_http_endpoint, class_ws_endpoint
+)
+
+
+def test_server_as_class():
+    class CalculatorService(WebServer):
+        square: MockHTTPEndpoint
+        calc: MockWSEndpoint
+
+        def start(self, retry_spec=None) -> WebServer:
+            ret = super().start(retry_spec)
+
+            async def square(request: Request):
+                return PlainTextResponse(str(request.path_params['a'] ** 2))
+
+            self.square = self.add_http_endpoint('GET', '/{a:int}/square', square)
+            self.calc = self.add_ws_endpoint('/{a:int}/calc', do_some_math)
+            return ret
+
+    with CalculatorService('calulator').start() as server:
+        with Client(base_url=server.local_url()) as client:
+            with server.square.capture_calls() as calls:
+                resp = client.get('/12/square')
+                resp.raise_for_status()
+                assert resp.text == '144'
+            calls.assert_requested_once_with(path='/12/square')
+
+        ws_client = create_ws_connection(server.local_url('ws') + '/12/calc?mod=20')
+        assert json.loads(ws_client.recv()) == 12
+        ws_client.send(json.dumps({'op': 'add', 'value': 1}))
+        assert json.loads(ws_client.recv()) == 13
+        ws_client.send(json.dumps({'op': 'mul', 'value': 15}))
+        assert json.loads(ws_client.recv()) == 15
+        ws_client.send(json.dumps({'op': 'done'}))
+
+
+def test_server_class_endpoints():
+    class CalculatorService(WebServer):
+        @class_http_endpoint('GET', '/{a:int}/square')
+        async def square(self, request: Request):
+            return PlainTextResponse(str(request.path_params['a'] ** 2))
+
+        @class_ws_endpoint('/{a:int}/calc')
+        async def calc(self, websocket: WebSocket):
+            return await do_some_math(websocket)
+
+    with CalculatorService('calulator').start() as server:
+        with Client(base_url=server.local_url()) as client:
+            with server.square.capture_calls() as calls:
+                resp = client.get('/12/square')
+                resp.raise_for_status()
+                assert resp.text == '144'
+            calls.assert_requested_once_with(path='/12/square')
+
+        ws_client = create_ws_connection(server.local_url('ws') + '/12/calc?mod=20')
+        assert json.loads(ws_client.recv()) == 12
+        ws_client.send(json.dumps({'op': 'add', 'value': 1}))
+        assert json.loads(ws_client.recv()) == 13
+        ws_client.send(json.dumps({'op': 'mul', 'value': 15}))
+        assert json.loads(ws_client.recv()) == 15
+        ws_client.send(json.dumps({'op': 'done'}))
 
 
 def test_const_class_endpoint():
