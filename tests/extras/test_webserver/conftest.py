@@ -25,6 +25,7 @@ def ws_client_factory(server) -> Callable[[str], WSClient]:
 
     return ret
 
+
 @fixture
 def squib(server):
     @server.add_http_endpoint

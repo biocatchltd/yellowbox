@@ -2,7 +2,7 @@ import re
 from io import StringIO
 
 from httpx import Client, HTTPError, get
-from pytest import fixture, raises
+from pytest import raises
 from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse, Response
 from starlette.status import HTTP_200_OK, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
