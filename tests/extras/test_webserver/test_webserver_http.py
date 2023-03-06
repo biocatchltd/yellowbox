@@ -114,19 +114,6 @@ def test_readd_endpoint(server, client):
     assert client.get('/foo').status_code == HTTP_404_NOT_FOUND
 
 
-@fixture
-def squib(server):
-    @server.add_http_endpoint
-    @http_endpoint('GET', '/bar')
-    async def bar(request):
-        raise ValueError('ree')
-
-    yield bar
-
-    # in case the squib was called, clear the pending error
-    server._pending_exception = None
-
-
 def test_handler_error(server, client, squib):
     assert client.get('/bar').status_code == HTTP_500_INTERNAL_SERVER_ERROR
     with raises(HandlerError) as exc_info:
