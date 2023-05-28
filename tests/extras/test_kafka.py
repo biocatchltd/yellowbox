@@ -4,15 +4,18 @@ from yellowbox.extras.kafka import KafkaService
 from yellowbox.networks import connect, temp_network
 from yellowbox.utils import docker_host_name
 
+# this is a patch for a known issue where latest kafka won't start, actual fix OTW
+KAFKA_IMAGE_TAG = ("bitnami/zookeeper:3.8.0", "bitnami/kafka:3.2.0")
+
 
 @mark.parametrize('spinner', [True, False])
 def test_make_kafka(docker_client, spinner):
-    with KafkaService.run(docker_client, spinner=spinner):
+    with KafkaService.run(docker_client, spinner=spinner, tag_or_images=KAFKA_IMAGE_TAG):
         pass
 
 
 def test_kafka_works(docker_client):
-    with KafkaService.run(docker_client, spinner=False) as service:
+    with KafkaService.run(docker_client, spinner=False, tag_or_images=KAFKA_IMAGE_TAG) as service:
         with service.consumer() as consumer, \
                 service.producer() as producer:
 
@@ -31,7 +34,7 @@ def test_kafka_works(docker_client):
 
 @mark.asyncio
 async def test_kafka_works_async(docker_client):
-    async with KafkaService.arun(docker_client) as service:
+    async with KafkaService.arun(docker_client, tag_or_images=KAFKA_IMAGE_TAG) as service:
         with service.consumer() as consumer, service.producer() as producer:
 
             producer.send('test', b'hello world')
@@ -49,7 +52,7 @@ async def test_kafka_works_async(docker_client):
 
 @fixture(scope='module')
 def kafka_service(docker_client):
-    with KafkaService.run(docker_client, spinner=False) as service:
+    with KafkaService.run(docker_client, spinner=False, tag_or_images=KAFKA_IMAGE_TAG) as service:
         yield service
 
 

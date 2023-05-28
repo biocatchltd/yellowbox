@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## 0.8.3
+### Changed
+* docker_expose_host is no longer inferred for WSL2
 ## 0.8.2
 ### Fixed
 * support for gcloud-aio-storage 8.0.0

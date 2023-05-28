@@ -93,7 +93,7 @@ def test_sibling(service, db_name, engine, create_and_pull, docker_client):
 
     container = create_and_pull(
         docker_client,
-        "fabiang/sqlcmd:latest",
+        "fabiang/sqlcmd:17",
         f'-S {docker_host_name},{service.external_port()} -U sa -P {service.admin_password} -d {db_name}'
         " -Q 'DELETE FROM foo WHERE x < 3'",
         detach=True,
@@ -119,7 +119,7 @@ def test_sibling_network(service, db_name, engine, create_and_pull, docker_clien
 
         container = create_and_pull(
             docker_client,
-            "fabiang/sqlcmd:latest",
+            "fabiang/sqlcmd:17",
             f'-S {service_alias[0]},{service.INTERNAL_PORT} -U sa -P {service.admin_password} -d {db_name}'
             " -Q 'DELETE FROM foo WHERE x < 3'",
             detach=True,
