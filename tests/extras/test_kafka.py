@@ -6,6 +6,8 @@ from yellowbox.utils import docker_host_name
 
 # this is a patch for a known issue where latest kafka won't start, actual fix OTW
 KAFKA_IMAGE_TAG = ("bitnami/zookeeper:3.8.0", "bitnami/kafka:3.2.0")
+
+
 @mark.parametrize('spinner', [True, False])
 def test_make_kafka(docker_client, spinner):
     with KafkaService.run(docker_client, spinner=spinner, tags_or_images=KAFKA_IMAGE_TAG):
