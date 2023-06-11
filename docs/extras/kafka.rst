@@ -13,9 +13,13 @@ docker images.
 
     Requires the ``kafka`` extra. For more information, see our :ref:`installation guide <installation>`.
 
-.. class:: KafkaService(docker_client: docker.client.DockerClient, tag_or_images : str | tuple[str, str] = 'latest', inner_port : int=0, outer_port: int=0, **kwargs)
+.. note::
 
-    A service to run the redis database. Inherits from :class:`~subclasses.SingleEndpointService`. Usable with
+    This service runs a kafka broker/zookeeper pair. For a lightweight kraft service, see `the yellowbox-kraft library <https://github.com/biocatchltd/yellowbox-kraft>`_.
+
+.. class:: KafkaService(docker_client: docker.client.DockerClient, tag_or_images : str | tuple[str, str] = 'latest', inner_port : int=0, outer_port: int=0, bitnami_debug = False, **kwargs)
+
+    A service to run the kafka queue. Inherits from :class:`~subclasses.SingleEndpointService`. Usable with
     :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
 
     :param docker_client: The docker client to used to pull and create the Kafka containers.
@@ -29,6 +33,8 @@ docker images.
 
     :param outer_port: The external port to expose on the Kafka broker for consumers and producers. Default is 0,
         which will assign to a random unoccupied port.
+
+    :param bitnami_debug: If enabled, will run the zookeeper and kafka broker in debug mode (`BITNAMI_DEBUG=true`).
 
     :param \*\*kwargs: Additional keyword arguments passed to :class:`~subclasses.SingleEndpointService`.
 

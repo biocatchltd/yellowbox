@@ -17,7 +17,7 @@ __all__ = ['KafkaService']
 
 class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
     def __init__(self, docker_client: DockerClient, tag_or_images: Union[str, Tuple[str, str]] = 'latest',
-                 inner_port=0, outer_port=0, **kwargs):
+                 inner_port=0, outer_port=0, bitnami_debug: bool = False, **kwargs):
         self.inner_port = inner_port or get_free_port()
         self.outer_port = outer_port or get_free_port()
         if isinstance(tag_or_images, str):
@@ -31,6 +31,10 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
 
         creator = SafeContainerCreator(docker_client)
 
+        extra_bitnami_env = {}
+        if bitnami_debug:
+            extra_bitnami_env["BITNAMI_DEBUG"] = "true"
+
         self.zookeeper = creator.create_and_pull(
             zookeeper_image, detach=True,
             publish_all_ports=True,
@@ -38,7 +42,9 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
                 'ZOOKEEPER_CLIENT_PORT': '2181',
                 'ZOOKEEPER_TICK_TIME': '2000',
                 'ALLOW_ANONYMOUS_LOGIN': 'yes',
+                **extra_bitnami_env
             })
+
 
         self.broker = creator.create_and_pull(
             broker_image,
@@ -55,7 +61,9 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
                 'ALLOW_PLAINTEXT_LISTENER': 'yes',
                 'KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP': 'INNER:PLAINTEXT,OUTER:PLAINTEXT',
                 'KAFKA_INTER_BROKER_LISTENER_NAME': 'INNER',
-                'KAFKA_CFG_LISTENERS': f'INNER://:{self.inner_port},OUTER://:{self.outer_port}'
+                'KAFKA_CFG_LISTENERS': f'INNER://:{self.inner_port},OUTER://:{self.outer_port}',
+                "KAFKA_ENABLE_KRAFT": "false",
+                **extra_bitnami_env
             })
 
         self.network = anonymous_network(docker_client)
