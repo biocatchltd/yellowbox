@@ -45,7 +45,6 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
                 **extra_bitnami_env
             })
 
-
         self.broker = creator.create_and_pull(
             broker_image,
             ports={
