@@ -1,4 +1,9 @@
 # Yellowbox Changelog
+## 0.8.4
+### Fixed
+* fixed issue where latest bitnami kafka would not start
+### Added
+* extras/kafka: added `bitnami_debug` parameter to enable bitnami debug.
 ## 0.8.3
 ### Changed
 * docker_expose_host is no longer inferred for WSL2

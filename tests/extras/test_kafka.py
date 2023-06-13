@@ -4,13 +4,12 @@ from yellowbox.extras.kafka import KafkaService
 from yellowbox.networks import connect, temp_network
 from yellowbox.utils import docker_host_name
 
-# this is a patch for a known issue where latest kafka won't start, actual fix OTW
-KAFKA_IMAGE_TAG = ("bitnami/zookeeper:3.8.0", "bitnami/kafka:3.2.0")
+KAFKA_IMAGE_TAG = 'latest'
 
 
-@mark.parametrize('spinner', [True, False])
-def test_make_kafka(docker_client, spinner):
-    with KafkaService.run(docker_client, spinner=spinner, tag_or_images=KAFKA_IMAGE_TAG):
+@mark.parametrize('bitnami_debug', [True, False])
+def test_make_kafka(docker_client, bitnami_debug):
+    with KafkaService.run(docker_client, spinner=False, tag_or_images=KAFKA_IMAGE_TAG, bitnami_debug=bitnami_debug):
         pass
 
 
