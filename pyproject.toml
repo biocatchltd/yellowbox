@@ -33,14 +33,12 @@ pyodbc = { version = ">=4.0.32", optional = true }
 Deprecated = ">=1.2.13"
 SQLAlchemy-Utils = { version = ">=0.38.2", optional = true }
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"
 httpx = "^0.20.0"
 pytest-cov = "^2.10"
 requests = "^2"
-flake8 = {version="^6.0.0", python=">=3.8.1"}
 websocket_client = "*"
-isort = "^5.9.1"
 mypy = ">=1"
 types-requests = "^2.25.0"
 types-redis = "^3.5.4"
@@ -53,6 +51,8 @@ types-Deprecated = "^1.2.7"
 google-cloud-storage = "^2.5.0"
 gcloud-aio-storage = "^8.0.0"
 setuptools = "^67.3.3"
+ruff = "^0.0.272"
+black = "^23.3.0"
 
 [tool.poetry.extras]
 azure = ["azure-storage-blob", "cffi"]
@@ -77,3 +77,58 @@ build-backend = "poetry.masonry.api"
 
 [tool.poetry.plugins.pytest11]
 yellowbox = "yellowbox._pytest"
+
+[tool.ruff]
+# https://beta.ruff.rs/docs/rules/
+select = ["I", "E", "W", "F", "N", "S", "BLE", "COM", "C4", "ISC", "ICN", "G", "PIE", "T20", "PYI", "Q", "SLF", "SIM",
+          "ERA", "PGH", "PLC", "PLE", "PLR", "PLW", "RUF", "PT", "UP", "B"]
+# should be included later: ANN, RET?, ARG, TRY
+ignore = [
+    "COM812",  # trailing comma, handled by black
+    "PLR2004",  # Magic value used in comparison
+    "PLR0913",  # Too many arguments to function call
+    "PLR0912",  # too many branches
+    "PLR0911",  # Too many return statements
+    "PLR0915",  # too many statements
+    "SIM108",  # Use ternary operator instead of `if`-`else`-block
+    "SIM105",  # Use `contextlib.suppress(...)` instead of try-except-pass
+    "S101",  # assert detected
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+    "SIM118",  # Use `key in {}` instead of `key in {}.keys()`
+    "SIM112",  # Use capitalized environment variable
+    "S311", # use of non-cryptographic random
+]
+line-length = 120
+show-source = true
+
+[tool.ruff.isort]
+combine-as-imports=true
+
+[tool.ruff.flake8-self]
+ignore-names = ["_3DS", "_3DSOutcome", "_set_fallbacks"]
+
+[tool.ruff.flake8-pytest-style]
+raises-require-match-for = []
+
+[tool.ruff.per-file-ignores]
+"tests/**" = [
+    "N802", # Function name should be lowercase
+    "N803", # Argument name should be lowercase
+    "S105",  # Possible hardcoded password
+    "S113",  # Probable use of requests call without timeout
+    "PIE804", # Unnecessary `dict` kwargs
+    "PT013",  # Found incorrect import of pytest, use simple `import pytest` instead
+    "PT004", # Fixture does not return anything, add leading underscore
+    "BLE001",  # BLE001 Do not catch blind exception: `Exception`
+    "F405",  # name may be undefined, or defined from star imports
+    "F403",  # star import used; unable to detect undefined names
+    "T201",  # `print` found
+    "SLF001",  # Private member accessed
+    "PLC1901", # simplify str == ""
+    "B018",  # useless expression
+]
+
+[tool.black]
+line-length = 120
