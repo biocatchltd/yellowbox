@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from sys import version_info
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -26,15 +25,10 @@ from yellowbox.extras.webserver.request_capture import ScopeExpectation
 from yellowbox.extras.webserver.util import MismatchReason, reason_is_ne
 
 if TYPE_CHECKING:
-    from typing_extensions import TypeAlias
-
-    ellipsis: TypeAlias
-    if version_info >= (3, 10):
+    try:
         from types import EllipsisType
-
-        ellipsis = EllipsisType
-    else:
-        ellipsis = Any
+    except ImportError:
+        pass
 
 
 class WebSocketRecorder(WebSocket):
@@ -117,7 +111,7 @@ class Sender(Enum):
     Server = auto()
     Client = auto()
 
-    def __call__(self, data: Union[Pattern[str], Pattern[bytes], str, bytes, ellipsis]) -> ExpectedWSMessage:
+    def __call__(self, data: Union[Pattern[str], Pattern[bytes], str, bytes, EllipsisType]) -> ExpectedWSMessage:
         """
         Create an expected message, originating from this caller
         Args:
@@ -203,7 +197,7 @@ class ExpectedWSMessage:
     A single expected message in a websockets connection
     """
 
-    def __init__(self, data: Union[Pattern[str], Pattern[bytes], str, bytes, ellipsis], sender: Sender):
+    def __init__(self, data: Union[Pattern[str], Pattern[bytes], str, bytes, EllipsisType], sender: Sender):
         """
         Args:
             data: the expected data. Can be either a bytes or string for an exact match, a compiled pattern for a full
@@ -250,7 +244,7 @@ class ExpectedWSTranscript(ScopeExpectation):
 
     def __init__(
         self,
-        messages: Sequence[Union[ellipsis, ExpectedWSMessage]] = (...,),
+        messages: Sequence[Union[EllipsisType, ExpectedWSMessage]] = (...,),
         headers: Optional[Mapping[str, Collection[str]]] = None,
         headers_submap: Optional[Mapping[str, Collection[str]]] = None,
         path: Optional[Union[str, Pattern[str]]] = None,
@@ -387,7 +381,7 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
     def assert_requested_with(
         self,
         *,
-        messages: Sequence[Union[ellipsis, ExpectedWSMessage]] = (...,),
+        messages: Sequence[Union[EllipsisType, ExpectedWSMessage]] = (...,),
         headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
         headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
         path: Optional[Union[str, Pattern[str]]] = None,
@@ -429,7 +423,7 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
     def assert_requested_once_with(
         self,
         *,
-        messages: Sequence[Union[ellipsis, ExpectedWSMessage]] = (...,),
+        messages: Sequence[Union[EllipsisType, ExpectedWSMessage]] = (...,),
         headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
         headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
         path: Optional[Union[str, Pattern[str]]] = None,
@@ -473,7 +467,7 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
     def assert_any_request(
         self,
         *,
-        messages: Sequence[Union[ellipsis, ExpectedWSMessage]] = (...,),
+        messages: Sequence[Union[EllipsisType, ExpectedWSMessage]] = (...,),
         headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
         headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
         path: Optional[Union[str, Pattern[str]]] = None,
