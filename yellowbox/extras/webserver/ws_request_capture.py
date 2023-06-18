@@ -26,10 +26,11 @@ from yellowbox.extras.webserver.request_capture import ScopeExpectation
 from yellowbox.extras.webserver.util import MismatchReason, reason_is_ne
 
 if TYPE_CHECKING:
+    from typing_extensions import TypeAlias
+
     ellipsis: TypeAlias
     if version_info >= (3, 10):
         from types import EllipsisType
-        from typing import TypeAlias
 
         ellipsis = EllipsisType
     else:

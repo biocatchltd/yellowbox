@@ -53,6 +53,7 @@ gcloud-aio-storage = "^8.0.0"
 setuptools = "^67.3.3"
 ruff = "^0.0.272"
 black = "^23.3.0"
+typing-extensions = "^4.6.3"
 
 [tool.poetry.extras]
 azure = ["azure-storage-blob", "cffi"]
