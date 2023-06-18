@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from builtins import ellipsis
 from dataclasses import dataclass
 from enum import Enum, auto
+from sys import version_info
 from typing import (
+    TYPE_CHECKING,
     Any,
     Collection,
     Dict,
@@ -23,6 +24,16 @@ from starlette.websockets import WebSocket
 
 from yellowbox.extras.webserver.request_capture import ScopeExpectation
 from yellowbox.extras.webserver.util import MismatchReason, reason_is_ne
+
+if TYPE_CHECKING:
+    ellipsis: TypeAlias
+    if version_info >= (3, 10):
+        from types import EllipsisType
+        from typing import TypeAlias
+
+        ellipsis = EllipsisType
+    else:
+        ellipsis = Any
 
 
 class WebSocketRecorder(WebSocket):
