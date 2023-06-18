@@ -14,7 +14,18 @@ import threading
 from functools import partial, wraps
 from threading import RLock
 from typing import (
-    Any, Callable, Dict, Generator, Iterable, Iterator, List, Optional, Pattern, TypeVar, Union, no_type_check
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Pattern,
+    TypeVar,
+    Union,
+    no_type_check,
 )
 from urllib.parse import urlparse
 from weakref import WeakMethod
@@ -34,6 +45,7 @@ class _WebsocketTemplate(WebSocket):
     communicates over a generator to send and receive data. See WebsocketService
     for usage.
     """
+
     _get_generator: Optional[WeakMethod] = None
     """
     A weakmethod to call WebsocketService._get_generator and find the
@@ -62,8 +74,7 @@ class _WebsocketTemplate(WebSocket):
             generator_function = get_generator(path)
 
             if generator_function is None:
-                logger.info(f"No handler assigned to {path}. "
-                            "Closing connection.")
+                logger.info(f"No handler assigned to {path}. " "Closing connection.")
                 return
 
             self._generator = generator_function(self)
@@ -78,8 +89,7 @@ class _WebsocketTemplate(WebSocket):
 
         self._advance_generator(None)
 
-    def _advance_generator(
-            self, data: Union[bytearray, str, None]) -> None:
+    def _advance_generator(self, data: Union[bytearray, str, None]) -> None:
         """Advance the IO generator. Send it data and wait for output."""
         try:
             try:
@@ -124,8 +134,7 @@ class _WebsocketTemplate(WebSocket):
 
 
 @no_type_check
-def _to_generator(
-        side_effect: SIDE_EFFECT_TYPE) -> _GEN_FUNCTION_TYPE:
+def _to_generator(side_effect: SIDE_EFFECT_TYPE) -> _GEN_FUNCTION_TYPE:
     """Convert a side effect to an IO generator function.
 
     Args:
@@ -136,16 +145,20 @@ def _to_generator(
     """
     # Side effect == normal string
     if isinstance(side_effect, (str, bytes, bytearray, memoryview)):
+
         def gen(*args: Any, **kwargs: Any) -> _GENERAOTR_TYPE:
             return side_effect
             yield  # On purpose.
+
         return gen
 
     # Side effect == list of strings
     if isinstance(side_effect, Iterable):
+
         def gen(*args, **kwargs) -> _GENERAOTR_TYPE:
             for item in side_effect:
                 yield item
+
         return gen
 
     assert callable(side_effect)
@@ -154,8 +167,7 @@ def _to_generator(
     def gen(*args: Any, **kwargs: Any) -> _GENERAOTR_TYPE:
         # Side effect == normal function that returns a string.
         result = side_effect(*args, **kwargs)
-        if result is None or isinstance(result, (str, bytes,
-                                                 bytearray, memoryview)):
+        if result is None or isinstance(result, (str, bytes, bytearray, memoryview)):
             return result
 
         # Side effect == generator function
@@ -167,15 +179,12 @@ def _to_generator(
 # Type aliases used all around
 _YIELDTYPES = Union[str, bytes, bytearray, memoryview, None]
 
-_GENERAOTR_TYPE = Generator[_YIELDTYPES,
-                            Union[bytearray, str], _YIELDTYPES]
+_GENERAOTR_TYPE = Generator[_YIELDTYPES, Union[bytearray, str], _YIELDTYPES]
 
 _GEN_FUNCTION_TYPE = Callable[[WebSocket], _GENERAOTR_TYPE]
 
 SIDE_EFFECT_TYPE = Union[
-    _YIELDTYPES, List[_YIELDTYPES],
-    Callable[[WebSocket], Optional[_YIELDTYPES]],
-    _GEN_FUNCTION_TYPE
+    _YIELDTYPES, List[_YIELDTYPES], Callable[[WebSocket], Optional[_YIELDTYPES]], _GEN_FUNCTION_TYPE
 ]
 
 _T = TypeVar("_T")
@@ -212,6 +221,7 @@ class WebsocketService(YellowService):
         `service.container_url` if communicating with a hosted docker
         container.
     """
+
     port: int
     """Server listening port."""
 
@@ -243,7 +253,7 @@ class WebsocketService(YellowService):
         Suffix this with the path. For example, if you wish to connect locally
         to the "/echo" endpoint, connect to `service.local_url + '/echo'`.
         """
-        return f'ws://127.0.0.1:{self.port}'
+        return f"ws://127.0.0.1:{self.port}"
 
     @cached_property
     def container_url(self) -> str:
@@ -253,7 +263,7 @@ class WebsocketService(YellowService):
         "/echo" endpoint from inside a container, connect
         to `service.container_url + '/echo'`.
         """
-        return f'ws://{docker_host_name}:{self.port}'
+        return f"ws://{docker_host_name}:{self.port}"
 
     def is_alive(self) -> bool:
         """Boolean stating if wesocket service is active."""
@@ -302,9 +312,9 @@ class WebsocketService(YellowService):
 
         return None
 
-    def route(self, path: Optional[str] = None, *,
-              regex: Optional[Union[Pattern[str], str]] = None
-              ) -> Callable[[SIDE_EFFECT_TYPE], None]:
+    def route(
+        self, path: Optional[str] = None, *, regex: Optional[Union[Pattern[str], str]] = None
+    ) -> Callable[[SIDE_EFFECT_TYPE], None]:
         """Add a route using a decorator syntax.
 
         Raises an exception if the route already exists.
@@ -334,10 +344,14 @@ class WebsocketService(YellowService):
 
         return partial(self.add, path=path, regex=regex)
 
-    def add(self, side_effect: SIDE_EFFECT_TYPE,
-            path: Optional[str] = None, *,
-            regex: Optional[Union[Pattern[str], str]] = None,
-            _overwrite: bool = False) -> None:
+    def add(
+        self,
+        side_effect: SIDE_EFFECT_TYPE,
+        path: Optional[str] = None,
+        *,
+        regex: Optional[Union[Pattern[str], str]] = None,
+        _overwrite: bool = False,
+    ) -> None:
         """Add a route.
 
         Raises an exception if the route already exists.
@@ -371,8 +385,7 @@ class WebsocketService(YellowService):
 
         # Check and place
         with self._lock:
-            if not _overwrite and (path in self._routes or
-                                   regex in self._re_routes):
+            if not _overwrite and (path in self._routes or regex in self._re_routes):
                 raise RuntimeError(f"Route {path or regex} already exists!")
 
             if path:
@@ -381,9 +394,13 @@ class WebsocketService(YellowService):
                 self._re_routes[regex] = gen  # type: ignore
 
     @contextmanager
-    def patch(self, side_effect: SIDE_EFFECT_TYPE,
-              path: Optional[str] = None, *,
-              regex: Optional[Union[Pattern[str], str]] = None) -> Iterator[None]:
+    def patch(
+        self,
+        side_effect: SIDE_EFFECT_TYPE,
+        path: Optional[str] = None,
+        *,
+        regex: Optional[Union[Pattern[str], str]] = None,
+    ) -> Iterator[None]:
         """Temporarily patch a route.
 
         Like `.add()` but uses a context manager for easy removal.
@@ -394,18 +411,20 @@ class WebsocketService(YellowService):
         finally:
             self.remove(path, regex=regex)
 
-    def set(self, side_effect: SIDE_EFFECT_TYPE,
-            path: Optional[str] = None, *,
-            regex: Optional[Union[Pattern[str], str]] = None) -> None:
+    def set(
+        self,
+        side_effect: SIDE_EFFECT_TYPE,
+        path: Optional[str] = None,
+        *,
+        regex: Optional[Union[Pattern[str], str]] = None,
+    ) -> None:
         """Set a route.
 
         Like `add()` but overwrites existing routes.
         """
-        self.add(side_effect=side_effect, path=path,
-                 regex=regex, _overwrite=True)
+        self.add(side_effect=side_effect, path=path, regex=regex, _overwrite=True)
 
-    def remove(self, path: Optional[str] = None, *,
-               regex: Optional[Union[Pattern[str], str]] = None) -> None:
+    def remove(self, path: Optional[str] = None, *, regex: Optional[Union[Pattern[str], str]] = None) -> None:
         """Remove a route.
 
         Args:

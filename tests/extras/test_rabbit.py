@@ -12,7 +12,7 @@ from yellowbox.networks import connect, temp_network
 from yellowbox.utils import docker_host_name
 
 
-@mark.parametrize('spinner', [True, False])
+@mark.parametrize("spinner", [True, False])
 def test_make_rabbit(docker_client, spinner):
     with RabbitMQService.run(docker_client, spinner=spinner):
         pass
@@ -24,20 +24,22 @@ async def test_connection_works_async(docker_client):
         connection: BlockingConnection
         with rabbit.connection() as connection:
             channel = connection.channel()
-            channel.queue_declare('routing')
+            channel.queue_declare("routing")
 
-            channel.basic_publish('', 'routing', body=b'hi there')
+            channel.basic_publish("", "routing", body=b"hi there")
             sleep(1)
-            *_, body = channel.basic_get('routing', auto_ack=True)
-            assert body == b'hi there'
+            *_, body = channel.basic_get("routing", auto_ack=True)
+            assert body == b"hi there"
 
 
-@fixture(scope='module',
-         params=itertools.product(['rabbitmq:management-alpine', 'rabbitmq:latest'], ['/', "guest-vhost"]))
+@fixture(
+    scope="module", params=itertools.product(["rabbitmq:management-alpine", "rabbitmq:latest"], ["/", "guest-vhost"])
+)
 def rabbit(docker_client, request):
     tag, vhost = request.param
-    with RabbitMQService.run(docker_client, image=tag, virtual_host=vhost, spinner=False,
-                             enable_management=True) as service:
+    with RabbitMQService.run(
+        docker_client, image=tag, virtual_host=vhost, spinner=False, enable_management=True
+    ) as service:
         yield service
 
 
@@ -50,19 +52,17 @@ def test_connection_works(docker_client, rabbit, q_name):
         channel = connection.channel()
         channel.queue_declare(q_name)
 
-        channel.basic_publish('', q_name, body=b'hi there')
+        channel.basic_publish("", q_name, body=b"hi there")
         sleep(1)
         *_, body = channel.basic_get(q_name, auto_ack=True)
-        assert body == b'hi there'
+        assert body == b"hi there"
 
 
 def test_connection_works_sibling_network(docker_client, rabbit, create_and_pull):
     with temp_network(docker_client) as network, connect(network, rabbit) as aliases:
         url = f"http://{aliases[0]}:{RABBIT_HTTP_API_PORT}/api/vhosts"
         container = create_and_pull(
-            docker_client,
-            "byrnedo/alpine-curl:latest", f'-u guest:guest -vvv -I "{url}" --http0.9',
-            detach=True
+            docker_client, "byrnedo/alpine-curl:latest", f'-u guest:guest -vvv -I "{url}" --http0.9', detach=True
         )
         with connect(network, container):
             container.start()
@@ -74,9 +74,7 @@ def test_connection_works_sibling(docker_client, rabbit, create_and_pull):
     api_port = get_ports(rabbit.container)[RABBIT_HTTP_API_PORT]
     url = f"http://{docker_host_name}:{api_port}/api/vhosts"
     container = create_and_pull(
-        docker_client,
-        "byrnedo/alpine-curl:latest", f'-u guest:guest -vvv -I "{url}" --http0.9',
-        detach=True
+        docker_client, "byrnedo/alpine-curl:latest", f'-u guest:guest -vvv -I "{url}" --http0.9', detach=True
     )
     container.start()
     return_status = container.wait()

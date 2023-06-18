@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import aerospike
 from docker import DockerClient
@@ -10,7 +10,7 @@ from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, SingleContainerService
 from yellowbox.utils import DOCKER_EXPOSE_HOST
 
-__all__ = ['AerospikeService', 'AEROSPIKE_DEFAULT_PORT']
+__all__ = ["AerospikeService", "AEROSPIKE_DEFAULT_PORT"]
 
 AerospikeError = aerospike.exception.AerospikeError  # aerospike doesn't let you import this on its own
 
@@ -18,25 +18,26 @@ AEROSPIKE_DEFAULT_PORT = 3000
 
 
 class AerospikeService(SingleContainerService, RunMixin, AsyncRunMixin):
-    def __init__(self, docker_client: DockerClient, image='aerospike:ce-6.2.0.3', **kwargs):
+    def __init__(self, docker_client: DockerClient, image="aerospike:ce-6.2.0.3", **kwargs):
         container = create_and_pull(docker_client, image, publish_all_ports=True, detach=True)
         self.started = False
         super().__init__(container, **kwargs)
 
-    namespace = 'test'
+    namespace = "test"
 
     def client_port(self):
         return get_ports(self.container)[AEROSPIKE_DEFAULT_PORT]
 
-    def _client(self, config={}) -> aerospike.Client:
+    def _client(self, config: Optional[Dict[str, Any]] = None) -> aerospike.Client:
+        config = config or {}
         config = {
             **config,
-            'hosts': [(DOCKER_EXPOSE_HOST, self.client_port())],
+            "hosts": [(DOCKER_EXPOSE_HOST, self.client_port())],
         }
         return aerospike.client(config)
 
     @contextmanager
-    def client(self, config={}):
+    def client(self, config: Optional[Dict[str, Any]] = None):
         ret = self._client(config)
         try:
             yield ret
@@ -59,6 +60,6 @@ class AerospikeService(SingleContainerService, RunMixin, AsyncRunMixin):
         await retry_spec.aretry(client.is_connected, AerospikeError)
         self.started = True
 
-    def stop(self, signal='SIGKILL'):
+    def stop(self, signal="SIGKILL"):
         # change in default
         return super().stop(signal)

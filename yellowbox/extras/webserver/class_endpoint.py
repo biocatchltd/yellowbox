@@ -2,10 +2,16 @@ from functools import update_wrapper
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generic, Optional, TypeVar, overload
 
 from yellowbox.extras.webserver.endpoints import (
-    HTTP_SIDE_EFFECT, METHODS, WS_SIDE_EFFECT, MockHTTPEndpoint, MockWSEndpoint, http_endpoint, ws_endpoint
+    HTTP_SIDE_EFFECT,
+    METHODS,
+    WS_SIDE_EFFECT,
+    MockHTTPEndpoint,
+    MockWSEndpoint,
+    http_endpoint,
+    ws_endpoint,
 )
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class EndpointTemplate(Generic[T]):
@@ -13,6 +19,7 @@ class EndpointTemplate(Generic[T]):
     A template for a generic endpoint. To be created before any instance of a subclass of webserver, but to be added to
      all instances.
     """
+
     constructor: ClassVar[Callable]
 
     def __init__(self, *args, side_effect_method, **kwargs):
@@ -22,13 +29,14 @@ class EndpointTemplate(Generic[T]):
         update_wrapper(self, side_effect_method)
 
     def construct(self, instance) -> T:
-        if hasattr(self.side_effect_method, '__get__'):
+        if hasattr(self.side_effect_method, "__get__"):
             side_effect = self.side_effect_method.__get__(instance, type(instance))
         else:
             side_effect = self.side_effect_method
         return self.constructor(*self.args, side_effect, **self.kwargs)
 
     if TYPE_CHECKING:
+
         def __get__(self, instance, owner) -> T:
             ...
 
@@ -37,6 +45,7 @@ class HTTPEndpointTemplate(EndpointTemplate[MockHTTPEndpoint]):
     """
     A subclass of EndpointTemplate that is used to create an HTTP endpoint.
     """
+
     constructor = staticmethod(http_endpoint)  # type: ignore[assignment]
 
 
@@ -44,20 +53,32 @@ class WSEndpointTemplate(EndpointTemplate[MockWSEndpoint]):
     """
     A subclass of EndpointTemplate that is used to create a websocket endpoint.
     """
+
     constructor = staticmethod(ws_endpoint)  # type: ignore[assignment]
 
 
 @overload
-def class_http_endpoint(methods: METHODS, rule_string: str, *, auto_read_body: bool = True,
-                        forbid_head_verb: bool = True, name: Optional[str] = None)\
-        -> Callable[[Any], HTTPEndpointTemplate]:
+def class_http_endpoint(
+    methods: METHODS,
+    rule_string: str,
+    *,
+    auto_read_body: bool = True,
+    forbid_head_verb: bool = True,
+    name: Optional[str] = None
+) -> Callable[[Any], HTTPEndpointTemplate]:
     ...
 
 
 @overload
-def class_http_endpoint(methods: METHODS, rule_string: str, side_effect: HTTP_SIDE_EFFECT, *,
-                        auto_read_body: bool = True, forbid_implicit_head_verb: bool = True,
-                        name: Optional[str] = None) -> HTTPEndpointTemplate:
+def class_http_endpoint(
+    methods: METHODS,
+    rule_string: str,
+    side_effect: HTTP_SIDE_EFFECT,
+    *,
+    auto_read_body: bool = True,
+    forbid_implicit_head_verb: bool = True,
+    name: Optional[str] = None
+) -> HTTPEndpointTemplate:
     ...
 
 
@@ -75,6 +96,7 @@ def class_http_endpoint(methods: METHODS, rule_string: str, side_effect: Optiona
         A new http endpoint template
 
     """
+
     def ret(side_effect_method):
         return HTTPEndpointTemplate(methods, rule_string, side_effect_method=side_effect_method, **kwargs)
 
@@ -84,13 +106,17 @@ def class_http_endpoint(methods: METHODS, rule_string: str, side_effect: Optiona
 
 
 @overload
-def class_ws_endpoint(rule_string: str, *, name: Optional[str] = None, allow_abrupt_disconnect: bool = True)\
-        -> Callable[[Any], WSEndpointTemplate]: pass
+def class_ws_endpoint(
+    rule_string: str, *, name: Optional[str] = None, allow_abrupt_disconnect: bool = True
+) -> Callable[[Any], WSEndpointTemplate]:
+    pass
 
 
 @overload
-def class_ws_endpoint(rule_string: str, side_effect: WS_SIDE_EFFECT, *,
-                      name: Optional[str] = None, allow_abrupt_disconnect: bool = True) -> WSEndpointTemplate: pass
+def class_ws_endpoint(
+    rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: Optional[str] = None, allow_abrupt_disconnect: bool = True
+) -> WSEndpointTemplate:
+    pass
 
 
 def class_ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None, **kwargs):
@@ -105,6 +131,7 @@ def class_ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = 
         A new websocket endpoint template
 
     """
+
     def ret(side_effect_method):
         return WSEndpointTemplate(rule_string, side_effect_method=side_effect_method, **kwargs)
 

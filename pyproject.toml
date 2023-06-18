@@ -80,9 +80,9 @@ yellowbox = "yellowbox._pytest"
 
 [tool.ruff]
 # https://beta.ruff.rs/docs/rules/
-select = ["I", "E", "W", "F", "N", "S", "BLE", "COM", "C4", "ISC", "ICN", "G", "PIE", "T20", "PYI", "Q", "SLF", "SIM",
-          "ERA", "PGH", "PLC", "PLE", "PLR", "PLW", "RUF", "PT", "UP", "B"]
-# should be included later: ANN, RET?, ARG, TRY
+select = ["I", "E", "W", "F", "N", "BLE", "COM", "C4", "ISC", "ICN", "G", "PIE", "T20", "PYI", "Q", "SLF", "SIM",
+          "ERA", "PGH", "PLC", "PLE", "PLR", "PLW", "RUF", "PT", "B"]
+# should be included later: UP, ANN, RET?, ARG, TRY, S
 ignore = [
     "COM812",  # trailing comma, handled by black
     "PLR2004",  # Magic value used in comparison
@@ -99,15 +99,22 @@ ignore = [
     "SIM118",  # Use `key in {}` instead of `key in {}.keys()`
     "SIM112",  # Use capitalized environment variable
     "S311", # use of non-cryptographic random
+    "T201",  # print found
+    "PT013",  # Found incorrect import of pytest, use simple `import pytest` instead
+    "B905", # `zip()` without an explicit `strict=` parameter
 ]
 line-length = 120
 show-source = true
+exclude = [
+    "yellowbox/extras/websocket.py",
+    "yellowbox/extras/http_server.py",
+    "tests/extras/test_websocket.py",
+    "tests/extras/test_http_server.py",
+    "docs/conf.py",
+]
 
 [tool.ruff.isort]
 combine-as-imports=true
-
-[tool.ruff.flake8-self]
-ignore-names = ["_3DS", "_3DSOutcome", "_set_fallbacks"]
 
 [tool.ruff.flake8-pytest-style]
 raises-require-match-for = []
@@ -119,7 +126,6 @@ raises-require-match-for = []
     "S105",  # Possible hardcoded password
     "S113",  # Probable use of requests call without timeout
     "PIE804", # Unnecessary `dict` kwargs
-    "PT013",  # Found incorrect import of pytest, use simple `import pytest` instead
     "PT004", # Fixture does not return anything, add leading underscore
     "BLE001",  # BLE001 Do not catch blind exception: `Exception`
     "F405",  # name may be undefined, or defined from star imports

@@ -11,7 +11,7 @@ from weakref import WeakMethod
 from yellowbox.subclasses import YellowService
 from yellowbox.utils import docker_host_name
 
-__all__ = ['FakeLogstashService']
+__all__ = ["FakeLogstashService"]
 _logger = logging.getLogger(__name__)
 
 _T = TypeVar("_T")
@@ -76,6 +76,7 @@ class FakeLogstashService(YellowService):
         >>> ls.assert_logs("ERROR")
         >>> assert ls.records[0]["record"] == "value"
     """
+
     delimiter: bytes = b"\n"
     encoding: str = "utf-8"
     local_host: str = "localhost"
@@ -112,9 +113,8 @@ class FakeLogstashService(YellowService):
         self._root = root
 
         # Avoiding a cyclic reference.
-        _background = WeakMethod(self._background_thread)  # type: ignore # typeshed bug.
-        self._thread = threading.Thread(target=lambda: _background()(),
-                                        daemon=True)
+        _background = WeakMethod(self._background_thread)
+        self._thread = threading.Thread(target=lambda: _background()(), daemon=True)
 
         self._selector = selectors.DefaultSelector()
 
@@ -182,8 +182,7 @@ class FakeLogstashService(YellowService):
                 self._selector.unregister(sock)
                 sock.shutdown(socket.SHUT_RDWR)
                 sock.close()
-                _logger.exception("Failed decoding json, closing socket. "
-                                  "Data received: %s", chunk)
+                _logger.exception("Failed decoding json, closing socket. Data received: %s", chunk)
                 return
 
         return process_socket_data
@@ -192,18 +191,16 @@ class FakeLogstashService(YellowService):
         """Background thread processing incoming connections and data"""
         while True:
             events = self._selector.select(timeout=5)  # For signal handling
-            for key, mask in events:
+            for key, _mask in events:
                 # Handle closing request
                 if key.fileobj is self._rshutdown:
-                    assert self._rshutdown.recv(
-                        len(_CLOSE_SENTINEL)) == _CLOSE_SENTINEL
+                    assert self._rshutdown.recv(len(_CLOSE_SENTINEL)) == _CLOSE_SENTINEL
                     return
 
                 # Handle new connection
                 if key.fileobj is self._root:
                     new_socket, _ = self._root.accept()
-                    self._selector.register(new_socket, selectors.EVENT_READ,
-                                            self._create_data_callback(new_socket))
+                    self._selector.register(new_socket, selectors.EVENT_READ, self._create_data_callback(new_socket))
                     continue
 
                 # Data received, run callback
@@ -254,8 +251,7 @@ class FakeLogstashService(YellowService):
         """Filter records in the given level or above."""
         level = _level_to_int(level)
 
-        return (record for record in self.records if
-                logging.getLevelName(record["level"]) >= level)
+        return (record for record in self.records if logging.getLevelName(record["level"]) >= level)
 
     def assert_logs(self, level: Union[str, int]):
         """Asserts that log messages were received in the given level or above.
@@ -271,21 +267,19 @@ class FakeLogstashService(YellowService):
         level = _level_to_int(level)
 
         if not any(self.filter_records(level)):
-            raise AssertionError(f"No logs of level {logging.getLevelName(level)} "
-                                 f"or above were received.")
+            raise AssertionError(f"No logs of level {logging.getLevelName(level)} or above were received.")
 
     def assert_no_logs(self, level: Union[str, int]):
         """Asserts that no log messages were received in the given level or above.
 
-         Args:
-             level: Log level by name or number
+        Args:
+            level: Log level by name or number
 
-         Raises:
-             AssertionError: A log above the given level was received.
-         """
+        Raises:
+            AssertionError: A log above the given level was received.
+        """
         level = _level_to_int(level)
 
         record = next(self.filter_records(level), None)
         if record:
-            raise AssertionError(f"A log level {record['level']} was received. "
-                                 f"Message: {record['message']}")
+            raise AssertionError(f"A log level {record['level']} was received. Message: {record['message']}")

@@ -9,7 +9,7 @@ import pytest
 from yellowbox.extras.logstash import FakeLogstashService
 
 
-@pytest.fixture
+@pytest.fixture()
 def logstash():
     with FakeLogstashService().start() as ls:
         yield ls
@@ -103,10 +103,8 @@ def test_assert_no_logs(logstash):
 
 
 def test_filter_records(logstash):
-    send_records(logstash, {"level": "INFO"}, {"level": "WARNING"},
-                 {"level": "ERROR"})
-    assert list(logstash.filter_records("warning")) == [
-        {"level": "WARNING"}, {"level": "ERROR"}]
+    send_records(logstash, {"level": "INFO"}, {"level": "WARNING"}, {"level": "ERROR"})
+    assert list(logstash.filter_records("warning")) == [{"level": "WARNING"}, {"level": "ERROR"}]
 
 
 def test_is_alive():

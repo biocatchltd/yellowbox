@@ -14,6 +14,7 @@ from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleEndpointService
 from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
 
 if TYPE_CHECKING:  # pragma: no cover
+
     class AsDefault(Enum):
         as_default = auto()
 
@@ -24,22 +25,35 @@ else:
 ConnectionOptions = Union[str, Mapping[str, str]]
 
 
-class Database(ContextManager['Database']):
+class Database(ContextManager["Database"]):
     # represents a database that is ensured to exist
     def __init__(self, name: str, owner: SQLService):
         self.name = name
         self.owner = owner
 
-    def local_connection_string(self, dialect: Union[str, AsDefault] = as_default, driver: Optional[str] = None,
-                                options: Union[ConnectionOptions, None, AsDefault] = as_default):
+    def local_connection_string(
+        self,
+        dialect: Union[str, AsDefault] = as_default,
+        driver: Optional[str] = None,
+        options: Union[ConnectionOptions, None, AsDefault] = as_default,
+    ):
         return self.owner.local_connection_string(dialect, driver, database=self.name, options=options)
 
-    def container_connection_string(self, hostname: str, dialect: Union[str, AsDefault] = as_default,
-                                    driver: Optional[str] = None, options: Optional[ConnectionOptions] = None):
+    def container_connection_string(
+        self,
+        hostname: str,
+        dialect: Union[str, AsDefault] = as_default,
+        driver: Optional[str] = None,
+        options: Optional[ConnectionOptions] = None,
+    ):
         return self.owner.container_connection_string(hostname, dialect, driver, database=self.name, options=options)
 
-    def host_connection_string(self, dialect: Union[str, AsDefault] = as_default, driver: Optional[str] = None,
-                               options: Optional[ConnectionOptions] = None):
+    def host_connection_string(
+        self,
+        dialect: Union[str, AsDefault] = as_default,
+        driver: Optional[str] = None,
+        options: Optional[ConnectionOptions] = None,
+    ):
         return self.owner.host_connection_string(dialect, driver, database=self.name, options=options)
 
     def __enter__(self):
@@ -51,22 +65,32 @@ class Database(ContextManager['Database']):
 
 def _options_to_string(options: Optional[ConnectionOptions]) -> str:
     if options is None:
-        return ''
+        return ""
     if isinstance(options, Mapping):
-        return '?' + '&'.join(f"{k}={str(v).replace(' ', '+')}" for k, v in options.items())
-    if not options.startswith('?'):
-        return '?' + options
+        return "?" + "&".join(f"{k}={str(v).replace(' ', '+')}" for k, v in options.items())
+    if not options.startswith("?"):
+        return "?" + options
     return options
 
 
-class SQLService(SingleEndpointService, RunMixin, AsyncRunMixin, ):
+class SQLService(
+    SingleEndpointService,
+    RunMixin,
+    AsyncRunMixin,
+):
     LOCAL_HOSTNAME = DOCKER_EXPOSE_HOST
     INTERNAL_PORT: int
     DIALECT: str
     DEFAULT_START_RETRYSPEC = RetrySpec(attempts=20)
 
-    def __init__(self, *args, local_driver: Optional[str] = None, local_options: Optional[ConnectionOptions] = None,
-                 default_database: str, **kwargs):
+    def __init__(
+        self,
+        *args,
+        local_driver: Optional[str] = None,
+        local_options: Optional[ConnectionOptions] = None,
+        default_database: str,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.local_driver = local_driver
         self.local_options = local_options
@@ -91,9 +115,14 @@ class SQLService(SingleEndpointService, RunMixin, AsyncRunMixin, ):
     def external_port(self) -> int:
         return get_ports(self._single_endpoint)[self.INTERNAL_PORT]
 
-    def local_connection_string(self, dialect: Union[str, AsDefault] = as_default,
-                                driver: Union[str, AsDefault, None] = as_default, *, database: str,
-                                options: Union[ConnectionOptions, AsDefault, None] = as_default) -> str:
+    def local_connection_string(
+        self,
+        dialect: Union[str, AsDefault] = as_default,
+        driver: Union[str, AsDefault, None] = as_default,
+        *,
+        database: str,
+        options: Union[ConnectionOptions, AsDefault, None] = as_default,
+    ) -> str:
         """
         Generate an sqlalchemy-style connection string to the database in the service from the docker host.
         Args:
@@ -108,19 +137,27 @@ class SQLService(SingleEndpointService, RunMixin, AsyncRunMixin, ):
         if driver is as_default:
             driver = self.local_driver
         if driver is not None:
-            dialect += '+' + driver
+            dialect += "+" + driver
 
         if options is as_default:
             options = self.local_options
 
         options = _options_to_string(options)
 
-        return f'{dialect}://{":".join(self.userpass())}@{self.LOCAL_HOSTNAME}:{self.external_port()}/' \
-               f'{database}{options}'
+        return (
+            f'{dialect}://{":".join(self.userpass())}@{self.LOCAL_HOSTNAME}:{self.external_port()}/'
+            f"{database}{options}"
+        )
 
-    def container_connection_string(self, hostname: str, dialect: Union[str, AsDefault] = as_default,
-                                    driver: Optional[str] = None, *, database: str,
-                                    options: Optional[ConnectionOptions] = None) -> str:
+    def container_connection_string(
+        self,
+        hostname: str,
+        dialect: Union[str, AsDefault] = as_default,
+        driver: Optional[str] = None,
+        *,
+        database: str,
+        options: Optional[ConnectionOptions] = None,
+    ) -> str:
         """
         Generate an sqlalchemy-style connection string to the database in the service from another container on a
          common network.
@@ -135,15 +172,20 @@ class SQLService(SingleEndpointService, RunMixin, AsyncRunMixin, ):
             dialect = self.DIALECT
 
         if driver is not None:
-            dialect += '+' + driver
+            dialect += "+" + driver
 
         options = _options_to_string(options)
 
-        return f'{dialect}://{":".join(self.userpass())}@{hostname}:{self.INTERNAL_PORT}/' \
-               f'{database}{options}'
+        return f"{dialect}://{':'.join(self.userpass())}@{hostname}:{self.INTERNAL_PORT}/{database}{options}"
 
-    def host_connection_string(self, dialect: Union[str, AsDefault] = as_default, driver: Optional[str] = None,
-                               *, database: str, options: Optional[ConnectionOptions] = None) -> str:
+    def host_connection_string(
+        self,
+        dialect: Union[str, AsDefault] = as_default,
+        driver: Optional[str] = None,
+        *,
+        database: str,
+        options: Optional[ConnectionOptions] = None,
+    ) -> str:
         """
         Generate an sqlalchemy-style connection string to the database in the service from another container.
         Args:
@@ -156,12 +198,11 @@ class SQLService(SingleEndpointService, RunMixin, AsyncRunMixin, ):
             dialect = self.DIALECT
 
         if driver is not None:
-            dialect += '+' + driver
+            dialect += "+" + driver
 
         options = _options_to_string(options)
 
-        return f'{dialect}://{":".join(self.userpass())}@{docker_host_name}:{self.external_port()}/' \
-               f'{database}{options}'
+        return f"{dialect}://{':'.join(self.userpass())}@{docker_host_name}:{self.external_port()}/{database}{options}"
 
     def database(self, name: str) -> Database:
         if not self.database_exists(name):

@@ -6,7 +6,7 @@ from typing import Callable, Optional, TypeVar
 
 from yaspin import yaspin
 
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 _SPINNER_FAILMSG = "💥 "
 _SPINNER_SUCCESSMSG = "✅ "
 
@@ -30,17 +30,17 @@ def _get_spinner(real=True) -> Callable[[str], AbstractContextManager]:
 
 def get_free_port():
     with closing(socket(AF_INET, SOCK_STREAM)) as s:
-        s.bind(('', 0))
+        s.bind(("", 0))
         s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         return s.getsockname()[1]
 
 
 uname = platform.uname().release.lower()
 
-if platform.system() == "Linux" and ('microsoft' not in uname):  # catch WSL
-    docker_host_name = '172.17.0.1'
+if platform.system() == "Linux" and ("microsoft" not in uname):  # catch WSL
+    docker_host_name = "172.17.0.1"
 else:
-    docker_host_name = 'host.docker.internal'
+    docker_host_name = "host.docker.internal"
 
 # if we expose a port in docker, this is where we expect to find it hosted
 # this is almost always just localhost
@@ -61,7 +61,7 @@ def update_docker_expose_host(value: Optional[str]):
         YELLOWBOX_DOCKER_EXPOSE_HOST
 
     """
-    global DOCKER_EXPOSE_HOST
+    global DOCKER_EXPOSE_HOST  # noqa: PLW0603
 
     if value is None:
         value = "127.0.0.1"

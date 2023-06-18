@@ -12,12 +12,19 @@ from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleEndpointService
 from yellowbox.utils import DOCKER_EXPOSE_HOST, get_free_port
 
-__all__ = ['KafkaService']
+__all__ = ["KafkaService"]
 
 
 class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
-    def __init__(self, docker_client: DockerClient, tag_or_images: Union[str, Tuple[str, str]] = 'latest',
-                 inner_port=0, outer_port=0, bitnami_debug: bool = False, **kwargs):
+    def __init__(
+        self,
+        docker_client: DockerClient,
+        tag_or_images: Union[str, Tuple[str, str]] = "latest",
+        inner_port=0,
+        outer_port=0,
+        bitnami_debug: bool = False,
+        **kwargs,
+    ):
         self.inner_port = inner_port or get_free_port()
         self.outer_port = outer_port or get_free_port()
         if isinstance(tag_or_images, str):
@@ -27,7 +34,7 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
             zookeeper_image, broker_image = tag_or_images
 
         # broker must have a known alias at creation time
-        self.static_broker_alias = f'broker-{uuid1()}'
+        self.static_broker_alias = f"broker-{uuid1()}"
 
         creator = SafeContainerCreator(docker_client)
 
@@ -36,34 +43,37 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
             extra_bitnami_env["BITNAMI_DEBUG"] = "true"
 
         self.zookeeper = creator.create_and_pull(
-            zookeeper_image, detach=True,
+            zookeeper_image,
+            detach=True,
             publish_all_ports=True,
             environment={
-                'ZOOKEEPER_CLIENT_PORT': '2181',
-                'ZOOKEEPER_TICK_TIME': '2000',
-                'ALLOW_ANONYMOUS_LOGIN': 'yes',
-                **extra_bitnami_env
-            })
+                "ZOOKEEPER_CLIENT_PORT": "2181",
+                "ZOOKEEPER_TICK_TIME": "2000",
+                "ALLOW_ANONYMOUS_LOGIN": "yes",
+                **extra_bitnami_env,
+            },
+        )
 
         self.broker = creator.create_and_pull(
             broker_image,
             ports={
-                str(self.outer_port): ('0.0.0.0', self.outer_port),
-                str(self.inner_port): ('0.0.0.0', self.inner_port)
+                str(self.outer_port): ("0.0.0.0", self.outer_port),
+                str(self.inner_port): ("0.0.0.0", self.inner_port),
             },
             publish_all_ports=True,
             detach=True,
             environment={
-                'KAFKA_CFG_ADVERTISED_LISTENERS': f'INNER://{self.static_broker_alias}:{self.inner_port},'
-                                                  f'OUTER://localhost:{self.outer_port}',
+                "KAFKA_CFG_ADVERTISED_LISTENERS": f"INNER://{self.static_broker_alias}:{self.inner_port},"
+                f"OUTER://localhost:{self.outer_port}",
                 "KAFKA_CFG_ZOOKEEPER_CONNECT": "zk/2181",
-                'ALLOW_PLAINTEXT_LISTENER': 'yes',
-                'KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP': 'INNER:PLAINTEXT,OUTER:PLAINTEXT',
-                'KAFKA_INTER_BROKER_LISTENER_NAME': 'INNER',
-                'KAFKA_CFG_LISTENERS': f'INNER://:{self.inner_port},OUTER://:{self.outer_port}',
+                "ALLOW_PLAINTEXT_LISTENER": "yes",
+                "KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP": "INNER:PLAINTEXT,OUTER:PLAINTEXT",
+                "KAFKA_INTER_BROKER_LISTENER_NAME": "INNER",
+                "KAFKA_CFG_LISTENERS": f"INNER://:{self.inner_port},OUTER://:{self.outer_port}",
                 "KAFKA_ENABLE_KRAFT": "false",
-                **extra_bitnami_env
-            })
+                **extra_bitnami_env,
+            },
+        )
 
         self.network = anonymous_network(docker_client)
         self.network.connect(self.zookeeper, aliases=["zk"])
@@ -78,23 +88,23 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
     def consumer(self, **kwargs) -> ContextManager[KafkaConsumer]:
         port = self.connection_port()
         return cast(
-            'ContextManager[KafkaConsumer]',
-            closing(KafkaConsumer(
-                bootstrap_servers=[f'{DOCKER_EXPOSE_HOST}:{port}'],
-                security_protocol="PLAINTEXT",
-                **kwargs
-            ))
+            "ContextManager[KafkaConsumer]",
+            closing(
+                KafkaConsumer(
+                    bootstrap_servers=[f"{DOCKER_EXPOSE_HOST}:{port}"], security_protocol="PLAINTEXT", **kwargs
+                )
+            ),
         )
 
     def producer(self, **kwargs) -> ContextManager[KafkaProducer]:
         port = self.connection_port()
         return cast(
-            'ContextManager[KafkaProducer]',
-            closing(KafkaProducer(
-                bootstrap_servers=[f'{DOCKER_EXPOSE_HOST}:{port}'],
-                security_protocol="PLAINTEXT",
-                **kwargs
-            ))
+            "ContextManager[KafkaProducer]",
+            closing(
+                KafkaProducer(
+                    bootstrap_servers=[f"{DOCKER_EXPOSE_HOST}:{port}"], security_protocol="PLAINTEXT", **kwargs
+                )
+            ),
         )
 
     def start(self, retry_spec: Optional[RetrySpec] = None):
@@ -110,7 +120,7 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
         with await retry_spec.aretry(self.consumer, (KafkaError, ConnectionError, ValueError)):
             pass
 
-    def stop(self, signal='SIGKILL'):
+    def stop(self, signal="SIGKILL"):
         # difference in default signal
         self.network.disconnect(self.broker)
         self.network.disconnect(self.zookeeper)
@@ -121,7 +131,7 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
         if not isinstance(aliases, list):
             aliases = list(aliases)
         aliases.append(self.static_broker_alias)
-        kwargs['aliases'] = aliases
+        kwargs["aliases"] = aliases
         return super().connect(network, **kwargs)
 
     @property

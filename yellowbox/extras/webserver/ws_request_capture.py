@@ -1,8 +1,22 @@
 from __future__ import annotations
 
+from builtins import ellipsis
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, Collection, Dict, Iterable, List, Mapping, Optional, Pattern, Sequence, Tuple, Union, overload
+from typing import (
+    Any,
+    Collection,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Pattern,
+    Sequence,
+    Tuple,
+    Union,
+    overload,
+)
 
 from starlette.requests import HTTPConnection
 from starlette.websockets import WebSocket
@@ -32,16 +46,16 @@ class WebSocketRecorder(WebSocket):
 
     async def receive(self):
         message = await super().receive()
-        message_type = message.get('type')
+        message_type = message.get("type")
         if message_type == "websocket.receive":
             # by asgi uvicorn implementation (def asgi_receive), a message will always contain exactly one of
             #  'text' or 'bytes'
-            data = message.get('text')
+            data = message.get("text")
             if data is None:
-                data = message.get('bytes')
+                data = message.get("bytes")
             self.transcript.append(RecordedWSMessage(data, Sender.Client))
         elif message_type == "websocket.disconnect":
-            self.transcript.close = (Sender.Client, message.get('code', 1000))
+            self.transcript.close = (Sender.Client, message.get("code", 1000))
         return message
 
     async def send(self, message):
@@ -49,13 +63,13 @@ class WebSocketRecorder(WebSocket):
         if message_type == "websocket.accept":
             self.transcript.accepted = True
         elif message_type == "websocket.close":
-            self.transcript.close = (Sender.Server, message.get('code', 1000))
+            self.transcript.close = (Sender.Server, message.get("code", 1000))
         elif message_type == "websocket.send":
             # by asgi uvicorn implementation (def asgi_receive), a message will always contain exactly one of
             #  'text' or 'data'
-            data = message.get('text')
+            data = message.get("text")
             if data is None:
-                data = message.get('bytes')
+                data = message.get("bytes")
             self.transcript.append(RecordedWSMessage(data, Sender.Server))
         await super().send(message)
 
@@ -87,11 +101,11 @@ class Sender(Enum):
         ... message = RecordedWSMessage('tk1', Sender.Server)
         ... assert expected_message.matches(message)
     """
+
     Server = auto()
     Client = auto()
 
-    def __call__(self, data: Union[Pattern[str], Pattern[bytes], str, bytes, ellipsis]) \
-            -> ExpectedWSMessage:  # noqa: F821
+    def __call__(self, data: Union[Pattern[str], Pattern[bytes], str, bytes, ellipsis]) -> ExpectedWSMessage:
         """
         Create an expected message, originating from this caller
         Args:
@@ -106,11 +120,12 @@ class RecordedWSMessage:
     """
     A recorded websocket message, with a sender and value sent
     """
+
     data: Union[bytes, str]
     sender: Sender
 
     def __repr__(self):
-        return f'RecordedWSMessage({self.data!r}, Sender.{self.sender.name})'
+        return f"RecordedWSMessage({self.data!r}, Sender.{self.sender.name})"
 
 
 class RecordedWSTranscript(List[RecordedWSMessage]):
@@ -118,8 +133,14 @@ class RecordedWSTranscript(List[RecordedWSMessage]):
     A transcript of a single websocket connection
     """
 
-    def __init__(self, arg: Iterable[RecordedWSMessage], headers: Dict[str, List[str]], path: str,
-                 path_params: Dict[str, Any], query_params: Dict[str, List[str]]):
+    def __init__(
+        self,
+        arg: Iterable[RecordedWSMessage],
+        headers: Dict[str, List[str]],
+        path: str,
+        path_params: Dict[str, Any],
+        query_params: Dict[str, List[str]],
+    ):
         """
         Args:
             arg: forwarded to super (List)
@@ -147,10 +168,10 @@ class RecordedWSTranscript(List[RecordedWSMessage]):
         """
         headers: Dict[str, List[str]] = {}
         for h_k, h_v in connection.headers.items():
-            h_k = h_k.lower()
-            h_lst = headers.get(h_k)
+            h_k_lower = h_k.lower()
+            h_lst = headers.get(h_k_lower)
             if h_lst is None:
-                headers[h_k] = [h_v]
+                headers[h_k_lower] = [h_v]
             else:
                 h_lst.append(h_v)
         path = connection.url.path
@@ -170,7 +191,7 @@ class ExpectedWSMessage:
     A single expected message in a websockets connection
     """
 
-    def __init__(self, data: Union[Pattern[str], Pattern[bytes], str, bytes, ellipsis], sender: Sender):  # noqa: F821
+    def __init__(self, data: Union[Pattern[str], Pattern[bytes], str, bytes, ellipsis], sender: Sender):
         """
         Args:
             data: the expected data. Can be either a bytes or string for an exact match, a compiled pattern for a full
@@ -190,7 +211,7 @@ class ExpectedWSMessage:
             True if the message matches, or a mismatch reason otherwise.
         """
         if self.sender != message.sender:
-            return MismatchReason(reason_is_ne('sender', self.sender, message.sender))
+            return MismatchReason(reason_is_ne("sender", self.sender, message.sender))
 
         if self.data is ...:
             return True
@@ -200,15 +221,14 @@ class ExpectedWSMessage:
             except TypeError:  # this would happen when we try to use byte patterns on strs or vice-versa
                 match = None
             if not match:
-                return MismatchReason(f'expected data to match pattern {self.data.pattern!r}, got {message.data!r}')
+                return MismatchReason(f"expected data to match pattern {self.data.pattern!r}, got {message.data!r}")
             return True
-        else:
-            if self.data != message.data:
-                return MismatchReason(reason_is_ne('data', self.data, message.data))
+        elif self.data != message.data:
+            return MismatchReason(reason_is_ne("data", self.data, message.data))
         return True
 
     def __str__(self):
-        return f'{self.sender.name}({self.data})'
+        return f"{self.sender.name}({self.data})"
 
 
 class ExpectedWSTranscript(ScopeExpectation):
@@ -216,14 +236,19 @@ class ExpectedWSTranscript(ScopeExpectation):
     An expected websocket transcript
     """
 
-    def __init__(self, messages: Sequence[Union[ellipsis, ExpectedWSMessage]] = (...,),  # noqa: F821
-                 headers: Optional[Mapping[str, Collection[str]]] = None,
-                 headers_submap: Optional[Mapping[str, Collection[str]]] = None,
-                 path: Optional[Union[str, Pattern[str]]] = None, path_params: Optional[Mapping[str, Any]] = None,
-                 path_params_submap: Optional[Mapping[str, Any]] = None,
-                 query_params: Optional[Mapping[str, Collection[str]]] = None,
-                 query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-                 close: Optional[Tuple[Sender, int]] = None, accepted: Optional[bool] = True):
+    def __init__(
+        self,
+        messages: Sequence[Union[ellipsis, ExpectedWSMessage]] = (...,),
+        headers: Optional[Mapping[str, Collection[str]]] = None,
+        headers_submap: Optional[Mapping[str, Collection[str]]] = None,
+        path: Optional[Union[str, Pattern[str]]] = None,
+        path_params: Optional[Mapping[str, Any]] = None,
+        path_params_submap: Optional[Mapping[str, Any]] = None,
+        query_params: Optional[Mapping[str, Collection[str]]] = None,
+        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+        close: Optional[Tuple[Sender, int]] = None,
+        accepted: Optional[bool] = True,
+    ):
         """
         Args:
             messages: the expected messages in the transcript, can begin or end ellipsis to signify that any
@@ -243,8 +268,9 @@ class ExpectedWSTranscript(ScopeExpectation):
             accepted: If specified, will only match transcripts of accepted connections (if True) or rejected
              connections (if False)
         """
-        super().__init__(headers, headers_submap, path, path_params, path_params_submap, query_params,
-                         query_params_submap)
+        super().__init__(
+            headers, headers_submap, path, path_params, path_params_submap, query_params, query_params_submap
+        )
         if messages and messages[0] is ...:
             messages = messages[1:]
             self.any_start = True
@@ -258,7 +284,7 @@ class ExpectedWSTranscript(ScopeExpectation):
             self.any_end = False
 
         if any(m is ... for m in messages):
-            raise TypeError('ExpectedWSTranscript can only contain ellipsis at the start and at the end')
+            raise TypeError("ExpectedWSTranscript can only contain ellipsis at the start and at the end")
 
         self.expected_messages: Tuple[ExpectedWSMessage] = messages  # type:ignore[assignment]
         self.accepted = accepted
@@ -274,21 +300,21 @@ class ExpectedWSTranscript(ScopeExpectation):
             True if the transcript matches, or a mismatch reason otherwise.
         """
         if recorded.close is None:
-            raise RuntimeError('the transcript is not yet done')
+            raise RuntimeError("the transcript is not yet done")
 
         reasons = list(self.scope_mismatch_reasons(recorded))
 
         if self.close is not None and recorded.close != self.close:
-            reasons.append(reason_is_ne('close_code', self.close, recorded.close))
+            reasons.append(reason_is_ne("close_code", self.close, recorded.close))
         if self.accepted is not None and recorded.accepted != self.accepted:
-            reasons.append(reason_is_ne('accepted', self.accepted, recorded.accepted))
+            reasons.append(reason_is_ne("accepted", self.accepted, recorded.accepted))
 
         if not self.any_start and not self.any_end and len(recorded) != len(self.expected_messages):
-            reasons.append(f'expected exactly {len(self.expected_messages)} messages, found {len(recorded)}')
+            reasons.append(f"expected exactly {len(self.expected_messages)} messages, found {len(recorded)}")
         if len(recorded) < len(self.expected_messages):
-            reasons.append(f'expected at least {len(self.expected_messages)} messages, found only {len(recorded)}')
+            reasons.append(f"expected at least {len(self.expected_messages)} messages, found only {len(recorded)}")
         if reasons:
-            return MismatchReason(', '.join(reasons))
+            return MismatchReason(", ".join(reasons))
         # in order to account for any_start, any_end, we check every subsequence of the recorded transcript
         # we store a list of candidate indices for the subsequence start
         if not self.any_start:
@@ -305,12 +331,12 @@ class ExpectedWSTranscript(ScopeExpectation):
                 rec = recorded[start_index + i]
                 match = expected_message.matches(rec)
                 if not match:
-                    whynots.append(f'{rec} did not match {expected_message}: {match}')
+                    whynots.append(f"{rec} did not match {expected_message}: {match}")
                     break
             else:
                 return True
 
-        return MismatchReason('could not find expected calls' + ''.join('\n\t' + wn for wn in whynots))
+        return MismatchReason("could not find expected calls" + "".join("\n\t" + wn for wn in whynots))
 
 
 class RecordedWSTranscripts(List[RecordedWSTranscript]):
@@ -323,38 +349,43 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
         asserts that no connections were recorded.
         """
         if self:
-            raise AssertionError(f'{len(self)} requests were made')
+            raise AssertionError(f"{len(self)} requests were made")
 
     def assert_requested(self):
         """
         asserts that at least one transcript was recorded.
         """
         if not self:
-            raise AssertionError('No requests were made')
+            raise AssertionError("No requests were made")
 
     def assert_requested_once(self):
         """
         asserts that exactly one transcript was recorded.
         """
         if not self:
-            raise AssertionError('No requests were made')
+            raise AssertionError("No requests were made")
         if len(self) > 1:
-            raise AssertionError(f'{len(self)} requests were made')
+            raise AssertionError(f"{len(self)} requests were made")
 
     @overload
     def assert_requested_with(self, expected: ExpectedWSTranscript):
         ...
 
     @overload
-    def assert_requested_with(self, *, messages: Sequence[Union[ellipsis, ExpectedWSMessage]] = (...,),  # noqa: F821
-                              headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
-                              headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
-                              path: Optional[Union[str, Pattern[str]]] = None,
-                              path_params: Optional[Mapping[str, Any]] = None,
-                              path_params_submap: Optional[Mapping[str, Any]] = None,
-                              query_params: Optional[Mapping[str, Collection[str]]] = None,
-                              query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-                              close: Optional[Tuple[Sender, int]] = None, accepted: Optional[bool] = True):
+    def assert_requested_with(
+        self,
+        *,
+        messages: Sequence[Union[ellipsis, ExpectedWSMessage]] = (...,),
+        headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
+        headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
+        path: Optional[Union[str, Pattern[str]]] = None,
+        path_params: Optional[Mapping[str, Any]] = None,
+        path_params_submap: Optional[Mapping[str, Any]] = None,
+        query_params: Optional[Mapping[str, Collection[str]]] = None,
+        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+        close: Optional[Tuple[Sender, int]] = None,
+        accepted: Optional[bool] = True,
+    ):
         ...
 
     def assert_requested_with(self, expected: Optional[ExpectedWSTranscript] = None, **kwargs):
@@ -366,14 +397,14 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
              the keyword arguments to the constructor of ExpectedWSTranscript.
         """
         if expected and kwargs:
-            raise TypeError('method can be called with either expected or keyword args, but not both')
+            raise TypeError("method can be called with either expected or keyword args, but not both")
         if not expected:
             if not kwargs:
-                raise TypeError('either expected or keyword args must be provided')
+                raise TypeError("either expected or keyword args must be provided")
             expected = ExpectedWSTranscript(**kwargs)
 
         if not self:
-            raise AssertionError('No requests were made')
+            raise AssertionError("No requests were made")
         match = expected.matches(self[-1])
         if not match:
             raise AssertionError(str(match))
@@ -383,16 +414,20 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
         ...
 
     @overload
-    def assert_requested_once_with(self, *,
-                                   messages: Sequence[Union[ellipsis, ExpectedWSMessage]] = (...,),  # noqa: F821
-                                   headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
-                                   headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
-                                   path: Optional[Union[str, Pattern[str]]] = None,
-                                   path_params: Optional[Mapping[str, Any]] = None,
-                                   path_params_submap: Optional[Mapping[str, Any]] = None,
-                                   query_params: Optional[Mapping[str, Collection[str]]] = None,
-                                   query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-                                   close: Optional[Tuple[Sender, int]] = None, accepted: Optional[bool] = True):
+    def assert_requested_once_with(
+        self,
+        *,
+        messages: Sequence[Union[ellipsis, ExpectedWSMessage]] = (...,),
+        headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
+        headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
+        path: Optional[Union[str, Pattern[str]]] = None,
+        path_params: Optional[Mapping[str, Any]] = None,
+        path_params_submap: Optional[Mapping[str, Any]] = None,
+        query_params: Optional[Mapping[str, Collection[str]]] = None,
+        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+        close: Optional[Tuple[Sender, int]] = None,
+        accepted: Optional[bool] = True,
+    ):
         ...
 
     def assert_requested_once_with(self, expected: Optional[ExpectedWSTranscript] = None, **kwargs):
@@ -404,16 +439,16 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
              the keyword arguments to the constructor of ExpectedWSTranscript.
         """
         if expected and kwargs:
-            raise TypeError('method can be called with either expected or keyword args, but not both')
+            raise TypeError("method can be called with either expected or keyword args, but not both")
         if not expected:
             if not kwargs:
-                raise TypeError('either expected or keyword args must be provided')
+                raise TypeError("either expected or keyword args must be provided")
             expected = ExpectedWSTranscript(**kwargs)
 
         if not self:
-            raise AssertionError('No requests were made')
+            raise AssertionError("No requests were made")
         if len(self) > 1:
-            raise AssertionError(f'{len(self)} requests were made')
+            raise AssertionError(f"{len(self)} requests were made")
         match = expected.matches(self[0])
         if not match:
             raise AssertionError(str(match))
@@ -423,15 +458,20 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
         ...
 
     @overload
-    def assert_any_request(self, *, messages: Sequence[Union[ellipsis, ExpectedWSMessage]] = (...,),  # noqa: F821
-                           headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
-                           headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
-                           path: Optional[Union[str, Pattern[str]]] = None,
-                           path_params: Optional[Mapping[str, Any]] = None,
-                           path_params_submap: Optional[Mapping[str, Any]] = None,
-                           query_params: Optional[Mapping[str, Collection[str]]] = None,
-                           query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-                           close: Optional[Tuple[Sender, int]] = None, accepted: Optional[bool] = True):
+    def assert_any_request(
+        self,
+        *,
+        messages: Sequence[Union[ellipsis, ExpectedWSMessage]] = (...,),
+        headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
+        headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
+        path: Optional[Union[str, Pattern[str]]] = None,
+        path_params: Optional[Mapping[str, Any]] = None,
+        path_params_submap: Optional[Mapping[str, Any]] = None,
+        query_params: Optional[Mapping[str, Collection[str]]] = None,
+        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+        close: Optional[Tuple[Sender, int]] = None,
+        accepted: Optional[bool] = True,
+    ):
         ...
 
     def assert_any_request(self, expected: Optional[ExpectedWSTranscript] = None, **kwargs):
@@ -443,14 +483,14 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
              the keyword arguments to the constructor of ExpectedWSTranscript.
         """
         if expected and kwargs:
-            raise TypeError('method can be called with either expected or keyword args, but not both')
+            raise TypeError("method can be called with either expected or keyword args, but not both")
         if not expected:
             if not kwargs:
-                raise TypeError('either expected or keyword args must be provided')
+                raise TypeError("either expected or keyword args must be provided")
             expected = ExpectedWSTranscript(**kwargs)
 
         if not self:
-            raise AssertionError('No requests were made')
+            raise AssertionError("No requests were made")
         if any(expected.matches(req) for req in self):
             return
-        raise AssertionError('No transcripts match')
+        raise AssertionError("No transcripts match")
