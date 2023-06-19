@@ -144,7 +144,11 @@ class WebServer(YellowService):
             raise RuntimeError("endpoint is not added to the server")
         with self._route_lock:
             i = next(
-                (i for i, route in enumerate(self._app.routes) if isinstance(route, Route) and route.endpoint == endpoint.get),
+                (
+                    i
+                    for i, route in enumerate(self._app.routes)
+                    if isinstance(route, Route) and route.endpoint == endpoint.get
+                ),
                 None,
             )
             if i is None:
