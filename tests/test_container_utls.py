@@ -50,7 +50,7 @@ def test_removing(docker_client, create_and_pull, expected_exit_code):
     container = create_and_pull(docker_client, "alpine:latest", "sh -c exit 0")
     with removing(container, expected_exit_code=expected_exit_code):
         container.start()
-    assert container.wait()["StatusCode"] == 0
+        assert container.wait()["StatusCode"] == 0
     assert is_removed(container)
 
 
