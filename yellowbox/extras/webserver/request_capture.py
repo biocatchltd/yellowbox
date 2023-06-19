@@ -4,11 +4,11 @@ from typing import Any, Collection, Iterable, Iterator, Mapping, Optional, Patte
 
 from yellowbox.extras.webserver.util import MismatchReason, lower_keys, reason_is_ne
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 _missing = object()
-K = TypeVar('K')
-V = TypeVar('V')
+K = TypeVar("K")
+V = TypeVar("V")
 
 
 def _is_submap_of(submap: Mapping[K, V], supermap: Mapping[K, V]):
@@ -27,9 +27,9 @@ def _is_submap_of(submap: Mapping[K, V], supermap: Mapping[K, V]):
     for k, v in submap.items():
         other_v = supermap.get(k, _missing)  # type:ignore[arg-type]
         if other_v is _missing:
-            return MismatchReason(f'expected key {k}, none found (found keys {list(supermap.keys())})')
+            return MismatchReason(f"expected key {k}, none found (found keys {list(supermap.keys())})")
         if other_v != v:
-            return MismatchReason(f'expected key {k} to have value {v}, got {other_v}')
+            return MismatchReason(f"expected key {k} to have value {v}, got {other_v}")
     return True
 
 
@@ -49,16 +49,17 @@ def _is_submultimap_of(submultimap: Mapping[K, Collection[V]], supermultimap: Ma
     for k, v in submultimap.items():
         other_v = supermultimap.get(k, _missing)
         if other_v is _missing:
-            return MismatchReason(f'expected key {k}, none found')
+            return MismatchReason(f"expected key {k}, none found")
         if not isinstance(other_v, Iterable):
-            return MismatchReason(f'expected key {k} to be in iterable {other_v}')
+            return MismatchReason(f"expected key {k} to be in iterable {other_v}")
         diff = Counter(other_v)
         diff.subtract(Counter(v))
         missing_value = next((k for (k, v) in diff.items() if v < 0), _missing)
         if missing_value is not _missing:
             expected = sum(i == missing_value for i in v)
-            return MismatchReason(f'expected value {missing_value!r} to appear {expected} times in key {k}'
-                                  f', got {other_v}')
+            return MismatchReason(
+                f"expected value {missing_value!r} to appear {expected} times in key {k} got {other_v}"
+            )
     return True
 
 
@@ -85,8 +86,9 @@ def _to_expected_map(name: str, exact: Optional[T], submap: Optional[T]) -> Opti
     return None
 
 
-def _matches_expected_map(name: str, expected: Optional[Tuple[Mapping[K, V], bool]], recorded: Mapping[K, V]) \
-        -> Optional[str]:
+def _matches_expected_map(
+    name: str, expected: Optional[Tuple[Mapping[K, V], bool]], recorded: Mapping[K, V]
+) -> Optional[str]:
     """
     Matches a map against the return value of _to_expected_map
     Args:
@@ -103,15 +105,15 @@ def _matches_expected_map(name: str, expected: Optional[Tuple[Mapping[K, V], boo
     if is_subset:
         submap_match = _is_submap_of(expected_value, recorded)
         if not submap_match:
-            return f'{name} mismatch: {submap_match}'
-    else:
-        if expected_value != recorded:
-            return reason_is_ne(name, expected_value, recorded)
+            return f"{name} mismatch: {submap_match}"
+    elif expected_value != recorded:
+        return reason_is_ne(name, expected_value, recorded)
     return None
 
 
-def _matches_expected_multimap(name: str, expected: Optional[Tuple[Mapping[K, Collection[V]], bool]],
-                               recorded: Mapping[K, Collection[V]]) -> Optional[str]:
+def _matches_expected_multimap(
+    name: str, expected: Optional[Tuple[Mapping[K, Collection[V]], bool]], recorded: Mapping[K, Collection[V]]
+) -> Optional[str]:
     """
     Matches a multimap against the return value of _to_expected_map
     Args:
@@ -128,10 +130,9 @@ def _matches_expected_multimap(name: str, expected: Optional[Tuple[Mapping[K, Co
     if is_subset:
         submap_match = _is_submultimap_of(expected_value, recorded)
         if not submap_match:
-            return f'{name} mismatch: {submap_match}'
-    else:
-        if expected_value != recorded:
-            return reason_is_ne(name, expected_value, recorded)
+            return f"{name} mismatch: {submap_match}"
+    elif expected_value != recorded:
+        return reason_is_ne(name, expected_value, recorded)
     return None
 
 
@@ -150,7 +151,7 @@ def _repr_map(name: str, expected: Optional[Tuple[T, bool]]):
         return {}
     expected_value, is_subset = expected
     if is_subset:
-        return {f'{name}_submap': expected_value}
+        return {f"{name}_submap": expected_value}
     else:
         return {name: expected_value}
 
@@ -160,34 +161,37 @@ class ScopeExpectation:
     A utility mixin class representing an expected http scope, common to both HTTP and websockets.
     """
 
-    def __init__(self, headers: Optional[Mapping[str, Collection[str]]] = None,
-                 headers_submap: Optional[Mapping[str, Collection[str]]] = None,
-                 path: Optional[Union[str, Pattern[str]]] = None, path_params: Optional[Mapping[str, Any]] = None,
-                 path_params_submap: Optional[Mapping[str, Any]] = None,
-                 query_params: Optional[Mapping[str, Collection[str]]] = None,
-                 query_params_submap: Optional[Mapping[str, Collection[str]]] = None, ):
-        self.headers = _to_expected_map('headers', lower_keys(headers), lower_keys(headers_submap))
+    def __init__(
+        self,
+        headers: Optional[Mapping[str, Collection[str]]] = None,
+        headers_submap: Optional[Mapping[str, Collection[str]]] = None,
+        path: Optional[Union[str, Pattern[str]]] = None,
+        path_params: Optional[Mapping[str, Any]] = None,
+        path_params_submap: Optional[Mapping[str, Any]] = None,
+        query_params: Optional[Mapping[str, Collection[str]]] = None,
+        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+    ):
+        self.headers = _to_expected_map("headers", lower_keys(headers), lower_keys(headers_submap))
         if isinstance(path, str):
             self.path_pattern = re.compile(re.escape(path))
         else:
             self.path_pattern = path
-        self.path_params = _to_expected_map('path_params', path_params, path_params_submap)
-        self.query_params = _to_expected_map('query_params', query_params, query_params_submap)
+        self.path_params = _to_expected_map("path_params", path_params, path_params_submap)
+        self.query_params = _to_expected_map("query_params", query_params, query_params_submap)
 
     def scope_mismatch_reasons(self, recorded) -> Iterator[str]:
-        header_match = _matches_expected_multimap('header', self.headers, recorded.headers)
+        header_match = _matches_expected_multimap("header", self.headers, recorded.headers)
         if header_match:
             yield header_match
 
-        if (self.path_pattern is not None
-                and self.path_pattern.fullmatch(str(recorded.path)) is None):
-            yield reason_is_ne('path', self.path_pattern.pattern, recorded.path)
+        if self.path_pattern is not None and self.path_pattern.fullmatch(str(recorded.path)) is None:
+            yield reason_is_ne("path", self.path_pattern.pattern, recorded.path)
 
-        path_params_match = _matches_expected_map('path_params', self.path_params, recorded.path_params)
+        path_params_match = _matches_expected_map("path_params", self.path_params, recorded.path_params)
         if path_params_match:
             yield path_params_match
 
-        query_params_match = _matches_expected_multimap('query_params', self.query_params, recorded.query_params)
+        query_params_match = _matches_expected_multimap("query_params", self.query_params, recorded.query_params)
         if query_params_match:
             yield query_params_match
 
@@ -196,10 +200,10 @@ class ScopeExpectation:
         Returns: a mapping of the parameters used to create this mixin instance
         """
         args = {
-            **_repr_map('headers', self.headers),
-            **_repr_map('path_params', self.path_params),
-            **_repr_map('query_params', self.query_params),
+            **_repr_map("headers", self.headers),
+            **_repr_map("path_params", self.path_params),
+            **_repr_map("query_params", self.query_params),
         }
         if self.path_pattern is not None:
-            args['path'] = self.path_pattern
+            args["path"] = self.path_pattern
         return args

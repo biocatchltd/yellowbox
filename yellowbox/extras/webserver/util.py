@@ -20,7 +20,7 @@ def reason_is_ne(field: str, expected, got) -> str:
         expected: the expected value
         got: the actual value
     """
-    return f'{field} mismatch: expected {expected}, got {got}'
+    return f"{field} mismatch: expected {expected}, got {got}"
 
 
 class MismatchReason(str):
@@ -32,7 +32,7 @@ class MismatchReason(str):
         return False
 
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def iter_side_effects(side_effects: Iterable[Union[Callable[..., Awaitable[T]], T]]) -> Callable[..., Awaitable[T]]:
@@ -62,19 +62,22 @@ def iter_side_effects(side_effects: Iterable[Union[Callable[..., Awaitable[T]], 
     return ret
 
 
-def _DEFAULT_MESSAGE_FACTORY(endpoint: MockHTTPEndpoint, request: Request, response: Response) -> str:
-    client = f'{request.client.host}:{request.client.port}'
+def _default_verbose_message_factory(endpoint: MockHTTPEndpoint, request: Request, response: Response) -> str:
+    client = f"{request.client.host}:{request.client.port}"
     relative_path = request.url.path
     if request.url.query:
-        relative_path += f'?{request.url.query}'
-    return f'{datetime.now().isoformat(sep=" ", timespec="seconds")} {endpoint.owner.__name__}:{endpoint.__name__} ' \
-           f'{client} - {request.method} {relative_path} {response.status_code} ({len(response.body)} bytes)'
+        relative_path += f"?{request.url.query}"
+    return (
+        f'{datetime.now().isoformat(sep=" ", timespec="seconds")} {endpoint.owner.__name__}:{endpoint.__name__} '
+        f"{client} - {request.method} {relative_path} {response.status_code} ({len(response.body)} bytes)"
+    )
 
 
-def verbose_http_side_effect(side_effect: BASE_HTTP_SIDE_EFFECT,
-                             format_function: Callable[[MockHTTPEndpoint, Request, Response], str]
-                             = _DEFAULT_MESSAGE_FACTORY,
-                             file=sys.stdout) -> HTTP_SIDE_EFFECT:
+def verbose_http_side_effect(
+    side_effect: BASE_HTTP_SIDE_EFFECT,
+    format_function: Callable[[MockHTTPEndpoint, Request, Response], str] = _default_verbose_message_factory,
+    file=sys.stdout,
+) -> HTTP_SIDE_EFFECT:
     """
     Wrap a side effect so that it prints the arguments and return value on each call.
     """
@@ -101,7 +104,7 @@ def verbose_http_side_effect(side_effect: BASE_HTTP_SIDE_EFFECT,
     return side_effect_factory
 
 
-V = TypeVar('V')
+V = TypeVar("V")
 
 
 def lower_keys(d: Optional[Mapping[AnyStr, V]]) -> Optional[Dict[AnyStr, V]]:

@@ -3,7 +3,7 @@ from typing import Callable
 
 
 def _random_name(length=16) -> str:
-    return ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=length))
+    return "".join(random.choices("abcdefghijklmnopqrstuvwxyz", k=length))
 
 
 def unique_name_generator(length=16) -> Callable[..., str]:

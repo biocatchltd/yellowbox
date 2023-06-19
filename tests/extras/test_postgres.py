@@ -8,7 +8,7 @@ from yellowbox.extras.postgresql import POSTGRES_INTERNAL_PORT, PostgreSQLServic
 from yellowbox.utils import docker_host_name
 
 
-@mark.parametrize('spinner', [True, False])
+@mark.parametrize("spinner", [True, False])
 def test_make_pg(docker_client, spinner):
     with PostgreSQLService.run(docker_client, spinner=spinner):
         pass
@@ -20,23 +20,35 @@ async def test_local_connection_async(docker_client):
     async with PostgreSQLService.arun(docker_client) as service:
         engine = create_engine(service.local_connection_string())
         with engine.begin() as connection:
-            connection.execute(text("""
+            connection.execute(
+                text(
+                    """
             CREATE TABLE foo (x INTEGER, y TEXT);
             INSERT INTO foo VALUES (1,'one'), (2, 'two'), (3, 'three'), (10, 'ten');
-            """))
-            connection.execute(text("""
+            """
+                )
+            )
+            connection.execute(
+                text(
+                    """
             DELETE FROM foo WHERE x = 10;
-            """))
+            """
+                )
+            )
 
         with engine.begin() as connection:
-            results = connection.execute(text("""
+            results = connection.execute(
+                text(
+                    """
             SELECT x, y FROM foo WHERE y like 't%%'
-            """))
-            vals = [row['x'] for row in results.mappings()]
+            """
+                )
+            )
+            vals = [row["x"] for row in results.mappings()]
             assert vals == [2, 3]
 
 
-@fixture(scope='module')
+@fixture(scope="module")
 def service(docker_client):
     with PostgreSQLService.run(docker_client, spinner=False) as service:
         yield service
@@ -45,13 +57,13 @@ def service(docker_client):
 db_name = fixture(unique_name_generator())
 
 
-@fixture
+@fixture()
 def db(service, db_name):
     with service.database(db_name) as db:
         yield db
 
 
-@fixture
+@fixture()
 def engine(db):
     engine = create_engine(db.local_connection_string())
     yield engine
@@ -60,35 +72,51 @@ def engine(db):
 
 def test_local_connection(engine):
     with engine.begin() as connection:
-        connection.execute(text("""
+        connection.execute(
+            text(
+                """
         CREATE TABLE foo (x INTEGER, y TEXT);
         INSERT INTO foo VALUES (1,'one'), (2, 'two'), (3, 'three'), (10, 'ten');
-        """))
-        connection.execute(text("""
+        """
+            )
+        )
+        connection.execute(
+            text(
+                """
         DELETE FROM foo WHERE x = 10;
-        """))
+        """
+            )
+        )
 
     with engine.begin() as connection:
-        results = connection.execute(text("""
+        results = connection.execute(
+            text(
+                """
         SELECT x, y FROM foo WHERE y like 't%%'
-        """))
-        vals = [row['x'] for row in results.mappings()]
+        """
+            )
+        )
+        vals = [row["x"] for row in results.mappings()]
         assert vals == [2, 3]
 
 
 def test_sibling(docker_client, create_and_pull, engine, service, db_name):
     with engine.begin() as connection:
-        connection.execute(text("""
+        connection.execute(
+            text(
+                """
         CREATE TABLE foo (x INTEGER, y TEXT);
         INSERT INTO foo VALUES (1,'one'), (2, 'two'), (3, 'three'), (10, 'ten');
-        """))
+        """
+            )
+        )
 
     container = create_and_pull(
         docker_client,
         "postgres:latest",
-        f'psql -h {docker_host_name} -p {service.external_port()} -U {service.user} -d {db_name}'
+        f"psql -h {docker_host_name} -p {service.external_port()} -U {service.user} -d {db_name}"
         " -c 'DELETE FROM foo WHERE x < 3'",
-        environment={'PGPASSWORD': service.password},
+        environment={"PGPASSWORD": service.password},
         detach=True,
     )
     container.start()
@@ -97,25 +125,28 @@ def test_sibling(docker_client, create_and_pull, engine, service, db_name):
 
     with engine.begin() as connection:
         results = connection.execute(text("""SELECT y from foo"""))
-        vals = [row['y'] for row in results.mappings()]
-    assert vals == ['three', 'ten']
+        vals = [row["y"] for row in results.mappings()]
+    assert vals == ["three", "ten"]
 
 
 def test_sibling_network(docker_client, create_and_pull, engine, service, db_name):
-    with temp_network(docker_client) as network, \
-            connect(network, service) as service_alias:
+    with temp_network(docker_client) as network, connect(network, service) as service_alias:
         with engine.begin() as connection:
-            connection.execute(text("""
+            connection.execute(
+                text(
+                    """
             CREATE TABLE foo (x INTEGER, y TEXT);
             INSERT INTO foo VALUES (1,'one'), (2, 'two'), (3, 'three'), (10, 'ten');
-            """))
+            """
+                )
+            )
 
         container = create_and_pull(
             docker_client,
             "postgres:latest",
-            f'psql -h {service_alias[0]} -p {POSTGRES_INTERNAL_PORT} -U {service.user} -d {db_name}'
+            f"psql -h {service_alias[0]} -p {POSTGRES_INTERNAL_PORT} -U {service.user} -d {db_name}"
             " -c 'DELETE FROM foo WHERE x < 3'",
-            environment={'PGPASSWORD': service.password},
+            environment={"PGPASSWORD": service.password},
             detach=True,
         )
         with connect(network, container):
@@ -125,33 +156,38 @@ def test_sibling_network(docker_client, create_and_pull, engine, service, db_nam
 
         with engine.begin() as connection:
             results = connection.execute(text("SELECT y from foo"))
-            vals = [row['y'] for row in results.mappings()]
-        assert vals == ['three', 'ten']
+            vals = [row["y"] for row in results.mappings()]
+        assert vals == ["three", "ten"]
 
 
 def test_alchemy_usage(docker_client, engine):
-    table = Table('foo', MetaData(),
-                  Column('x', Integer),
-                  Column('y', String))
+    table = Table("foo", MetaData(), Column("x", Integer), Column("y", String))
 
     with engine.begin() as connection:
-        connection.execute(text("""
+        connection.execute(
+            text(
+                """
         CREATE TABLE foo (x INTEGER, y TEXT);
         INSERT INTO foo VALUES (1,'one'), (2, 'two'), (3, 'three'), (10, 'ten');
-        """))
-        results = connection.execute(select(table.c.x).where(table.c.y.like('t%')))
-        vals = [row['x'] for row in results.mappings()]
+        """
+            )
+        )
+        results = connection.execute(select(table.c.x).where(table.c.y.like("t%")))
+        vals = [row["x"] for row in results.mappings()]
     assert vals == [2, 3, 10]
 
 
 def test_remote_connection_string(docker_client, create_and_pull, service, engine, db):
-    with temp_network(docker_client) as network, \
-            connect(network, service) as service_alias:
+    with temp_network(docker_client) as network, connect(network, service) as service_alias:
         with engine.begin() as connection:
-            connection.execute(text("""
+            connection.execute(
+                text(
+                    """
             CREATE TABLE foo (x INTEGER, y TEXT);
             INSERT INTO foo VALUES (1,'one'), (2, 'two'), (3, 'three'), (10, 'ten');
-            """))
+            """
+                )
+            )
         conn_string = db.container_connection_string(service_alias[0])
         container = create_and_pull(
             docker_client,
@@ -160,12 +196,14 @@ def test_remote_connection_string(docker_client, create_and_pull, service, engin
             detach=True,
         )
         upload_file(
-            container, './main.py',
+            container,
+            "./main.py",
             bytes(
                 "import sqlalchemy as sa;"
                 f"e = sa.create_engine('{conn_string}');"
                 "e.execute('DELETE FROM foo WHERE x < 3');",
-                'ascii')
+                "ascii",
+            ),
         )
         with connect(network, container):
             container.start()
@@ -174,16 +212,20 @@ def test_remote_connection_string(docker_client, create_and_pull, service, engin
 
         with engine.begin() as connection:
             results = connection.execute(text("SELECT y from foo"))
-            vals = [row['y'] for row in results.mappings()]
-        assert vals == ['three', 'ten']
+            vals = [row["y"] for row in results.mappings()]
+        assert vals == ["three", "ten"]
 
 
 def test_remote_connection_string_host(docker_client, create_and_pull, service, engine, db):
     with engine.begin() as connection:
-        connection.execute(text("""
+        connection.execute(
+            text(
+                """
         CREATE TABLE foo (x INTEGER, y TEXT);
         INSERT INTO foo VALUES (1,'one'), (2, 'two'), (3, 'three'), (10, 'ten');
-        """))
+        """
+            )
+        )
     conn_string = db.host_connection_string()
     container = create_and_pull(
         docker_client,
@@ -192,12 +234,14 @@ def test_remote_connection_string_host(docker_client, create_and_pull, service, 
         detach=True,
     )
     upload_file(
-        container, './main.py',
+        container,
+        "./main.py",
         bytes(
             "import sqlalchemy as sa;"
             f"e = sa.create_engine('{conn_string}');"
             "e.execute('DELETE FROM foo WHERE x < 3');",
-            'ascii')
+            "ascii",
+        ),
     )
     container.start()
     return_status = container.wait()
@@ -205,16 +249,16 @@ def test_remote_connection_string_host(docker_client, create_and_pull, service, 
 
     with engine.begin() as connection:
         results = connection.execute(text("SELECT y from foo"))
-        vals = [row['y'] for row in results.mappings()]
-    assert vals == ['three', 'ten']
+        vals = [row["y"] for row in results.mappings()]
+    assert vals == ["three", "ten"]
 
 
 def test_mk_db(docker_client):
-    with PostgreSQLService.run(docker_client, default_db='foo') as service:
-        assert service.database_exists('foo')
-        assert not service.database_exists('bar')
-        with service.database('bar'):
-            assert service.database_exists('foo')
-            assert service.database_exists('bar')
-        assert service.database_exists('foo')
-        assert not service.database_exists('bar')
+    with PostgreSQLService.run(docker_client, default_db="foo") as service:
+        assert service.database_exists("foo")
+        assert not service.database_exists("bar")
+        with service.database("bar"):
+            assert service.database_exists("foo")
+            assert service.database_exists("bar")
+        assert service.database_exists("foo")
+        assert not service.database_exists("bar")

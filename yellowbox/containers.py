@@ -17,8 +17,18 @@ from docker.models.containers import Container
 from docker.models.networks import Network
 from requests import HTTPError
 
-__all__ = ['get_ports', 'get_aliases', 'is_alive', 'is_removed', 'killing', 'create_and_pull',
-           'download_file', 'upload_file', 'SafeContainerCreator', 'removing']
+__all__ = [
+    "get_ports",
+    "get_aliases",
+    "is_alive",
+    "is_removed",
+    "killing",
+    "create_and_pull",
+    "download_file",
+    "upload_file",
+    "SafeContainerCreator",
+    "removing",
+]
 
 _DEFAULT_TIMEOUT = 10
 
@@ -60,8 +70,8 @@ def get_ports(container: Container) -> Dict[int, int]:
 
         external_port = int(external_address[0]["HostPort"])
 
-        port, *_ = port.partition("/")  # Strip out type (tcp, udp, ...)
-        ports[int(port)] = int(external_port)
+        port_num, *_ = port.partition("/")  # Strip out type (tcp, udp, ...)
+        ports[int(port_num)] = int(external_port)
 
     return ports
 
@@ -90,12 +100,13 @@ def short_id(container: Container) -> str:
 def is_alive(container: Container) -> bool:
     if is_removed(container):
         return False
-    return container.status.lower() not in ('exited', 'stopped')
+    return container.status.lower() not in ("exited", "stopped")
 
 
 @contextmanager
-def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT,
-            signal: str = 'SIGKILL') -> Generator[_CT, None, None]:
+def killing(
+    container: _CT, *, timeout: float = _DEFAULT_TIMEOUT, signal: str = "SIGKILL"
+) -> Generator[_CT, None, None]:
     """A context manager that kills a docker container upon completion.
 
     Example:
@@ -122,8 +133,9 @@ def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT,
 
 
 @contextmanager
-def removing(container: _CT, *, expected_exit_code: Optional[Union[int, AbstractContainer[int]]] = 0, force=False) \
-        -> Generator[_CT, None, None]:
+def removing(
+    container: _CT, *, expected_exit_code: Optional[Union[int, AbstractContainer[int]]] = 0, force=False
+) -> Generator[_CT, None, None]:
     """A context manager that removes a docker container upon completion.
 
     Example:
@@ -144,21 +156,20 @@ def removing(container: _CT, *, expected_exit_code: Optional[Union[int, Abstract
     try:
         yield container
     finally:
-        if is_removed(container):
-            return
-        # checking if the container is removed reloads the container
-        if is_alive(container):
-            if not force:
-                raise RuntimeError(f"Container {container.id} is still alive (status: {container.status})")
-            container.kill('SIGKILL')
-        result = container.wait(timeout=10)
-        if expected_exit_code is not None:
-            if isinstance(expected_exit_code, int):
-                expected_exit_code = (expected_exit_code,)
+        if not is_removed(container):
+            # checking if the container is removed reloads the container
+            if is_alive(container):
+                if not force:
+                    raise RuntimeError(f"Container {container.id} is still alive (status: {container.status})")
+                container.kill("SIGKILL")
+            result = container.wait(timeout=10)
+            if expected_exit_code is not None:
+                if isinstance(expected_exit_code, int):
+                    expected_exit_code = (expected_exit_code,)
 
-            if result['StatusCode'] not in expected_exit_code:
-                raise RuntimeError(f"Container {container.id} exited with code {result['StatusCode']}")
-        container.remove(force=force, v=True)
+                if result["StatusCode"] not in expected_exit_code:
+                    raise RuntimeError(f"Container {container.id} exited with code {result['StatusCode']}")
+            container.remove(force=force, v=True)
 
 
 def create_and_pull(docker_client: DockerClient, image: str, *args, **kwargs) -> Container:
@@ -179,7 +190,7 @@ def create_and_pull(docker_client: DockerClient, image: str, *args, **kwargs) ->
     """
     name, _, tag = image.partition(":")
     if not tag:
-        raise ValueError('the image name must contain a tag')
+        raise ValueError("the image name must contain a tag")
     try:
         ret = docker_client.containers.create(image, *args, **kwargs)
     except ImageNotFound:
@@ -210,7 +221,7 @@ def download_file(container: Container, path: Union[str, PathLike]) -> IO[bytes]
     realpath = os.fspath(path)
     exc: Exception
     try:
-        iterator, stats = container.get_archive(realpath, chunk_size=None)  # noqa
+        iterator, stats = container.get_archive(realpath, chunk_size=None)
     except docker.errors.NotFound:
         exc = FileNotFoundError(realpath)
         exc.filename = realpath
@@ -230,11 +241,12 @@ def download_file(container: Container, path: Union[str, PathLike]) -> IO[bytes]
 
     tar_file = tarfile.open(fileobj=temp_file)
     member = tar_file.next()
-    return cast('IO[bytes]', tar_file.extractfile(member))
+    return cast("IO[bytes]", tar_file.extractfile(member))
 
 
-def upload_file(container: Container, path: Union[str, PathLike[str]],
-                data: bytes = None, fileobj: IO[bytes] = None) -> None:
+def upload_file(
+    container: Container, path: Union[str, PathLike[str]], data: bytes = None, fileobj: IO[bytes] = None
+) -> None:
     """Upload a file to the given container
 
     Args:
@@ -284,7 +296,7 @@ def _create_tar(filename, data=None, fileobj=None) -> bytes:
                     shutil.copyfileobj(fileobj, temp_file)
                     temp_file.seek(0)
                     temp_file.flush()
-                    tarinfo = tar.gettarinfo(arcname=filename, fileobj=temp_file)  # noqa
+                    tarinfo = tar.gettarinfo(arcname=filename, fileobj=temp_file)
                     tar.addfile(tarinfo, temp_file)
     return output.getvalue()
 

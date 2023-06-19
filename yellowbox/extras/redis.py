@@ -8,7 +8,7 @@ from yellowbox.containers import create_and_pull, get_ports, upload_file
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, SingleContainerService
 
-__all__ = ['RedisService', 'REDIS_DEFAULT_PORT', 'DEFAULT_RDB_PATH', 'append_state']
+__all__ = ["RedisService", "REDIS_DEFAULT_PORT", "DEFAULT_RDB_PATH", "append_state"]
 
 from yellowbox.utils import DOCKER_EXPOSE_HOST
 
@@ -17,7 +17,7 @@ DEFAULT_RDB_PATH = "/data/dump.rdb"
 
 _T = TypeVar("_T", bound=ContextManager)
 RedisPrimitive = Union[str, int, float, bytes]
-RedisState = Mapping[str, Union[RedisPrimitive, Mapping[str, RedisPrimitive], Sequence[RedisPrimitive]]]
+RedisState = Mapping[str, Union[RedisPrimitive, Mapping[Union[str, bytes], RedisPrimitive], Sequence[RedisPrimitive]]]
 
 
 def append_state(client: Redis, db_state: RedisState):
@@ -25,14 +25,15 @@ def append_state(client: Redis, db_state: RedisState):
         if isinstance(v, Sequence):
             client.rpush(k, *v)
         elif isinstance(v, Mapping):
-            client.hset(k, mapping=v)  # type: ignore
+            client.hset(k, mapping=v)
         else:
             client.set(k, v)
 
 
 class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
-    def __init__(self, docker_client: DockerClient, image='redis:latest',
-                 redis_file: Optional[IO[bytes]] = None, **kwargs):
+    def __init__(
+        self, docker_client: DockerClient, image="redis:latest", redis_file: Optional[IO[bytes]] = None, **kwargs
+    ):
         container = create_and_pull(docker_client, image, publish_all_ports=True, detach=True)
         self.started = False
         super().__init__(container, **kwargs)
@@ -56,7 +57,7 @@ class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
     def client(self, **kwargs) -> Redis:
         ...
 
-    def client(self, *, client_cls=Redis, **kwargs) -> Any:  # type: ignore
+    def client(self, *, client_cls=Redis, **kwargs) -> Any:
         port = self.client_port()
         return client_cls(host=DOCKER_EXPOSE_HOST, port=port, **kwargs)
 

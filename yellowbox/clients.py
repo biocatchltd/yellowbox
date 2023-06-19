@@ -12,8 +12,8 @@ def open_docker_client():
     try:
         ret = DockerClient.from_env()
         ret.ping()
-    except Exception:  # pragma: no cover
-        ret = DockerClient(base_url='tcp://localhost:2375')
+    except Exception:  # noqa: BLE001
+        ret = DockerClient(base_url="tcp://localhost:2375")
         ret.ping()
     with closing(ret):
         yield ret

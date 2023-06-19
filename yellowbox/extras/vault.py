@@ -11,15 +11,13 @@ from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
 
-__all__ = ['VAULT_DEFAULT_PORT', 'DEV_POLICY', 'VaultService']
+__all__ = ["VAULT_DEFAULT_PORT", "DEV_POLICY", "VaultService"]
 
 VAULT_DEFAULT_PORT = 8200
 
 DEV_POLICY = {
     "path": {
-        "secret/*": {
-            "capabilities": ["read"]
-        },
+        "secret/*": {"capabilities": ["read"]},
     }
 }
 
@@ -30,7 +28,7 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
     USED FOR DEVELOPMENT.
     """
 
-    def __init__(self, docker_client: DockerClient, image='vault:latest', root_token: str = 'guest', **kwargs):
+    def __init__(self, docker_client: DockerClient, image="vault:latest", root_token: str = "guest", **kwargs):
         """
         Args:
             docker_client: the client to use
@@ -38,9 +36,15 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
             root_token: the token string for the new vault container, with root access
             **kwargs: forwarded to SingleContainerService
         """
-        container = create_and_pull(docker_client, image, publish_all_ports=True, detach=True, environment={
-            'VAULT_DEV_ROOT_TOKEN_ID': root_token,
-        })
+        container = create_and_pull(
+            docker_client,
+            image,
+            publish_all_ports=True,
+            detach=True,
+            environment={
+                "VAULT_DEV_ROOT_TOKEN_ID": root_token,
+            },
+        )
         self.started = False
         self.root_token = root_token
         super().__init__(container, **kwargs)
@@ -49,16 +53,16 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
         return get_ports(self.container)[VAULT_DEFAULT_PORT]
 
     def local_url(self):
-        return f'http://{DOCKER_EXPOSE_HOST}:{self.client_port()}'
+        return f"http://{DOCKER_EXPOSE_HOST}:{self.client_port()}"
 
     def container_url(self):
-        return f'http://{docker_host_name}:{self.client_port()}'
+        return f"http://{docker_host_name}:{self.client_port()}"
 
     def sibling_container_url(self, container_alias):
-        return f'http://{container_alias}:{VAULT_DEFAULT_PORT}'
+        return f"http://{container_alias}:{VAULT_DEFAULT_PORT}"
 
     @contextmanager
-    def client(self, **kwargs) -> Iterator[hvac.Client]:  # type: ignore
+    def client(self, **kwargs) -> Iterator[hvac.Client]:
         """
         Get a context manager that creates and closes a root-access hvac client
         Args:
@@ -81,7 +85,7 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
 
         retry_spec.retry(self._check_health, (VaultError, ConnectionError))
         with self.client() as client:
-            client.sys.enable_auth_method('userpass')
+            client.sys.enable_auth_method("userpass")
         self.started = True
         return self
 
@@ -92,11 +96,12 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
 
         await retry_spec.aretry(self._check_health, (VaultError, ConnectionError))
         with self.client() as client:
-            client.sys.enable_auth_method('userpass')
+            client.sys.enable_auth_method("userpass")
         self.started = True
 
-    def set_users(self, userpass: Iterable[Tuple[str, str]], policy_name='dev',
-                  policy: Optional[Mapping] = DEV_POLICY) -> None:
+    def set_users(
+        self, userpass: Iterable[Tuple[str, str]], policy_name="dev", policy: Optional[Mapping] = DEV_POLICY
+    ) -> None:
         """
         Create and set users with policies
         Args:
@@ -121,7 +126,7 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
             for k, v in secrets.items():
                 client.secrets.kv.create_or_update_secret(k, v)
 
-    def clear_secrets(self, root_path='/') -> None:
+    def clear_secrets(self, root_path="/") -> None:
         """
         permanently remove all secrets and subdirectories from a directory in vault
         Args:
@@ -129,14 +134,15 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
         Notes:
             if a secret is assigned to the directory itself, the secret will not be deleted
         """
-        if not root_path.endswith('/'):
+        if not root_path.endswith("/"):
             raise ValueError('path must end with slash "/"')
         client: hvac.Client
         with self.client() as client:
+
             def clear_recursive(path) -> None:
-                secret_names: List[str] = client.secrets.kv.list_secrets(path)['data']['keys']
+                secret_names: List[str] = client.secrets.kv.list_secrets(path)["data"]["keys"]
                 for name in secret_names:
-                    if name.endswith('/'):
+                    if name.endswith("/"):
                         # is a directory
                         clear_recursive(path + name)
                     else:

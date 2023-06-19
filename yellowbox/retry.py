@@ -6,7 +6,7 @@ from itertools import count
 from time import perf_counter, sleep
 from typing import Callable, Iterable, Optional, Tuple, Type, TypeVar, Union
 
-_T = TypeVar('_T')
+_T = TypeVar("_T")
 
 
 @dataclass
@@ -30,10 +30,9 @@ class RetrySpec:
 
     def __post_init__(self):
         if self.attempts is self.timeout is None:
-            raise ValueError('RetrySpec must have either a timeout or attempts')
+            raise ValueError("RetrySpec must have either a timeout or attempts")
 
-    def retry(self, func: Callable[[], _T],
-              exceptions: Union[Type[Exception], Tuple[Type[Exception], ...]]) -> _T:
+    def retry(self, func: Callable[[], _T], exceptions: Union[Type[Exception], Tuple[Type[Exception], ...]]) -> _T:
         """
         Retry running func until it succeeds
 
@@ -61,7 +60,7 @@ class RetrySpec:
         if self.timeout:
             time_limit = perf_counter() + self.timeout
         else:
-            time_limit = float('inf')
+            time_limit = float("inf")
 
         for _ in attempt_iterator:
             try:
@@ -72,8 +71,9 @@ class RetrySpec:
             sleep(self.interval)
         return func()
 
-    async def aretry(self, func: Callable[[], _T],
-                     exceptions: Union[Type[Exception], Tuple[Type[Exception], ...]]) -> _T:
+    async def aretry(
+        self, func: Callable[[], _T], exceptions: Union[Type[Exception], Tuple[Type[Exception], ...]]
+    ) -> _T:
         """
         Retry running func until it succeeds
 
@@ -101,7 +101,7 @@ class RetrySpec:
         if self.timeout:
             time_limit = perf_counter() + self.timeout
         else:
-            time_limit = float('inf')
+            time_limit = float("inf")
 
         for _ in attempt_iterator:
             try:

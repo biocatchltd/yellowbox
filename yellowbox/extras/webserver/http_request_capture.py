@@ -17,15 +17,21 @@ class ExpectedHTTPRequest(ScopeExpectation):
     An expected HTTP request
     """
 
-    def __init__(self, headers: Optional[Mapping[str, Collection[str]]] = None,
-                 headers_submap: Optional[Mapping[str, Collection[str]]] = None,
-                 path: Optional[Union[str, Pattern[str]]] = None, path_params: Optional[Mapping[str, Any]] = None,
-                 path_params_submap: Optional[Mapping[str, Any]] = None,
-                 query_params: Optional[Mapping[str, Collection[str]]] = None,
-                 query_params_submap: Optional[Mapping[str, Collection[str]]] = None, method: Optional[str] = None,
-                 body: Optional[bytes] = None, text: Optional[str] = None, json: Any = _missing,
-                 content_predicate: Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]]
-                 = None):
+    def __init__(
+        self,
+        headers: Optional[Mapping[str, Collection[str]]] = None,
+        headers_submap: Optional[Mapping[str, Collection[str]]] = None,
+        path: Optional[Union[str, Pattern[str]]] = None,
+        path_params: Optional[Mapping[str, Any]] = None,
+        path_params_submap: Optional[Mapping[str, Any]] = None,
+        query_params: Optional[Mapping[str, Collection[str]]] = None,
+        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+        method: Optional[str] = None,
+        body: Optional[bytes] = None,
+        text: Optional[str] = None,
+        json: Any = _missing,
+        content_predicate: Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None,
+    ):
         """
         Args:
             headers: If specified, expects the request to have these headers exactly
@@ -50,21 +56,17 @@ class ExpectedHTTPRequest(ScopeExpectation):
              the content of the request to evaluate to either True or the second element of the tuple, if one is
              provided. Cannot be used alongside other content-testing parameters
         """
-        super().__init__(headers, headers_submap, path, path_params, path_params_submap, query_params,
-                         query_params_submap)
+        super().__init__(
+            headers, headers_submap, path, path_params, path_params_submap, query_params, query_params_submap
+        )
 
         if method is None:
             self.method = None
         else:
             self.method = method.upper()
 
-        if (
-                (body is not None)
-                + (text is not None)
-                + (json is not _missing)
-                + (content_predicate is not None)
-        ) >= 2:
-            raise ValueError('only one of content, text, json must be set')
+        if ((body is not None) + (text is not None) + (json is not _missing) + (content_predicate is not None)) >= 2:
+            raise ValueError("only one of content, text, json must be set")
 
         self.body_decode: Optional[Callable[[bytes], Any]]
         self.data: Optional[Any]
@@ -97,29 +99,29 @@ class ExpectedHTTPRequest(ScopeExpectation):
         reasons = list(self.scope_mismatch_reasons(recorded))
 
         if self.method and self.method != recorded.method:
-            reasons.append(reason_is_ne('body', self.method, recorded.method))
+            reasons.append(reason_is_ne("body", self.method, recorded.method))
 
         if self.body_decode is not None:
             try:
                 body = self.body_decode(recorded.content)
-            except Exception as e:
-                reasons.append(f'failed to parse content: {e!r}')
+            except Exception as e:  # noqa: BLE001
+                reasons.append(f"failed to parse content: {e!r}")
             else:
                 if self.data != body:
-                    reasons.append(reason_is_ne('content', self.data, body))
+                    reasons.append(reason_is_ne("content", self.data, body))
 
         if reasons:
-            return MismatchReason(', '.join(reasons))
+            return MismatchReason(", ".join(reasons))
         return True
 
     def __repr__(self):
         args = self._repr_map()
         if self.method is not None:
-            args['method'] = self.method
+            args["method"] = self.method
         if self.body_decode is not None:
-            args['content'] = self.data
+            args["content"] = self.data
 
-        return 'ExpectedHTTPRequest(' + ', '.join(f'{k}={v!r}' for (k, v) in args.items()) + ')'
+        return "ExpectedHTTPRequest(" + ", ".join(f"{k}={v!r}" for (k, v) in args.items()) + ")"
 
 
 @dataclass
@@ -127,6 +129,7 @@ class RecordedHTTPRequest:
     """
     A recorded HTTP request, received by a starlette application.
     """
+
     headers: Mapping[str, Sequence[str]]
     method: str
     path: str
@@ -149,11 +152,11 @@ class RecordedHTTPRequest:
         """
         headers = {}
         for k, v in request.headers.items():
-            k = k.lower()
-            if k not in headers:
-                headers[k] = [v]
+            k_lower = k.lower()
+            if k_lower not in headers:
+                headers[k_lower] = [v]
             else:
-                headers[k].append(v)
+                headers[k_lower].append(v)
 
         query_args = {}
         for k, v in request.query_params.multi_items():
@@ -162,14 +165,7 @@ class RecordedHTTPRequest:
             else:
                 query_args[k].append(v)
 
-        return cls(
-            headers,
-            request.method,
-            request.url.path,
-            request.path_params,
-            query_args,
-            await request.body()
-        )
+        return cls(headers, request.method, request.url.path, request.path_params, query_args, await request.body())
 
 
 class RecordedHTTPRequests(List[RecordedHTTPRequest]):
@@ -182,41 +178,45 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         asserts that no requests were recorded.
         """
         if self:
-            raise AssertionError(f'{len(self)} requests, latest: {self[-1]}')
+            raise AssertionError(f"{len(self)} requests, latest: {self[-1]}")
 
     def assert_requested(self):
         """
         asserts that at least one request was recorded.
         """
         if not self:
-            raise AssertionError('No requests were made')
+            raise AssertionError("No requests were made")
 
     def assert_requested_once(self):
         """
         asserts that exactly one request was recorded.
         """
         if not self:
-            raise AssertionError('No requests were made')
+            raise AssertionError("No requests were made")
         if len(self) > 1:
-            raise AssertionError('Multiple requests were made:'
-                                 + ''.join(f'\n\t{existing}' for existing in self))
+            raise AssertionError("Multiple requests were made:" + "".join(f"\n\t{existing}" for existing in self))
 
     @overload
     def assert_requested_with(self, expected: ExpectedHTTPRequest):
         ...
 
     @overload
-    def assert_requested_with(self, *, headers: Optional[Mapping[str, Collection[str]]] = None,
-                              headers_submap: Optional[Mapping[str, Collection[str]]] = None,
-                              path: Optional[Union[str, Pattern[str]]] = None,
-                              path_params: Optional[Mapping[str, Any]] = None,
-                              path_params_submap: Optional[Mapping[str, Any]] = None,
-                              query_params: Optional[Mapping[str, Collection[str]]] = None,
-                              query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-                              method: Optional[str] = None, body: Optional[bytes] = None,
-                              text: Optional[str] = None, json: Any = _missing,
-                              content_predicate:
-                              Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None):
+    def assert_requested_with(
+        self,
+        *,
+        headers: Optional[Mapping[str, Collection[str]]] = None,
+        headers_submap: Optional[Mapping[str, Collection[str]]] = None,
+        path: Optional[Union[str, Pattern[str]]] = None,
+        path_params: Optional[Mapping[str, Any]] = None,
+        path_params_submap: Optional[Mapping[str, Any]] = None,
+        query_params: Optional[Mapping[str, Collection[str]]] = None,
+        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+        method: Optional[str] = None,
+        body: Optional[bytes] = None,
+        text: Optional[str] = None,
+        json: Any = _missing,
+        content_predicate: Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None,
+    ):
         ...
 
     def assert_requested_with(self, expected: Optional[ExpectedHTTPRequest] = None, **kwargs):
@@ -228,14 +228,14 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
              the keyword arguments to the constructor of ExpectedHTTPRequest.
         """
         if expected and kwargs:
-            raise TypeError('method can be called with either expected or keyword args, but not both')
+            raise TypeError("method can be called with either expected or keyword args, but not both")
         if not expected:
             if not kwargs:
-                raise TypeError('either expected or keyword args must be provided')
+                raise TypeError("either expected or keyword args must be provided")
             expected = ExpectedHTTPRequest(**kwargs)
 
         if not self:
-            raise AssertionError('No requests were made')
+            raise AssertionError("No requests were made")
         match = expected.matches(self[-1])
         if not match:
             raise AssertionError(str(match))
@@ -245,17 +245,22 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         ...
 
     @overload
-    def assert_requested_once_with(self, *, headers: Optional[Mapping[str, Collection[str]]] = None,
-                                   headers_submap: Optional[Mapping[str, Collection[str]]] = None,
-                                   path: Optional[Union[str, Pattern[str]]] = None,
-                                   path_params: Optional[Mapping[str, Any]] = None,
-                                   path_params_submap: Optional[Mapping[str, Any]] = None,
-                                   query_params: Optional[Mapping[str, Collection[str]]] = None,
-                                   query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-                                   method: Optional[str] = None, body: Optional[bytes] = None,
-                                   text: Optional[str] = None, json: Any = _missing,
-                                   content_predicate:
-                                   Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None):
+    def assert_requested_once_with(
+        self,
+        *,
+        headers: Optional[Mapping[str, Collection[str]]] = None,
+        headers_submap: Optional[Mapping[str, Collection[str]]] = None,
+        path: Optional[Union[str, Pattern[str]]] = None,
+        path_params: Optional[Mapping[str, Any]] = None,
+        path_params_submap: Optional[Mapping[str, Any]] = None,
+        query_params: Optional[Mapping[str, Collection[str]]] = None,
+        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+        method: Optional[str] = None,
+        body: Optional[bytes] = None,
+        text: Optional[str] = None,
+        json: Any = _missing,
+        content_predicate: Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None,
+    ):
         ...
 
     def assert_requested_once_with(self, expected: Optional[ExpectedHTTPRequest] = None, **kwargs):
@@ -267,17 +272,16 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
              the keyword arguments to the constructor of ExpectedHTTPRequest.
         """
         if expected and kwargs:
-            raise TypeError('method can be called with either expected or keyword args, but not both')
+            raise TypeError("method can be called with either expected or keyword args, but not both")
         if not expected:
             if not kwargs:
-                raise TypeError('either expected or keyword args must be provided')
+                raise TypeError("either expected or keyword args must be provided")
             expected = ExpectedHTTPRequest(**kwargs)
 
         if not self:
-            raise AssertionError('No requests were made')
+            raise AssertionError("No requests were made")
         if len(self) > 1:
-            raise AssertionError('Multiple requests were made:'
-                                 + ''.join(f'\n\t{existing}' for existing in self))
+            raise AssertionError("Multiple requests were made:" + "".join(f"\n\t{existing}" for existing in self))
         match = expected.matches(self[0])
         if not match:
             raise AssertionError(str(match))
@@ -287,17 +291,22 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         ...
 
     @overload
-    def assert_any_request(self, *, headers: Optional[Mapping[str, Collection[str]]] = None,
-                           headers_submap: Optional[Mapping[str, Collection[str]]] = None,
-                           path: Optional[Union[str, Pattern[str]]] = None,
-                           path_params: Optional[Mapping[str, Any]] = None,
-                           path_params_submap: Optional[Mapping[str, Any]] = None,
-                           query_params: Optional[Mapping[str, Collection[str]]] = None,
-                           query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-                           method: Optional[str] = None, body: Optional[bytes] = None,
-                           text: Optional[str] = None, json: Any = _missing,
-                           content_predicate:
-                           Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None):
+    def assert_any_request(
+        self,
+        *,
+        headers: Optional[Mapping[str, Collection[str]]] = None,
+        headers_submap: Optional[Mapping[str, Collection[str]]] = None,
+        path: Optional[Union[str, Pattern[str]]] = None,
+        path_params: Optional[Mapping[str, Any]] = None,
+        path_params_submap: Optional[Mapping[str, Any]] = None,
+        query_params: Optional[Mapping[str, Collection[str]]] = None,
+        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+        method: Optional[str] = None,
+        body: Optional[bytes] = None,
+        text: Optional[str] = None,
+        json: Any = _missing,
+        content_predicate: Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None,
+    ):
         ...
 
     def assert_any_request(self, expected: Optional[ExpectedHTTPRequest] = None, **kwargs):
@@ -309,14 +318,14 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
              the keyword arguments to the constructor of ExpectedHTTPRequest.
         """
         if expected and kwargs:
-            raise TypeError('method can be called with either expected or keyword args, but not both')
+            raise TypeError("method can be called with either expected or keyword args, but not both")
         if not expected:
             if not kwargs:
-                raise TypeError('either expected or keyword args must be provided')
+                raise TypeError("either expected or keyword args must be provided")
             expected = ExpectedHTTPRequest(**kwargs)
 
         if not self:
-            raise AssertionError('No requests were made')
+            raise AssertionError("No requests were made")
         whynots: List[Tuple[RecordedHTTPRequest, MismatchReason]] = []
         for req in self:
             match = expected.matches(req)
@@ -324,8 +333,10 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
                 return
             assert isinstance(match, MismatchReason)
             whynots.append((req, match))
-        raise AssertionError(f'expected request {expected}, but no requests match:',
-                             ''.join(f'\n\t {existing}- {whynot}' for (existing, whynot) in whynots))
+        raise AssertionError(
+            f"expected request {expected}, but no requests match:",
+            "".join(f"\n\t {existing}- {whynot}" for (existing, whynot) in whynots),
+        )
 
     def assert_has_requests(self, *expected_requests: ExpectedHTTPRequest):
         """
@@ -337,7 +348,7 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
              This means that if requests A,B are expected, then the recorded request sequence A,C,B matches it.
         """
         if not expected_requests:
-            raise TypeError('at least one expected request must be provided')
+            raise TypeError("at least one expected request must be provided")
 
         if len(self) < len(expected_requests):
             raise AssertionError(f"could not find request to match {expected_requests[0]}")

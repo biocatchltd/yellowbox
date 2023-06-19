@@ -11,7 +11,7 @@ from yellowbox.containers import create_and_pull, get_ports, upload_file
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 
-__all__ = ['RabbitMQService', 'RABBIT_DEFAULT_PORT', 'RABBIT_HTTP_API_PORT']
+__all__ = ["RabbitMQService", "RABBIT_DEFAULT_PORT", "RABBIT_HTTP_API_PORT"]
 
 from yellowbox.utils import DOCKER_EXPOSE_HOST
 
@@ -20,23 +20,41 @@ RABBIT_HTTP_API_PORT = 15672
 
 
 class RabbitMQService(SingleContainerService, RunMixin, AsyncRunMixin):
-    def __init__(self, docker_client: DockerClient, image='rabbitmq:latest', *, user="guest", password="guest",
-                 virtual_host="/", enable_management=False, **kwargs):
+    def __init__(
+        self,
+        docker_client: DockerClient,
+        image="rabbitmq:latest",
+        *,
+        user="guest",
+        password="guest",
+        virtual_host="/",
+        enable_management=False,
+        **kwargs,
+    ):
         self.user = user
         self.password = password
         self.virtual_host = virtual_host
-        super().__init__(create_and_pull(
-            docker_client, image, publish_all_ports=True, detach=True,
-            ports={RABBIT_HTTP_API_PORT: 0},  # Forward management port by default.
-        ), **kwargs)
+        super().__init__(
+            create_and_pull(
+                docker_client,
+                image,
+                publish_all_ports=True,
+                detach=True,
+                ports={RABBIT_HTTP_API_PORT: 0},  # Forward management port by default.
+            ),
+            **kwargs,
+        )
 
-        upload_file(self.container, '/etc/rabbitmq/rabbitmq.conf',
-                    f'''
+        upload_file(
+            self.container,
+            "/etc/rabbitmq/rabbitmq.conf",
+            f"""
                     default_pass = {password}
                     default_user = {user}
                     default_vhost = {virtual_host}
                     loopback_users = none
-                    '''.encode())
+                    """.encode(),
+        )
 
         self._enable_management = enable_management
 
@@ -46,9 +64,11 @@ class RabbitMQService(SingleContainerService, RunMixin, AsyncRunMixin):
     def connection(self, **kwargs):
         credentials = PlainCredentials(self.user, self.password)
         connection_params = ConnectionParameters(
-            DOCKER_EXPOSE_HOST, self.connection_port(),
-            credentials=credentials, virtual_host=self.virtual_host,
-            **kwargs
+            DOCKER_EXPOSE_HOST,
+            self.connection_port(),
+            credentials=credentials,
+            virtual_host=self.virtual_host,
+            **kwargs,
         )
         return BlockingConnection(connection_params)
 
@@ -88,23 +108,22 @@ class RabbitMQService(SingleContainerService, RunMixin, AsyncRunMixin):
         try:
             management_url = self.management_url()
         except RuntimeError as e:
-            raise RuntimeError('management must be enabled for clean_slate') from e
+            raise RuntimeError("management must be enabled for clean_slate") from e
 
-        queues_url = management_url + 'api/queues'
+        queues_url = management_url + "api/queues"
         replies = requests.get(queues_url, auth=(self.user, self.password))
         replies.raise_for_status()
         extant_queues = replies.json()
         delete_params = {}
         if not force_queue_deletion:
-            delete_params['if-unused'] = 'true'
+            delete_params["if-unused"] = "true"
         for queue in extant_queues:
-            name = quote(queue['name'], safe='')
-            vhost = quote(queue['vhost'], safe='')
+            name = quote(queue["name"], safe="")
+            vhost = quote(queue["vhost"], safe="")
             requests.delete(
-                management_url + f'api/queues/{vhost}/{name}',
-                auth=(self.user, self.password), params=delete_params
+                management_url + f"api/queues/{vhost}/{name}", auth=(self.user, self.password), params=delete_params
             ).raise_for_status()
 
-    def stop(self, signal='SIGKILL'):
+    def stop(self, signal="SIGKILL"):
         # change in default
         return super().stop(signal)

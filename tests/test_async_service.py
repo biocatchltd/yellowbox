@@ -41,9 +41,7 @@ class SleepService(BaseSleepService, RunMixin, AsyncRunMixin):
 async def test_async_service():
     async with AsyncExitStack() as stack:
         t = perf_counter()
-        await gather(
-            *(stack.enter_async_context(SleepService.arun(None, sleep_time=0.1 * x)) for x in range(1, 4))
-        )
+        await gather(*(stack.enter_async_context(SleepService.arun(None, sleep_time=0.1 * x)) for x in range(1, 4)))
         assert perf_counter() - t < 0.4
 
     assert BaseSleepService.living_services == 0

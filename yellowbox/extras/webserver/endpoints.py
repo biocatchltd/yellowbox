@@ -3,7 +3,17 @@ from __future__ import annotations
 from contextlib import contextmanager
 from traceback import print_exc
 from typing import (
-    TYPE_CHECKING, Awaitable, Callable, ContextManager, Iterable, Iterator, List, Optional, Tuple, Union, overload
+    TYPE_CHECKING,
+    Awaitable,
+    Callable,
+    ContextManager,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    overload,
 )
 
 from starlette.requests import Request
@@ -19,8 +29,8 @@ from yellowbox.extras.webserver.ws_request_capture import RecordedWSTranscripts,
 BASE_HTTP_SIDE_EFFECT = Union[Response, Callable[[Request], Awaitable[Response]]]
 BASE_WS_SIDE_EFFECT = Callable[[WebSocket], Awaitable[Optional[int]]]
 
-HTTP_SIDE_EFFECT = Union[BASE_HTTP_SIDE_EFFECT, Callable[['MockHTTPEndpoint'], BASE_HTTP_SIDE_EFFECT]]
-WS_SIDE_EFFECT = Union[BASE_WS_SIDE_EFFECT, Callable[['MockWSEndpoint'], BASE_WS_SIDE_EFFECT]]
+HTTP_SIDE_EFFECT = Union[BASE_HTTP_SIDE_EFFECT, Callable[["MockHTTPEndpoint"], BASE_HTTP_SIDE_EFFECT]]
+WS_SIDE_EFFECT = Union[BASE_WS_SIDE_EFFECT, Callable[["MockWSEndpoint"], BASE_WS_SIDE_EFFECT]]
 METHODS = Union[str, Iterable[str]]
 
 if TYPE_CHECKING:
@@ -38,7 +48,7 @@ class EndpointPatch(ContextManager):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.endpoint.side_effect = self.restore_side_effect
-        self.endpoint.owner._raise_from_pending()
+        self.endpoint.owner.raise_from_pending()
 
 
 @overload
@@ -52,7 +62,7 @@ def bind_side_effect(endpoint: MockWSEndpoint, side_effect: WS_SIDE_EFFECT) -> B
 
 
 def bind_side_effect(endpoint, side_effect):
-    if callable(side_effect) and getattr(side_effect, '__side_effect_factory__', False):
+    if callable(side_effect) and getattr(side_effect, "__side_effect_factory__", False):
         return side_effect(endpoint)
     return side_effect
 
@@ -62,8 +72,15 @@ class MockHTTPEndpoint:
     A mock http endpoint for a webserver
     """
 
-    def __init__(self, name: str, methods: METHODS, rule_string: str, side_effect: HTTP_SIDE_EFFECT,
-                 auto_read_body: bool = True, forbid_implicit_head_verb: bool = True):
+    def __init__(
+        self,
+        name: str,
+        methods: METHODS,
+        rule_string: str,
+        side_effect: HTTP_SIDE_EFFECT,
+        auto_read_body: bool = True,
+        forbid_implicit_head_verb: bool = True,
+    ):
         """
         Args:
             name: the name of the endpoint
@@ -100,7 +117,7 @@ class MockHTTPEndpoint:
         Returns:
             A context manager that, if exited, restores the endpoint's original side effect
         """
-        self.owner._raise_from_pending()
+        self.owner.raise_from_pending()
         previous_side_effect = self.side_effect
         self.side_effect = bind_side_effect(self, side_effect)
         return EndpointPatch(self, previous_side_effect)
@@ -112,7 +129,7 @@ class MockHTTPEndpoint:
         Returns:
              A RecordedHTTPRequests to which the requests are recorded
         """
-        self.owner._raise_from_pending()
+        self.owner.raise_from_pending()
         if not self.auto_read_body:
             raise RuntimeError("cannot capture calls if auto_read_body is disabled")
         calls = RecordedHTTPRequests()
@@ -121,30 +138,32 @@ class MockHTTPEndpoint:
             yield calls
         finally:
             if self._request_captures[-1] is not calls:
-                raise RuntimeError('capture_calls contexts cannot be used in parallel')
+                raise RuntimeError("capture_calls contexts cannot be used in parallel")
             self._request_captures.pop()
-            self.owner._raise_from_pending()
+            self.owner.raise_from_pending()
 
     async def get(self, request: Request):
         # the target of the starlette route
         if not self.owner:
-            raise RuntimeError('endpoint must be assigned to a webserver')
-        if self.owner._pending_exception:
+            raise RuntimeError("endpoint must be assigned to a webserver")
+        if self.owner.pending_exception:
             return PlainTextResponse(
-                f'an exception in the webserver had previously occurred: {self.owner._pending_exception!r}',
-                status_code=HTTP_500_INTERNAL_SERVER_ERROR
+                f"an exception in the webserver had previously occurred: {self.owner.pending_exception!r}",
+                status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             )
         try:
             if isinstance(self.side_effect, Response):
                 ret = self.side_effect
             else:
                 ret = await self.side_effect(request)
-        except Exception as ex:
-            print(f'uncaught exception when handling request: {request.method}'
-                  f' {request.url} [{self.owner.__name__}/{self.__name__}]:')
+        except Exception as ex:  # noqa: BLE001
+            print(
+                f"uncaught exception when handling request: {request.method}"
+                f" {request.url} [{self.owner.__name__}/{self.__name__}]:"
+            )
             print_exc()
-            self.owner._pending_exception = ex
-            return PlainTextResponse(f'handler raised an exception: {ex!r}', status_code=HTTP_500_INTERNAL_SERVER_ERROR)
+            self.owner.pending_exception = ex
+            return PlainTextResponse(f"handler raised an exception: {ex!r}", status_code=HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             if self.auto_read_body:
                 await request.body()
@@ -159,24 +178,39 @@ class MockHTTPEndpoint:
         Returns: a starlette route representing the endpoint
         """
         ret = Route(self.rule_string, self.get, methods=self.methods, name=self.__name__)  # type:ignore[arg-type]
-        if self.forbid_implicit_head_verb and 'HEAD' not in self.methods:
-            ret.methods.discard('HEAD')
+        if self.forbid_implicit_head_verb and "HEAD" not in self.methods:
+            ret.methods.discard("HEAD")
         return ret
 
 
 @overload
-def http_endpoint(methods: METHODS, rule_string: str, *, auto_read_body: bool = True, forbid_head_verb: bool = True,
-                  name: str = None) \
-        -> Callable[[HTTP_SIDE_EFFECT], MockHTTPEndpoint]: ...
+def http_endpoint(
+    methods: METHODS, rule_string: str, *, auto_read_body: bool = True, forbid_head_verb: bool = True, name: str = None
+) -> Callable[[HTTP_SIDE_EFFECT], MockHTTPEndpoint]:
+    ...
 
 
 @overload
-def http_endpoint(methods: METHODS, rule_string: str, side_effect: HTTP_SIDE_EFFECT, *, auto_read_body: bool = True,
-                  forbid_implicit_head_verb: bool = True, name: str = None) -> MockHTTPEndpoint: ...
+def http_endpoint(
+    methods: METHODS,
+    rule_string: str,
+    side_effect: HTTP_SIDE_EFFECT,
+    *,
+    auto_read_body: bool = True,
+    forbid_implicit_head_verb: bool = True,
+    name: str = None,
+) -> MockHTTPEndpoint:
+    ...
 
 
-def http_endpoint(methods: METHODS, rule_string: str, side_effect: Optional[HTTP_SIDE_EFFECT] = None, *,
-                  name: Optional[str] = None, **kwargs):
+def http_endpoint(
+    methods: METHODS,
+    rule_string: str,
+    side_effect: Optional[HTTP_SIDE_EFFECT] = None,
+    *,
+    name: Optional[str] = None,
+    **kwargs,
+):
     """
     Create a mock HTTP endpoint.
     Args:
@@ -203,13 +237,13 @@ def http_endpoint(methods: METHODS, rule_string: str, side_effect: Optional[HTTP
 
     def ret(func: HTTP_SIDE_EFFECT):
         nonlocal name
-        if name is None and not getattr(func, '__skip_name_for_side_effect__', False):
+        if name is None and not getattr(func, "__skip_name_for_side_effect__", False):
             try:
                 name = func.__name__  # type: ignore[union-attr]
             except AttributeError:
                 pass
         if name is None:
-            name = f'{methods} {rule_string}'
+            name = f"{methods} {rule_string}"
         return MockHTTPEndpoint(name, methods, rule_string, func, **kwargs)
 
     if side_effect is None:
@@ -248,18 +282,18 @@ class MockWSEndpoint:
         if not self.owner:
             await websocket.close(WS_1011_INTERNAL_ERROR)  # note that this will actually send a 403 code :shrug:
             return
-        if self.owner._pending_exception:
+        if self.owner.pending_exception:
             await websocket.close(WS_1011_INTERNAL_ERROR)  # note that this will actually send a 403 code :shrug:
             return
         try:
             code = await self.side_effect(websocket)
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001
             if self.allow_abrupt_disconnect and isinstance(ex, (WebSocketDisconnect, ConnectionClosed)):
                 pass
             else:
-                print(f'uncaught exception when handling ws: {websocket.url} [{self.owner.__name__}/{self.__name__}]:')
+                print(f"uncaught exception when handling ws: {websocket.url} [{self.owner.__name__}/{self.__name__}]:")
                 print_exc()
-                self.owner._pending_exception = ex
+                self.owner.pending_exception = ex
                 await websocket.close(WS_1011_INTERNAL_ERROR)
         else:
             if code is not None:
@@ -274,33 +308,37 @@ class MockWSEndpoint:
         Returns:
             A context manager that, if exited, restores the endpoint's original side effect
         """
-        self.owner._raise_from_pending()
+        self.owner.raise_from_pending()
         previous_side_effect = self.side_effect
         self.side_effect = bind_side_effect(self, side_effect)
         return EndpointPatch(self, previous_side_effect)
 
     @contextmanager
     def capture_calls(self) -> Iterator[RecordedWSTranscripts]:
-        self.owner._raise_from_pending()
+        self.owner.raise_from_pending()
         calls = RecordedWSTranscripts()
         self._request_captures.append(calls)
         try:
             yield calls
         finally:
             if self._request_captures[-1] is not calls:
-                raise RuntimeError('capture_calls contexts cannot be used in parallel')
+                raise RuntimeError("capture_calls contexts cannot be used in parallel")
             self._request_captures.pop()
-            self.owner._raise_from_pending()
+            self.owner.raise_from_pending()
 
 
 @overload
-def ws_endpoint(rule_string: str, *, name: str = None, allow_abrupt_disconnect: bool = True) \
-        -> Callable[[WS_SIDE_EFFECT], MockWSEndpoint]: pass
+def ws_endpoint(
+    rule_string: str, *, name: str = None, allow_abrupt_disconnect: bool = True
+) -> Callable[[WS_SIDE_EFFECT], MockWSEndpoint]:
+    pass
 
 
 @overload
-def ws_endpoint(rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None,
-                allow_abrupt_disconnect: bool = True) -> MockWSEndpoint: pass
+def ws_endpoint(
+    rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None, allow_abrupt_disconnect: bool = True
+) -> MockWSEndpoint:
+    pass
 
 
 def ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None, *, name: str = None, **kwargs):
@@ -330,7 +368,7 @@ def ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None, 
 
     def ret(func: WS_SIDE_EFFECT):
         nonlocal name
-        if name is None and not getattr(func, '__skip_name_for_side_effect__', False):
+        if name is None and not getattr(func, "__skip_name_for_side_effect__", False):
             try:
                 name = func.__name__
             except AttributeError:

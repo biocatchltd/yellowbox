@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager, nullcontext
 from typing import AsyncIterator, ContextManager, Iterator, Optional, Sequence, Type, TypeVar
@@ -39,13 +41,13 @@ class ContainerService(YellowService):
 
         """
         for c in self.containers:
-            if c.status.lower() == 'started':
+            if c.status.lower() == "started":
                 continue
             c.start()
             c.reload()
         return super(ContainerService, self).start()
 
-    def stop(self, signal='SIGTERM'):
+    def stop(self, signal="SIGTERM"):
         for c in reversed(self.containers):
             if not is_alive(c):
                 continue
@@ -90,7 +92,7 @@ class SingleEndpointService(ContainerService):
 
     @property
     def _endpoint_containers(self) -> Sequence[Container]:
-        return self._single_endpoint,
+        return (self._single_endpoint,)
 
     def connect(self, network: Network, **kwargs) -> Sequence[str]:
         network.connect(self._single_endpoint, **kwargs)
@@ -116,19 +118,25 @@ class SingleContainerService(SingleEndpointService, ABC):
         return self.container
 
 
-_T = TypeVar("_T", bound=ContainerService)
+SelfRunMixin = TypeVar("SelfRunMixin", bound="RunMixin")
 
 
-class RunMixin:
+class RunMixin(ContainerService, ABC):
     @classmethod
     def service_name(cls):
         return cls.__name__
 
     @classmethod
     @contextmanager
-    def run(cls: Type[_T], docker_client: DockerClient, *, spinner: bool = True,  # type: ignore
-            retry_spec: Optional[RetrySpec] = None,
-            network: Optional[Network] = None, **kwargs) -> Iterator[_T]:
+    def run(
+        cls: Type[SelfRunMixin],
+        docker_client: DockerClient,
+        *,
+        spinner: bool = True,
+        retry_spec: Optional[RetrySpec] = None,
+        network: Optional[Network] = None,
+        **kwargs,
+    ) -> Iterator[SelfRunMixin]:
         """
         Args:
             docker_client: a DockerClient instance to use when creating the service
@@ -138,7 +146,7 @@ class RunMixin:
             **kwargs: all keyword arguments are forwarded to the class's constructor
         """
         yaspin_spinner = _get_spinner(spinner)
-        with yaspin_spinner(f"Fetching {cls.service_name()} ..."):  # type: ignore[attr-defined]
+        with yaspin_spinner(f"Fetching {cls.service_name()} ..."):
             service = cls(docker_client, **kwargs)
 
         connect_network: ContextManager[None]
@@ -148,29 +156,37 @@ class RunMixin:
             connect_network = nullcontext()
 
         with connect_network:
-            with yaspin_spinner(f"Waiting for {cls.service_name()} to start..."):  # type: ignore[attr-defined]
+            with yaspin_spinner(f"Waiting for {cls.service_name()} to start..."):
                 service.start(retry_spec=retry_spec)
             with service:
                 yield service
 
 
-class AsyncRunMixin(ABC):
+SelfARunMixin = TypeVar("SelfARunMixin", bound="AsyncRunMixin")
+
+
+class AsyncRunMixin(ContainerService, ABC):
     @classmethod
     def service_name(cls):
         return cls.__name__
 
     @abstractmethod
-    async def astart(self: _T, retry_spec: Optional[RetrySpec] = None) -> None:   # type: ignore[misc]
+    async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
         """
         Start the service synchronously, but block and wait for startup asynchronously.
         """
-        pass
 
     @classmethod
     @asynccontextmanager
-    async def arun(cls: Type[_T], docker_client: DockerClient, *, verbose: bool = True,  # type: ignore[misc]
-                   retry_spec: Optional[RetrySpec] = None,
-                   network: Optional[Network] = None, **kwargs) -> AsyncIterator[_T]:
+    async def arun(
+        cls: Type[SelfARunMixin],
+        docker_client: DockerClient,
+        *,
+        verbose: bool = True,
+        retry_spec: Optional[RetrySpec] = None,
+        network: Optional[Network] = None,
+        **kwargs,
+    ) -> AsyncIterator[SelfARunMixin]:
         """
         Same as RunMixin.run, but waits for startup asynchronously.
 
@@ -183,7 +199,7 @@ class AsyncRunMixin(ABC):
         """
 
         yaspin_spinner = _get_spinner(verbose)
-        with yaspin_spinner(f"Fetching {cls.service_name()} ..."):  # type: ignore[attr-defined]
+        with yaspin_spinner(f"Fetching {cls.service_name()} ..."):
             service = cls(docker_client, **kwargs)
 
         connect_network: ContextManager[None]
@@ -194,10 +210,9 @@ class AsyncRunMixin(ABC):
 
         with connect_network:
             if verbose:
-                print(f".   Waiting for {cls.service_name()} to start...")    # type: ignore[attr-defined]
-            await service.astart(retry_spec=retry_spec)    # type: ignore[attr-defined]
+                print(f".   Waiting for {cls.service_name()} to start...")
+            await service.astart(retry_spec=retry_spec)
             if verbose:
-                print(f"{_SPINNER_SUCCESSMSG} "    # type: ignore[attr-defined]
-                      f"{cls.service_name()} started successfully")    # type: ignore[attr-defined]
+                print(f"{_SPINNER_SUCCESSMSG} {cls.service_name()} started successfully")
             with service:
                 yield service

@@ -16,10 +16,9 @@ from yellowbox.retry import RetrySpec
 from yellowbox.service import YellowService
 from yellowbox.utils import docker_host_name
 
-__all__ = ['HttpService', 'RouterHTTPRequestHandler']
-SideEffectResponse = Union[bytes, str, int, 'RouterHTTPRequestHandler']
-SideEffect = Union[Callable[['RouterHTTPRequestHandler'], SideEffectResponse],
-                   SideEffectResponse]
+__all__ = ["HttpService", "RouterHTTPRequestHandler"]
+SideEffectResponse = Union[bytes, str, int, "RouterHTTPRequestHandler"]
+SideEffect = Union[Callable[["RouterHTTPRequestHandler"], SideEffectResponse], SideEffectResponse]
 
 
 class RoutedHandler(NamedTuple):
@@ -39,6 +38,7 @@ class RouterHTTPRequestHandler(BaseHTTPRequestHandler):
     A BaseHTTPRequestHandler that allows adding and deleting routed handlers.
     Also contains some utility argument parsing.
     """
+
     _parse_url: ParseResult
     _body: Optional[bytes]
 
@@ -49,7 +49,7 @@ class RouterHTTPRequestHandler(BaseHTTPRequestHandler):
         try:
             return self._body
         except AttributeError:
-            raw_body_len = self.headers['Content-Length']
+            raw_body_len = self.headers["Content-Length"]
             if raw_body_len is None:
                 self._body = None
             else:
@@ -107,20 +107,21 @@ class RouterHTTPRequestHandler(BaseHTTPRequestHandler):
             if match:
                 matched_candidates.append((candidate, match))
         if not matched_candidates:
-            self.send_error(404, 'mock server matched no routes')
+            self.send_error(404, "mock server matched no routes")
             self.end_headers()
         elif len(matched_candidates) > 1:
-            self.send_error(500, 'mock server matched multiple routes: '
-                            + ', '.join(c.name for c, _ in matched_candidates))
+            self.send_error(
+                500, "mock server matched multiple routes: " + ", ".join(c.name for c, _ in matched_candidates)
+            )
             self.end_headers()
         else:
-            (routed, match), = matched_candidates
-            self.log_message(f'routed to {routed.name}')
+            ((routed, match),) = matched_candidates
+            self.log_message(f"routed to {routed.name}")
             self.match = match
             routed.callback(self)
 
     def __getattr__(self, item: str):
-        if item.startswith('do_'):
+        if item.startswith("do_"):
             return self._do
         raise AttributeError(item)
 
@@ -145,12 +146,12 @@ class HttpService(YellowService):
     ...      assert requests.get(service.local_url+"/meaning_of_life").content == b'42'
     """
 
-    def __init__(self, host='0.0.0.0', port=0, name='anonymous_yellowbox_HTTPService'):
-        self.router_cls = cast(Type[RouterHTTPRequestHandler],
-                               new_class(name + '_RequestHandler', (RouterHTTPRequestHandler,)))
+    def __init__(self, host="0.0.0.0", port=0, name="anonymous_yellowbox_HTTPService"):
+        self.router_cls = cast(
+            Type[RouterHTTPRequestHandler], new_class(name + "_RequestHandler", (RouterHTTPRequestHandler,))
+        )
         self.server = HTTPServer((host, port), self.router_cls)
-        self.server_thread = Thread(name=name + '_thread', target=self.server.serve_forever,
-                                    daemon=True)
+        self.server_thread = Thread(name=name + "_thread", target=self.server.serve_forever, daemon=True)
 
     @property
     def server_port(self):
@@ -158,11 +159,11 @@ class HttpService(YellowService):
 
     @property
     def local_url(self):
-        return f'http://127.0.0.1:{self.server_port}'
+        return f"http://127.0.0.1:{self.server_port}"
 
     @property
     def container_url(self):
-        return f'http://{docker_host_name}:{self.server_port}'
+        return f"http://{docker_host_name}:{self.server_port}"
 
     @staticmethod
     def _to_callback(side_effect: SideEffect):
@@ -176,12 +177,14 @@ class HttpService(YellowService):
             handler.send_response(200)
             handler.end_headers()
             if isinstance(response, str):
-                response = bytes(response, 'ascii')
+                response = bytes(response, "ascii")
             if isinstance(response, bytes):
                 handler.wfile.write(response)
             else:
-                raise TypeError(f"got response of type {type(response)}, type must be RouterHTTPRequestHandler, "
-                                f"int, str or bytes")
+                raise TypeError(
+                    f"got response of type {type(response)}, type must be RouterHTTPRequestHandler, "
+                    f"int, str or bytes"
+                )
 
         def callback(handler: RouterHTTPRequestHandler):
             if callable(side_effect):
@@ -192,9 +195,13 @@ class HttpService(YellowService):
 
         return callback
 
-    def patch_route(self, method, route: Union[str, Pattern[str]],
-                    side_effect: SideEffect = ...,  # type: ignore[assignment]
-                    name: Optional[str] = None):
+    def patch_route(
+        self,
+        method,
+        route: Union[str, Pattern[str]],
+        side_effect: SideEffect = ...,  # type: ignore[assignment]
+        name: Optional[str] = None,
+    ):
         """
         Create a context manager that temporarily adds a route handler to the service.
 
@@ -227,7 +234,7 @@ class HttpService(YellowService):
         def _helper():
             nonlocal name
             callback = self._to_callback(side_effect)
-            name = name or getattr(side_effect, '__name__', None) or str(route)
+            name = name or getattr(side_effect, "__name__", None) or str(route)
             handler = RoutedHandler(method, name, route, callback)
             self.router_cls.add_route(handler)
             try:
@@ -238,12 +245,11 @@ class HttpService(YellowService):
         return _helper()
 
     def start(self, retry_spec: Optional[RetrySpec] = None):
-        with self.patch_route('GET', '/health', 200):
+        with self.patch_route("GET", "/health", 200):
             self.server_thread.start()
             retry_spec = retry_spec or RetrySpec(attempts=10)
             retry_spec.retry(
-                lambda: requests.get(self.local_url + '/health').raise_for_status(),
-                (ConnectionError, HTTPError)
+                lambda: requests.get(self.local_url + "/health").raise_for_status(), (ConnectionError, HTTPError)
             )
         return super(HttpService, self).start()
 
