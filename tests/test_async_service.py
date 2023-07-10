@@ -1,5 +1,4 @@
 from asyncio import gather, sleep
-from contextlib import AsyncExitStack
 from time import perf_counter
 
 from pytest import mark
@@ -33,15 +32,21 @@ class SleepService(BaseSleepService, RunMixin, AsyncRunMixin):
         super().start()
         await sleep(self.sleep_time)
 
+    async def astop(self, *args, **kwargs) -> None:
+        super().stop(*args, **kwargs)
+        await sleep(self.sleep_time)
+
     def stop(self):
-        super().stop()
+        raise AssertionError("should not be called")
 
 
 @mark.asyncio
 async def test_async_service():
-    async with AsyncExitStack() as stack:
-        t = perf_counter()
-        await gather(*(stack.enter_async_context(SleepService.arun(None, sleep_time=0.1 * x)) for x in range(1, 4)))
-        assert perf_counter() - t < 0.4
+    service_contexts = [SleepService.arun(None, sleep_time=0.1 * x) for x in range(1, 4)]
+    t = perf_counter()
+    await gather(*(s.__aenter__() for s in service_contexts))
+    assert perf_counter() - t < 0.4
+    await gather(*(s.__aexit__(None, None, None) for s in service_contexts))
+    assert perf_counter() - t < 0.7
 
     assert BaseSleepService.living_services == 0

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from asyncio import get_running_loop
 from contextlib import asynccontextmanager, contextmanager, nullcontext
+from functools import partial
 from typing import AsyncIterator, ContextManager, Iterator, Optional, Sequence, Type, TypeVar
 
 from docker import DockerClient
@@ -176,6 +178,20 @@ class AsyncRunMixin(ContainerService, ABC):
         Start the service synchronously, but block and wait for startup asynchronously.
         """
 
+    async def astop(self, *args, **kwargs) -> None:
+        """
+        Stop the service synchronously, but block and wait for shutdown asynchronously.
+        """
+        loop = get_running_loop()
+        func = partial(self.stop, *args, **kwargs)
+        await loop.run_in_executor(None, func)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args):
+        await self.astop()
+
     @classmethod
     @asynccontextmanager
     async def arun(
@@ -214,5 +230,5 @@ class AsyncRunMixin(ContainerService, ABC):
             await service.astart(retry_spec=retry_spec)
             if verbose:
                 print(f"{_SPINNER_SUCCESSMSG} {cls.service_name()} started successfully")
-            with service:
+            async with service:
                 yield service
