@@ -28,7 +28,9 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
     USED FOR DEVELOPMENT.
     """
 
-    def __init__(self, docker_client: DockerClient, image="hashicorp/vault:latest", root_token: str = "guest", **kwargs):
+    def __init__(
+        self, docker_client: DockerClient, image="hashicorp/vault:latest", root_token: str = "guest", **kwargs
+    ):
         """
         Args:
             docker_client: the client to use
