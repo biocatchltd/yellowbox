@@ -5,6 +5,7 @@
 ### Changed
 * `DockerfileParseException` has been renamed to `DockerfileParseError` (legacy alias preserved)
 * `RunMixin` and `AsyncRunMixin` are now subclasses of `ContainerService`
+* vault: default tag changed to hashicorp/vault:latest
 ### Fixed
 * fixed issue where latest bitnami kafka would not start
 ### Added
