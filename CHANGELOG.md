@@ -11,6 +11,7 @@
 * extras/kafka: added `bitnami_debug` parameter to enable bitnami debug.
 * the "pending_exception" method and "raise_from_pending" method of webservice are now public, but 
 undocumented. Their API is likely to change.
+* `AsyncRunMixin` noe exit asynchronously
 ## 0.8.3
 ### Changed
 * docker_expose_host is no longer inferred for WSL2
