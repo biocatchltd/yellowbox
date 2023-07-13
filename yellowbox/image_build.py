@@ -18,16 +18,6 @@ class DockerfileParseError(BuildError):
     pass
 
 
-class ThreadWithResult(threading.Thread):
-    def __init__(self, target):
-        super(ThreadWithResult, self).__init__()
-        self.target = target
-        self.result = None
-
-    def run(self):
-        self.result = self.target()
-
-
 DockerfileParseException = DockerfileParseError  # legacy alias
 
 
