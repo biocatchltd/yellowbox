@@ -1,6 +1,9 @@
 import json
 import sys
-from contextlib import contextmanager, asynccontextmanager
+from asyncio import get_event_loop
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import asynccontextmanager, contextmanager
+from functools import partial
 from json import JSONDecodeError
 from typing import Optional, TextIO
 
@@ -8,9 +11,6 @@ from docker import DockerClient
 from docker.errors import BuildError, DockerException, ImageNotFound
 
 from yellowbox.utils import _get_spinner
-from asyncio import get_event_loop
-from concurrent.futures import ThreadPoolExecutor
-from functools import partial
 
 
 class DockerfileParseError(BuildError):
@@ -119,6 +119,7 @@ def docker_build(docker_client, file, **kwargs):
                     print(aux, end="", flush=True, file=file)
                 else:
                     raise DockerException(parse_msg)
+
 
 @asynccontextmanager
 async def async_build_image(

@@ -1,8 +1,7 @@
-from pytest import mark
 from docker.errors import DockerException, ImageNotFound
-from pytest import raises
+from pytest import mark, raises
 
-from yellowbox import build_image, async_build_image
+from yellowbox import async_build_image, build_image
 
 
 def test_valid_image_build(docker_client):
