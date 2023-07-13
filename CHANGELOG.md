@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## 0.8.5
+### Added
+* BC-33337: duplicate the build_image function and make it asynchronous
 ## 0.8.4
 ### Deprecated
 * `DockerfileParseException` should be renamed to `DockerfileParseError`

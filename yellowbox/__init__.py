@@ -1,6 +1,6 @@
 from yellowbox._version import __version__
 from yellowbox.clients import docker_client, open_docker_client
-from yellowbox.image_build import build_image
+from yellowbox.image_build import build_image, build_docker_image
 from yellowbox.networks import connect, temp_network
 from yellowbox.retry import RetrySpec
 from yellowbox.service import YellowService
@@ -17,6 +17,7 @@ __all__ = [
     "docker_client",
     "open_docker_client",
     "build_image",
+    "build_docker_image",
     "connect",
     "temp_network",
     "RetrySpec",
