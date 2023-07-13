@@ -8,10 +8,9 @@ from docker import DockerClient
 from docker.errors import BuildError, DockerException, ImageNotFound
 
 from yellowbox.utils import _get_spinner
-import threading
-import queue
 from asyncio import get_event_loop
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 
 
 class DockerfileParseError(BuildError):
@@ -89,52 +88,8 @@ def build_image(
                 pass
 
 
-def build_docker_image(docker_client: DockerClient, image_name: str, **kwargs):
-    if ":" in image_name:
-        image_tag = image_name
-    else:
-        image_tag = f"{image_name}:test"
-    # Définissez les paramètres de construction de l'image Docker
-    kwargs = {"tag": image_tag, "rm": True, "forcerm": True, **kwargs}
-    log_queue = queue.Queue()
-
-    # Lancez la construction de l'image Docker de manière asynchrone dans un thread séparé
-    thread = threading.Thread(target=async_build_image, args=(docker_client, kwargs))
-    thread.start()
-
-    while True:
-        try:
-            log = log_queue.get(timeout=1)
-            print(log.strip())
-        except queue.Empty:
-            # Vérifiez si le thread de construction est toujours en cours d'exécution
-            if not thread.is_alive():
-                break
-
-
-@asynccontextmanager
-async def async_build_image(
-    docker_client: DockerClient,
-    kwargs,
-):
-    """
-    same function as build_image but asynchronously
-    """
-    print("toto")
-    image_name = ""
-    file = ""
-    remove_image = True
-
-    # spinner splits into multiple lines in case stream is being printed at the same time
-    if ":" in image_name:
-        image_tag = image_name
-    else:
-        image_tag = f"{image_name}:test"
-    kwargs = {"tag": image_tag, "rm": True, "forcerm": True, **kwargs}
-    # build_log = docker_client.api.build(**kwargs)
-    build_log = []
-    thread_pool_executor = ThreadPoolExecutor(max_workers=15)
-    await get_event_loop().run_in_executor(thread_pool_executor, docker_client.api.build(**kwargs))
+def docker_build(docker_client, file, **kwargs):
+    build_log = docker_client.api.build(**kwargs)
     for msg_b in build_log:
         msgs = str(msg_b, "utf-8").splitlines()
         for msg in msgs:
@@ -164,6 +119,34 @@ async def async_build_image(
                     print(aux, end="", flush=True, file=file)
                 else:
                     raise DockerException(parse_msg)
+
+@asynccontextmanager
+async def async_build_image(
+    docker_client: DockerClient,
+    image_name: str,
+    remove_image: bool = True,
+    file: Optional[TextIO] = sys.stderr,
+    **kwargs,
+):
+    """
+    Create a docker image (similar to docker build command)
+    At the end, deletes the image (using rmi command)
+    Args:
+        docker_client: DockerClient to be used to create the image
+        image_name: Name of the image to be created. If no tag is provided, the tag "test" will be added.
+        remove_image: boolean, whether or not to delete the image at the end, default as True
+        file: a file-like object (stream); defaults to the current sys.stderr. if set to None, will disable printing
+    """
+    # spinner splits into multiple lines in case stream is being printed at the same time
+    if ":" in image_name:
+        image_tag = image_name
+    else:
+        image_tag = f"{image_name}:test"
+    kwargs = {"docker_client": docker_client, "file": file, "tag": image_tag, "rm": True, "forcerm": True, **kwargs}
+
+    thread_pool_executor = ThreadPoolExecutor(max_workers=10)
+    await get_event_loop().run_in_executor(thread_pool_executor, partial(docker_build, **kwargs))
+
     yield image_tag
     if remove_image:
         try:
