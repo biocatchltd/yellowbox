@@ -20,7 +20,11 @@ class DockerfileParseError(BuildError):
 DockerfileParseException = DockerfileParseError  # legacy alias
 
 
-def _docker_build(docker_client: DockerClient, file: Optional[TextIO], **kwargs):
+def _docker_build(docker_client: DockerClient, file: TextIO, async_run: bool, **kwargs):
+    """
+    :param async_run: This parameter is True when the function is called asynchronously.
+                      In order not to log live in sys.stderr asynchronously, we log only at the end of the build.
+    """
     build_log = docker_client.api.build(**kwargs)
     log_list = []
     for msg_b in build_log:
@@ -31,9 +35,9 @@ def _docker_build(docker_client: DockerClient, file: Optional[TextIO], **kwargs)
             except JSONDecodeError as e:
                 raise DockerException("error at build logs") from e
             s = parse_msg.get("stream")
-            if s and file:
+            if s and file and not async_run:
                 print(s, end="", flush=True, file=file)
-            elif s:
+            elif s and async_run:
                 log_list.append(s)
             else:
                 # runtime errors
@@ -49,20 +53,21 @@ def _docker_build(docker_client: DockerClient, file: Optional[TextIO], **kwargs)
                 elif error_msg is not None:
                     raise DockerfileParseError(reason=error_msg, build_log=None)
                 elif status is not None:
-                    if file:
+                    if async_run:
+                        log_list.append(str(status))
+                    else:
                         print(status, end="", flush=True, file=file)
-                    else:
-                        log_list.append(aux)
                 elif aux is not None:
-                    if file:
-                        print(aux, end="", flush=True, file=file)
+                    if async_run:
+                        log_list.append(str(aux))
                     else:
-                        log_list.append(aux)
+                        print(aux, end="", flush=True, file=file)
                 else:
                     raise DockerException(parse_msg)
 
     if len(log_list):
-        print(log_list, end="", flush=True, file=sys.stderr)
+        formatted_str = ''.join(log_list)
+        print(formatted_str, file=file)
 
 
 @contextmanager
@@ -94,7 +99,7 @@ def build_image(
     yaspin_spinner = _get_spinner(spinner)
     with yaspin_spinner(f"Creating image {image_tag}..."):
         kwargs = {"tag": image_tag, "rm": True, "forcerm": True, **kwargs}
-        _docker_build(docker_client, file, **kwargs)
+        _docker_build(docker_client, file, async_run=False, **kwargs)
         yield image_tag
         if remove_image:
             try:
@@ -109,6 +114,7 @@ async def async_build_image(
     docker_client: DockerClient,
     image_name: str,
     remove_image: bool = True,
+    file: Optional[TextIO] = sys.stderr,
     **kwargs,
 ):
     """
@@ -125,7 +131,8 @@ async def async_build_image(
         image_tag = image_name
     else:
         image_tag = f"{image_name}:test"
-    kwargs = {"docker_client": docker_client, "file": None, "tag": image_tag, "rm": True, "forcerm": True, **kwargs}
+    kwargs = {"docker_client": docker_client, "file": file, "async_run": True, "tag": image_tag, "rm": True,
+              "forcerm": True, **kwargs}
 
     await get_event_loop().run_in_executor(None, partial(_docker_build, **kwargs))
 
