@@ -10,8 +10,7 @@ from docker import DockerClient
 from docker.errors import BuildError, DockerException, ImageNotFound
 
 from yellowbox.utils import _get_spinner
-import random
-import string
+
 
 class DockerfileParseError(BuildError):
     pass
@@ -66,7 +65,7 @@ def _docker_build(docker_client: DockerClient, file: TextIO, async_run: bool, **
                     raise DockerException(parse_msg)
 
     if len(log_list):
-        formatted_str = ''.join(log_list)
+        formatted_str = "".join(log_list)
         print(formatted_str, file=file)
 
 
@@ -131,8 +130,15 @@ async def async_build_image(
         image_tag = image_name
     else:
         image_tag = f"{image_name}:test"
-    kwargs = {"docker_client": docker_client, "file": file, "async_run": True, "tag": image_tag, "rm": True,
-              "forcerm": True, **kwargs}
+    kwargs = {
+        "docker_client": docker_client,
+        "file": file,
+        "async_run": True,
+        "tag": image_tag,
+        "rm": True,
+        "forcerm": True,
+        **kwargs,
+    }
 
     await get_event_loop().run_in_executor(None, partial(_docker_build, **kwargs))
 
