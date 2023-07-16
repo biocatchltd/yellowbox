@@ -139,32 +139,3 @@ raises-require-match-for = []
 
 [tool.black]
 line-length = 120
-
-[tool.towncrier]
-name = "Yellowbox"
-directory = "newsfragments"
-filename = "CHANGELOG.md"
-template = "newsfragments/changelog_template.md.jinja"
-issue_format = "[{issue}](https://biocatch.atlassian.net/browse/{issue})"
-title_format = "## [{version}](https://github.com/biocatchltd/yellowbox/tree/{version}) ({project_date})"
-underlines = ["", "", ""]
-[[tool.towncrier.type]]
-directory = "changed"
-name = "Changed"
-showcontent = true
-[[tool.towncrier.type]]
-directory = "removed"
-name = "Removed"
-showcontent = true
-[[tool.towncrier.type]]
-directory = "added"
-name = "Added"
-showcontent = true
-[[tool.towncrier.type]]
-directory = "fixed"
-name = "Fixed"
-showcontent = true
-[[tool.towncrier.type]]
-directory = "internal"
-name = "Internal"
-showcontent = true

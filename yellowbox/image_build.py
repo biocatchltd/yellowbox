@@ -10,7 +10,8 @@ from docker import DockerClient
 from docker.errors import BuildError, DockerException, ImageNotFound
 
 from yellowbox.utils import _get_spinner
-
+import random
+import string
 
 class DockerfileParseError(BuildError):
     pass
@@ -19,8 +20,9 @@ class DockerfileParseError(BuildError):
 DockerfileParseException = DockerfileParseError  # legacy alias
 
 
-def _docker_build(docker_client, file, **kwargs):
+def _docker_build(docker_client: DockerClient, file: Optional[TextIO], **kwargs):
     build_log = docker_client.api.build(**kwargs)
+    log_list = []
     for msg_b in build_log:
         msgs = str(msg_b, "utf-8").splitlines()
         for msg in msgs:
@@ -31,6 +33,8 @@ def _docker_build(docker_client, file, **kwargs):
             s = parse_msg.get("stream")
             if s and file:
                 print(s, end="", flush=True, file=file)
+            elif s:
+                log_list.append(s)
             else:
                 # runtime errors
                 error_detail = parse_msg.get("errorDetail")
@@ -44,12 +48,21 @@ def _docker_build(docker_client, file, **kwargs):
                     raise BuildError(reason=error_detail, build_log=None)
                 elif error_msg is not None:
                     raise DockerfileParseError(reason=error_msg, build_log=None)
-                elif status is not None and file:
-                    print(status, end="", flush=True, file=file)
-                elif aux is not None and file:
-                    print(aux, end="", flush=True, file=file)
+                elif status is not None:
+                    if file:
+                        print(status, end="", flush=True, file=file)
+                    else:
+                        log_list.append(aux)
+                elif aux is not None:
+                    if file:
+                        print(aux, end="", flush=True, file=file)
+                    else:
+                        log_list.append(aux)
                 else:
                     raise DockerException(parse_msg)
+
+    if len(log_list):
+        print(log_list, end="", flush=True, file=sys.stderr)
 
 
 @contextmanager
@@ -91,16 +104,11 @@ def build_image(
                 pass
 
 
-def _remove_image(docker_client: DockerClient, image_tag: str):
-    docker_client.api.remove_image(image_tag)
-
-
 @asynccontextmanager
 async def async_build_image(
     docker_client: DockerClient,
     image_name: str,
     remove_image: bool = True,
-    file: Optional[TextIO] = sys.stderr,
     **kwargs,
 ):
     """
@@ -117,15 +125,14 @@ async def async_build_image(
         image_tag = image_name
     else:
         image_tag = f"{image_name}:test"
-    kwargs = {"docker_client": docker_client, "file": file, "tag": image_tag, "rm": True, "forcerm": True, **kwargs}
+    kwargs = {"docker_client": docker_client, "file": None, "tag": image_tag, "rm": True, "forcerm": True, **kwargs}
 
     await get_event_loop().run_in_executor(None, partial(_docker_build, **kwargs))
 
     yield image_tag
     if remove_image:
         try:
-            kwargs = {"docker_client": docker_client, "image_tag": image_tag}
-            await get_event_loop().run_in_executor(None, partial(_remove_image, **kwargs))
+            await get_event_loop().run_in_executor(None, docker_client.api.remove_image, image_tag)
         except ImageNotFound:
             # if the image was already deleted
             pass
