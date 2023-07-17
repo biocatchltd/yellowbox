@@ -123,7 +123,7 @@ class SingleContainerService(SingleEndpointService, ABC):
 SelfRunMixin = TypeVar("SelfRunMixin", bound="RunMixin")
 
 
-class RunMixin(ContainerService, ABC):
+class RunMixin:
     @classmethod
     def service_name(cls):
         return cls.__name__
@@ -149,7 +149,7 @@ class RunMixin(ContainerService, ABC):
         """
         yaspin_spinner = _get_spinner(spinner)
         with yaspin_spinner(f"Fetching {cls.service_name()} ..."):
-            service = cls(docker_client, **kwargs)
+            service = cls(docker_client, **kwargs)  # type: ignore[call-arg]
 
         connect_network: ContextManager[None]
         if network:
@@ -159,15 +159,15 @@ class RunMixin(ContainerService, ABC):
 
         with connect_network:
             with yaspin_spinner(f"Waiting for {cls.service_name()} to start..."):
-                service.start(retry_spec=retry_spec)
-            with service:
+                service.start(retry_spec=retry_spec)  # type: ignore[attr-defined]
+            with service:  # type: ignore[attr-defined]
                 yield service
 
 
 SelfARunMixin = TypeVar("SelfARunMixin", bound="AsyncRunMixin")
 
 
-class AsyncRunMixin(ContainerService, ABC):
+class AsyncRunMixin(ABC):
     @classmethod
     def service_name(cls):
         return cls.__name__
@@ -183,7 +183,7 @@ class AsyncRunMixin(ContainerService, ABC):
         Stop the service synchronously, but block and wait for shutdown asynchronously.
         """
         loop = get_running_loop()
-        func = partial(self.stop, *args, **kwargs)
+        func = partial(self.stop, *args, **kwargs)  # type: ignore[attr-defined]
         await loop.run_in_executor(None, func)
 
     async def __aenter__(self):
@@ -216,7 +216,7 @@ class AsyncRunMixin(ContainerService, ABC):
 
         yaspin_spinner = _get_spinner(verbose)
         with yaspin_spinner(f"Fetching {cls.service_name()} ..."):
-            service = cls(docker_client, **kwargs)
+            service = cls(docker_client, **kwargs)  # type: ignore[call-arg]
 
         connect_network: ContextManager[None]
         if network:
