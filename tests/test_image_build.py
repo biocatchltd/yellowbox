@@ -24,7 +24,6 @@ async def test_valid_image_build_async(docker_client):
         image_name="yellowbox:test1",
         path=".",
         dockerfile="tests/resources/valid_dockerfile/Dockerfile",
-        remove_image=True,
     ) as first_image:
         async with async_build_image(
             docker_client,
@@ -36,6 +35,7 @@ async def test_valid_image_build_async(docker_client):
             first_container = docker_client.containers.create(first_image)
             first_container.start()
             first_container.wait()  # wait for the container to end and close
+            first_container.remove()
 
             # The second_image must not exist because not created
             with raises(ImageNotFound):
@@ -43,7 +43,7 @@ async def test_valid_image_build_async(docker_client):
 
     # The first_image must not exist because deleted
     with raises(ImageNotFound):
-        docker_client.containers.create(first_image)
+        docker_client.containers.create("yellowbox:test1")
 
 
 def test_invalid_parse_image_build(docker_client):
