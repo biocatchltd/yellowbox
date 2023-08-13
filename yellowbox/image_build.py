@@ -50,7 +50,6 @@ def _docker_build(docker_client: DockerClient, file: Optional[TextIO] = None, **
                 elif aux is not None and file:
                     print(aux, end="", flush=True, file=file)
                 else:
-                    print("GO HERE")
                     raise DockerException(parse_msg)
 
 
@@ -127,7 +126,8 @@ async def async_build_image(
     try:
         await get_event_loop().run_in_executor(None, partial(_docker_build, **kwargs))
     except (DockerException, BuildError, DockerfileParseError) as e:
-        print(e)
+        print(file.getvalue())
+        raise e
 
     yield image_tag
     if remove_image:
