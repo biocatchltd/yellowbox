@@ -1,4 +1,6 @@
+import sys
 from asyncio import gather
+from io import StringIO
 
 from docker.errors import BuildError, DockerException, ImageNotFound
 from pytest import mark, raises
@@ -56,13 +58,25 @@ async def test_valid_image_build_async(docker_client):
 
 @mark.asyncio
 async def test_invalid_image_build_async(docker_client):
-    with raises(BuildError), build_image(
-        docker_client,
-        image_name="yellowbox:test2",
-        path=".",
-        dockerfile="tests/resources/invalid_run_dockerfile/Dockerfile",
-    ) as image:
-        docker_client.containers.create(image)
+    async def build():
+        async with async_build_image(
+            docker_client,
+            image_name="yellowbox:test2",
+            path=".",
+            dockerfile="tests/resources/invalid_run_dockerfile/Dockerfile",
+        ) as image:
+            docker_client.containers.create(image)
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    with raises(BuildError):
+        await build()
+    captured_stdout = sys.stdout.getvalue()
+    assert "Step 1/3 : FROM alpine:3.4" in captured_stdout
+    assert "Step 2/3 : RUN apk update" in captured_stdout
+    assert "Step 3/3 : RUN file_not_exists.sh" in captured_stdout
+    assert "/bin/sh: file_not_exists.sh: not found" in captured_stdout
+    sys.stdout = old_stdout
 
 
 def test_invalid_parse_image_build(docker_client):
