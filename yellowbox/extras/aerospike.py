@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from typing import Any, Dict, Optional
 
 import aerospike
+from aerospike import exception as aerospike_exception
 from docker import DockerClient
 
 from yellowbox import RunMixin
@@ -12,7 +13,7 @@ from yellowbox.utils import DOCKER_EXPOSE_HOST
 
 __all__ = ["AerospikeService", "AEROSPIKE_DEFAULT_PORT"]
 
-AerospikeError = aerospike.exception.AerospikeError  # aerospike doesn't let you import this on its own
+AerospikeError = aerospike_exception.AerospikeError  # aerospike doesn't let you import this on its own
 
 AEROSPIKE_DEFAULT_PORT = 3000
 
