@@ -32,7 +32,7 @@ def _docker_build(docker_client: DockerClient, output: TextIO, **kwargs):
                 raise DockerException("error at build logs") from e
             s = parse_msg.get("stream")
             if s and output:
-                print(s, end="", flush=True, output=output)
+                print(s, end="", flush=True, file=output)
             else:
                 # runtime errors
                 error_detail = parse_msg.get("errorDetail")
@@ -47,9 +47,9 @@ def _docker_build(docker_client: DockerClient, output: TextIO, **kwargs):
                 elif error_msg is not None:
                     raise DockerfileParseError(reason=error_msg, build_log=None)
                 elif status is not None and output:
-                    print(status, end="", flush=True, output=output)
+                    print(status, end="", flush=True, file=output)
                 elif aux is not None and output:
-                    print(aux, end="", flush=True, output=output)
+                    print(aux, end="", flush=True, file=output)
                 else:
                     raise DockerException(parse_msg)
 
@@ -59,7 +59,7 @@ def build_image(
     docker_client: DockerClient,
     image_name: str,
     remove_image: bool = True,
-    file: Optional[TextIO] = ...,
+    file: Optional[TextIO] = ...,  # type: ignore[assignment]
     output: Optional[TextIO] = sys.stderr,
     spinner: bool = True,
     **kwargs,
@@ -77,7 +77,11 @@ def build_image(
     """
     spinner = spinner and file is None
     if file is not ...:
-        warn("The `file` parameter is deprecated and will be removed in a future version", DeprecationWarning, stacklevel=1)
+        warn(
+            "The `file` parameter is deprecated and will be removed in a future version",
+            DeprecationWarning,
+            stacklevel=1,
+        )
         output = file
 
     # spinner splits into multiple lines in case stream is being printed at the same time
