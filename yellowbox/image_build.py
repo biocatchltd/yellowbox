@@ -128,7 +128,7 @@ async def async_build_image(
     file = StringIO()
     kwargs = {
         "docker_client": docker_client,
-        "file": file,
+        "output": file,
         "tag": image_tag,
         "rm": True,
         "forcerm": True,
