@@ -6,6 +6,7 @@ from functools import partial
 from io import StringIO
 from json import JSONDecodeError
 from typing import Optional, TextIO
+from warnings import warn
 
 from docker import DockerClient
 from docker.errors import BuildError, DockerException, ImageNotFound
@@ -20,7 +21,7 @@ class DockerfileParseError(BuildError):
 DockerfileParseException = DockerfileParseError  # legacy alias
 
 
-def _docker_build(docker_client: DockerClient, file: Optional[TextIO] = None, **kwargs):
+def _docker_build(docker_client: DockerClient, output: TextIO, **kwargs):
     build_log = docker_client.api.build(**kwargs)
     for msg_b in build_log:
         msgs = str(msg_b, "utf-8").splitlines()
@@ -30,8 +31,8 @@ def _docker_build(docker_client: DockerClient, file: Optional[TextIO] = None, **
             except JSONDecodeError as e:
                 raise DockerException("error at build logs") from e
             s = parse_msg.get("stream")
-            if s and file:
-                print(s, end="", flush=True, file=file)
+            if s and output:
+                print(s, end="", flush=True, output=output)
             else:
                 # runtime errors
                 error_detail = parse_msg.get("errorDetail")
@@ -45,10 +46,10 @@ def _docker_build(docker_client: DockerClient, file: Optional[TextIO] = None, **
                     raise BuildError(reason=error_detail, build_log=None)
                 elif error_msg is not None:
                     raise DockerfileParseError(reason=error_msg, build_log=None)
-                elif status is not None and file:
-                    print(status, end="", flush=True, file=file)
-                elif aux is not None and file:
-                    print(aux, end="", flush=True, file=file)
+                elif status is not None and output:
+                    print(status, end="", flush=True, output=output)
+                elif aux is not None and output:
+                    print(aux, end="", flush=True, output=output)
                 else:
                     raise DockerException(parse_msg)
 
@@ -58,7 +59,8 @@ def build_image(
     docker_client: DockerClient,
     image_name: str,
     remove_image: bool = True,
-    file: Optional[TextIO] = sys.stderr,
+    file: Optional[TextIO] = ...,
+    output: Optional[TextIO] = sys.stderr,
     spinner: bool = True,
     **kwargs,
 ):
@@ -74,6 +76,10 @@ def build_image(
         case `file` param is not None
     """
     spinner = spinner and file is None
+    if file is not ...:
+        warn("The `file` parameter is deprecated and will be removed in a future version", DeprecationWarning, stacklevel=1)
+        output = file
+
     # spinner splits into multiple lines in case stream is being printed at the same time
     if ":" in image_name:
         image_tag = image_name
@@ -82,7 +88,7 @@ def build_image(
     yaspin_spinner = _get_spinner(spinner)
     with yaspin_spinner(f"Creating image {image_tag}..."):
         kwargs = {"tag": image_tag, "rm": True, "forcerm": True, **kwargs}
-        _docker_build(docker_client, file, **kwargs)
+        _docker_build(docker_client, output, **kwargs)
         yield image_tag
         if remove_image:
             try:
@@ -97,6 +103,8 @@ async def async_build_image(
     docker_client: DockerClient,
     image_name: str,
     remove_image: bool = True,
+    output: Optional[TextIO] = sys.stderr,
+    spinner: bool = True,
     **kwargs,
 ):
     """
@@ -122,12 +130,18 @@ async def async_build_image(
         "forcerm": True,
         **kwargs,
     }
-
+    if spinner and output:
+        print(f".   building image {image_tag}...", file=output)
     try:
         await get_event_loop().run_in_executor(None, partial(_docker_build, **kwargs))
     except (DockerException, BuildError, DockerfileParseError) as e:
-        print(file.getvalue())
+        print(f"failed building image {image_tag}", file=sys.stderr)
+        print(file.getvalue(), file=sys.stderr)
         raise e
+    else:
+        if spinner and output:
+            print(f".   image {image_tag} built successfully", file=output)
+            print(file.getvalue(), file=output)
 
     yield image_tag
     if remove_image:
