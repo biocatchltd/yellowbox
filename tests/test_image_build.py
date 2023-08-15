@@ -69,10 +69,10 @@ async def test_invalid_image_build_async(docker_client, capsys):
         await build()
 
     captured = capsys.readouterr()
-    assert "Step 1/3 : FROM alpine:3.4" in captured.out
-    assert "Step 2/3 : RUN apk update" in captured.out
-    assert "Step 3/3 : RUN file_not_exists.sh" in captured.out
-    assert "/bin/sh: file_not_exists.sh: not found" in captured.out
+    assert "Step 1/3 : FROM alpine:3.4" in captured.err
+    assert "Step 2/3 : RUN apk update" in captured.err
+    assert "Step 3/3 : RUN file_not_exists.sh" in captured.err
+    assert "/bin/sh: file_not_exists.sh: not found" in captured.err
 
 
 def test_invalid_parse_image_build(docker_client):
