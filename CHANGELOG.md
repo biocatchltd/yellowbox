@@ -1,7 +1,11 @@
 # Yellowbox Changelog
 ## Next
+### Deprecated
+* the `file` parameter of build_image
 ### Added
 * duplicate the build_image function and make it asynchronous
+### Fixed
+* fixed import of exceptions in aerospike that would cause an error with newer clients
 ## 0.8.5
 ### Fixed
 * `RunMixin` and `AsyncRunMixin` no longer subclass `ContainerService`
