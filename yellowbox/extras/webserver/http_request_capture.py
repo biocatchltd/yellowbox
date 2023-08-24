@@ -1,15 +1,117 @@
 from __future__ import annotations
 
+import json
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from json import loads as json_loads
 from typing import Any, Callable, Collection, List, Mapping, Optional, Pattern, Sequence, Tuple, Union, overload
 
 from starlette.requests import Request
 
-from yellowbox.extras.webserver.request_capture import ScopeExpectation
+from yellowbox.extras.webserver.request_capture import ScopeExpectation, _is_submap_of
 from yellowbox.extras.webserver.util import MismatchReason, reason_is_ne
 
 _missing = object()
+
+
+class BodyValidator(ABC):
+    @abstractmethod
+    def validate(self, content: bytes) -> Optional[MismatchReason]:
+        ...
+
+    def repr_map(self) -> Mapping[str, Any]:
+        return {"content_predicate": self}
+
+
+@dataclass(frozen=True)
+class BodyValidatorContent(BodyValidator):
+    expected_content: bytes
+
+    def validate(self, content: bytes) -> Optional[MismatchReason]:
+        if content != self.expected_content:
+            return MismatchReason(reason_is_ne("content", self.expected_content, content))
+        return None
+
+    def repr_map(self) -> Mapping[str, Any]:
+        return {"body": self.expected_content}
+
+
+@dataclass(frozen=True)
+class BodyValidatorText(BodyValidator):
+    expected_text: str
+    encoding: str = "utf-8"
+
+    def validate(self, content: bytes) -> Optional[MismatchReason]:
+        try:
+            text = content.decode(self.encoding)
+        except UnicodeDecodeError:
+            return MismatchReason(f"could not decode content as {self.encoding}")
+        if text != self.expected_text:
+            return MismatchReason(reason_is_ne("content-text", self.expected_text, text))
+        return None
+
+    def repr_map(self) -> Mapping[str, Any]:
+        return {"text": self.expected_text}
+
+
+@dataclass(frozen=True)
+class BodyValidatorJson(BodyValidator):
+    expected_json: Any
+
+    def validate(self, content: bytes) -> Optional[MismatchReason]:
+        try:
+            parsed = json.loads(content)
+        except json.JSONDecodeError:
+            return MismatchReason("could not decode content as json")
+        if parsed != self.expected_json:
+            return MismatchReason(reason_is_ne("content-json", self.expected_json, parsed))
+        return None
+
+    def repr_map(self) -> Mapping[str, Any]:
+        return {"json": self.expected_json}
+
+
+@dataclass(frozen=True)
+class BodyValidatorJsonSubmap(BodyValidator):
+    expected_json_submap: Mapping[str, Any]
+
+    def validate(self, content: bytes) -> Optional[MismatchReason]:
+        try:
+            parsed = json.loads(content)
+        except json.JSONDecodeError:
+            return MismatchReason("could not decode content as json")
+        if not isinstance(parsed, Mapping):
+            return MismatchReason("content is not a json object")
+        return _is_submap_of(self.expected_json_submap, parsed) and None
+
+    def repr_map(self) -> Mapping[str, Any]:
+        return {"json_submap": self.expected_json_submap}
+
+
+@dataclass(frozen=True)
+class BodyValidatorCustom(BodyValidator):
+    predicate: Callable[[bytes], bool]
+
+    def validate(self, content: bytes) -> Optional[MismatchReason]:
+        if not self.predicate(content):
+            return MismatchReason("content_predicate did not match")
+        return None
+
+    def repr_map(self) -> Mapping[str, Any]:
+        return {"content_predicate": self.predicate}
+
+
+@dataclass(frozen=True)
+class BodyValidatorCustom2(BodyValidator):
+    predicate: Callable[[bytes], Any]
+    expected: Any
+
+    def validate(self, content: bytes) -> Optional[MismatchReason]:
+        if self.predicate(content) != self.expected:
+            return MismatchReason(reason_is_ne("content-predicate", self.expected, self.predicate(content)))
+        return None
+
+    def repr_map(self) -> Mapping[str, Any]:
+        return {"content_predicate": (self.predicate, self.expected)}
 
 
 class ExpectedHTTPRequest(ScopeExpectation):
@@ -30,7 +132,10 @@ class ExpectedHTTPRequest(ScopeExpectation):
         body: Optional[bytes] = None,
         text: Optional[str] = None,
         json: Any = _missing,
-        content_predicate: Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None,
+        json_submap: Optional[Mapping[str, Any]] = None,
+        content_predicate: Optional[
+            Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any], BodyValidator]
+        ] = None,
     ):
         """
         Args:
@@ -51,6 +156,8 @@ class ExpectedHTTPRequest(ScopeExpectation):
              Cannot be used alongside other content-testing parameters
             json: If specified, expects the JSON-decoded content of the request to be equal to the specified value.
              Cannot be used alongside other content-testing parameters
+            json_submap: If specified, expects the JSON-decoded content of the request to have at least the specified
+             keys and values. Cannot be used alongside other content-testing parameters
             content_predicate: If specified, must be either a callable that accepts a bytes object, or a tuple of a
              callable that accepts a bytes object and another value, and expects the return value of the callable with
              the content of the request to evaluate to either True or the second element of the tuple, if one is
@@ -65,27 +172,32 @@ class ExpectedHTTPRequest(ScopeExpectation):
         else:
             self.method = method.upper()
 
-        if ((body is not None) + (text is not None) + (json is not _missing) + (content_predicate is not None)) >= 2:
-            raise ValueError("only one of content, text, json must be set")
+        if (
+            (body is not None)
+            + (text is not None)
+            + (json is not _missing)
+            + (json_submap is not None)
+            + (content_predicate is not None)
+        ) >= 2:
+            raise ValueError("only one of content, text, json, json_submap, or content_predicate must be set")
 
-        self.body_decode: Optional[Callable[[bytes], Any]]
-        self.data: Optional[Any]
+        self.body_validator: Optional[BodyValidator]
         if body is not None:
-            self.body_decode = lambda x: x
-            self.data = body
+            self.body_validator = BodyValidatorContent(body)
         elif text is not None:
-            self.body_decode = lambda x: x.decode()
-            self.data = text
+            self.body_validator = BodyValidatorText(text)
         elif json is not _missing:
-            self.body_decode = lambda x: json_loads(x.decode())
-            self.data = json
+            self.body_validator = BodyValidatorJson(json)
+        elif json_submap is not None:
+            self.body_validator = BodyValidatorJsonSubmap(json_submap)
+        elif isinstance(content_predicate, BodyValidator):
+            self.body_validator = content_predicate
         elif isinstance(content_predicate, tuple):
-            self.body_decode, self.data = content_predicate
+            self.body_validator = BodyValidatorCustom2(*content_predicate)
         elif callable(content_predicate):
-            self.body_decode = content_predicate
-            self.data = True
+            self.body_validator = BodyValidatorCustom(content_predicate)
         else:
-            self.body_decode = self.data = None
+            self.body_validator = None
 
     def matches(self, recorded: RecordedHTTPRequest) -> Union[bool, MismatchReason]:
         """
@@ -101,14 +213,10 @@ class ExpectedHTTPRequest(ScopeExpectation):
         if self.method and self.method != recorded.method:
             reasons.append(reason_is_ne("body", self.method, recorded.method))
 
-        if self.body_decode is not None:
-            try:
-                body = self.body_decode(recorded.content)
-            except Exception as e:  # noqa: BLE001
-                reasons.append(f"failed to parse content: {e!r}")
-            else:
-                if self.data != body:
-                    reasons.append(reason_is_ne("content", self.data, body))
+        if self.body_validator is not None:
+            body_reason = self.body_validator.validate(recorded.content)
+            if body_reason is not None:
+                reasons.append(body_reason)
 
         if reasons:
             return MismatchReason(", ".join(reasons))
@@ -118,8 +226,8 @@ class ExpectedHTTPRequest(ScopeExpectation):
         args = self._repr_map()
         if self.method is not None:
             args["method"] = self.method
-        if self.body_decode is not None:
-            args["content"] = self.data
+        if self.body_validator is not None:
+            args.update(self.body_validator.repr_map())
 
         return "ExpectedHTTPRequest(" + ", ".join(f"{k}={v!r}" for (k, v) in args.items()) + ")"
 
@@ -166,6 +274,12 @@ class RecordedHTTPRequest:
                 query_args[k].append(v)
 
         return cls(headers, request.method, request.url.path, request.path_params, query_args, await request.body())
+
+    def text(self, encoding="utf-8") -> str:
+        return self.content.decode(encoding)
+
+    def json(self):
+        return json.loads(self.content)
 
 
 class RecordedHTTPRequests(List[RecordedHTTPRequest]):
@@ -215,7 +329,10 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         body: Optional[bytes] = None,
         text: Optional[str] = None,
         json: Any = _missing,
-        content_predicate: Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None,
+        json_submap: Optional[Mapping[str, Any]] = None,
+        content_predicate: Optional[
+            Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any], BodyValidator]
+        ] = None,
     ):
         ...
 
@@ -259,6 +376,7 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         body: Optional[bytes] = None,
         text: Optional[str] = None,
         json: Any = _missing,
+        json_submap: Optional[Mapping[str, Any]] = None,
         content_predicate: Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None,
     ):
         ...
@@ -305,7 +423,10 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         body: Optional[bytes] = None,
         text: Optional[str] = None,
         json: Any = _missing,
-        content_predicate: Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None,
+        json_submap: Optional[Mapping[str, Any]] = None,
+        content_predicate: Optional[
+            Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any], BodyValidator]
+        ] = None,
     ):
         ...
 

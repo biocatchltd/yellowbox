@@ -4,8 +4,14 @@
 * the `file` parameter of build_image
 ### Added
 * duplicate the build_image function and make it asynchronous
+* `RecordedHTTPRequest.text` to get the request body as text
+* `RecordedHTTPRequest.json` to get the request body as json
+* `ExpectedHTTPRequest.json_submap` to expect a submap of the request body as json
 ### Fixed
 * fixed import of exceptions in aerospike that would cause an error with newer clients
+* fixed `forbid_implicit_head_verb` being incorrectly named in the `class_http_endpoint` overload.
+### Documentation
+* fixed documentation of MockWSEndpoint.side_effect
 ## 0.8.5
 ### Fixed
 * `RunMixin` and `AsyncRunMixin` no longer subclass `ContainerService`

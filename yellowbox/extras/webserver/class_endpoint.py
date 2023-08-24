@@ -63,7 +63,7 @@ def class_http_endpoint(
     rule_string: str,
     *,
     auto_read_body: bool = True,
-    forbid_head_verb: bool = True,
+    forbid_implicit_head_verb: bool = True,
     name: Optional[str] = None
 ) -> Callable[[Any], HTTPEndpointTemplate]:
     ...

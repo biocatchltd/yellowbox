@@ -371,6 +371,7 @@ of handling both HTTP and websocket routes.
     with :func:`ws_endpoint`.
 
     .. attribute:: side_effect
+
         The current side effect of the endpoint
 
     .. method:: patch(side_effect:collections.abc.Callable[[Websocket], \
@@ -437,7 +438,7 @@ of handling both HTTP and websocket routes.
     path_params_submap: collections.abc.Mapping[str, ...] =None,\
     query_params: collections.abc.Mapping[str, collections.abc.Collection[str]]=None,\
     query_params_submap: collections.abc.Mapping[str, collections.abc.Collection[str]]=None,\
-    method: str=None, body: bytes=None, text: str=None, json =...,\
+    method: str=None, body: bytes=None, text: str=None, json =..., json_submap: collections.abc.Mapping[str, ...]=None,\
     content_predicate: collections.abc.Callable[[bytes], bool] | tuple[collections.abc.Callable[[bytes], T], T]=None)
 
     An expected HTTP request, used for matching a recorded request.
@@ -454,6 +455,8 @@ of handling both HTTP and websocket routes.
     :param body: If specified, a recorded request must have a body equal to the one specified.
     :param text: If specified, a recorded request must have a body equal to the one specified with utf-8 encoding.
     :param json: If specified, a recorded request must have a body equal to the one specified with json encoding.
+    :param json_submap: If specified, a recorded request must have a body that is a supermap of the one specified with
+        json encoding.
     :param content_predicate: If specified, may be a callable that accepts a :class:`bytes` object, in which
         case the predicate must evaluate to True when called with the request body. Alternatively, the predicate can be
         a tuple of a callable that returns a value, and a value to compare to, in this case, the callable must return
@@ -461,12 +464,56 @@ of handling both HTTP and websocket routes.
 
     .. note::
 
-        Only one of ``body``, ``text``, ``json``, or ``content_predicate`` may be specified. Additionally, only a
+        Only one of ``body``, ``text``, ``json``, ``json_submap``, or ``content_predicate`` may be specified. Additionally, only a
         parameter or its ``*_submap`` variant may be specified, but not both.
+
+.. class:: http_request_capture.RecordedHTTPRequest
+
+    A recorded HTTP request. Yielded by :meth:`MockHTTPEndpoint.capture_calls` to record requests.
+
+    .. attribute:: headers
+        :type: collections.abc.Mapping[str, collections.abc.Sequence[str]]
+
+        The request headers.
+
+    .. attribute:: method
+        :type: str
+
+        The request method.
+
+    .. attribute:: path
+        :type: str
+
+        The request path.
+
+    .. attribute:: path_params
+        :type: collections.abc.Mapping[str, ...]
+
+        The request path parameters.
+
+    .. attribute:: query_params
+        :type: collections.abc.Mapping[str, collections.abc.Sequence[str]]
+
+        The request query parameters.
+
+    .. attribute:: content
+        :type: bytes
+
+        The request body.
+
+    .. method:: text(encoding='utf-8')->str
+
+        Return the request body as a :class:`str` decoded with the specified encoding.
+
+        :param encoding: The encoding to use. Defaults to ``'utf-8'``.
+
+    .. method:: json()
+
+        Return the request body as a json-decoded value.
 
 .. class:: http_request_capture.RecordedHTTPRequests
 
-    A :class:`list` of recorded HTTP requests. Yielded by :meth:`MockHTTPEndpoint.capture_calls` to record requests.
+    A :class:`list` of :class:`http_request_capture.RecordedHTTPRequest`. Yielded by :meth:`MockHTTPEndpoint.capture_calls` to record requests.
 
     .. method:: assert_not_requested()
 
