@@ -133,6 +133,28 @@ def test_match_recorded_http_call(expected):
 @mark.parametrize(
     "expected",
     [
+        ExpectedHTTPRequest(json_submap={}),
+        ExpectedHTTPRequest(json_submap={"a": 15}),
+        ExpectedHTTPRequest(json_submap={"a": 15, "b": "hi"}),
+        ExpectedHTTPRequest(json_submap={"a": 15, "b": "hi", "c": [1, 2, "f"]}),
+    ],
+)
+def test_match_recorded_http_call_json(expected):
+    recorded = RecordedHTTPRequest(
+        {"a": ["1"], "b": ["2"], "c": ["3", "4"]},
+        "GET",
+        "/foo/12/bar",
+        {"x": 12},
+        {"y": ["15", "17"]},
+        b'{"a": 15, "b": "hi", "c":[1,2,"f"]}',
+    )
+
+    assert expected.matches(recorded)
+
+
+@mark.parametrize(
+    "expected",
+    [
         ExpectedHTTPRequest(headers_submap={"c": ["3", "10"]}),
         ExpectedHTTPRequest(headers={"c": ["3"]}),
         ExpectedHTTPRequest(method="PUT"),
@@ -145,6 +167,7 @@ def test_match_recorded_http_call(expected):
         ExpectedHTTPRequest(body=b"25"),
         ExpectedHTTPRequest(text="16"),
         ExpectedHTTPRequest(json=11),
+        ExpectedHTTPRequest(json_submap={"a": 11}),
         ExpectedHTTPRequest(content_predicate=(int, 12)),
         ExpectedHTTPRequest(content_predicate=lambda x: x.startswith(b"2")),
     ],
@@ -174,11 +197,13 @@ def test_mismatch_recorded_http_call(expected):
             ExpectedHTTPRequest(query_params_submap={"y": ["15"]}),
             """ExpectedHTTPRequest(query_params_submap={'y': ['15']})""",
         ),
-        (ExpectedHTTPRequest(body=b"15"), """ExpectedHTTPRequest(content=b'15')"""),
-        (ExpectedHTTPRequest(text="15"), """ExpectedHTTPRequest(content='15')"""),
-        (ExpectedHTTPRequest(json=15), """ExpectedHTTPRequest(content=15)"""),
-        (ExpectedHTTPRequest(content_predicate=(int, 15)), """ExpectedHTTPRequest(content=15)"""),
-        (ExpectedHTTPRequest(content_predicate=lambda x: x.startswith(b"1")), """ExpectedHTTPRequest(content=True)"""),
+        (ExpectedHTTPRequest(body=b"15"), """ExpectedHTTPRequest(body=b'15')"""),
+        (ExpectedHTTPRequest(text="15"), """ExpectedHTTPRequest(text='15')"""),
+        (ExpectedHTTPRequest(json=15), """ExpectedHTTPRequest(json=15)"""),
+        (
+            ExpectedHTTPRequest(content_predicate=(int, 15)),
+            """ExpectedHTTPRequest(content_predicate=(<class 'int'>, 15))""",
+        ),
         (
             ExpectedHTTPRequest(headers_submap={"c": ["3", "10"]}),
             """ExpectedHTTPRequest(headers_submap={'c': ['3', '10']})""",
@@ -194,10 +219,13 @@ def test_mismatch_recorded_http_call(expected):
             ExpectedHTTPRequest(query_params_submap={"y": ["15", "16"]}),
             """ExpectedHTTPRequest(query_params_submap={'y': ['15', '16']})""",
         ),
-        (ExpectedHTTPRequest(body=b"25"), """ExpectedHTTPRequest(content=b'25')"""),
-        (ExpectedHTTPRequest(text="16"), """ExpectedHTTPRequest(content='16')"""),
-        (ExpectedHTTPRequest(json=11), """ExpectedHTTPRequest(content=11)"""),
-        (ExpectedHTTPRequest(content_predicate=(int, 12)), """ExpectedHTTPRequest(content=12)"""),
+        (ExpectedHTTPRequest(body=b"25"), """ExpectedHTTPRequest(body=b'25')"""),
+        (ExpectedHTTPRequest(text="16"), """ExpectedHTTPRequest(text='16')"""),
+        (ExpectedHTTPRequest(json=11), """ExpectedHTTPRequest(json=11)"""),
+        (
+            ExpectedHTTPRequest(content_predicate=(int, 12)),
+            """ExpectedHTTPRequest(content_predicate=(<class 'int'>, 12))""",
+        ),
     ],
 )
 def test_expected_repr(expected, repr_):

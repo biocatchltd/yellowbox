@@ -57,6 +57,19 @@ def test_capture(server, client):
     assert c0_0 == c1
 
 
+def test_capture_json(server, client):
+    endpoint = server.add_http_endpoint("POST", "/api/foo", side_effect=PlainTextResponse("hewwo"))
+    with endpoint.capture_calls() as calls0:
+        resp = client.post("/api/foo", json={"a": "b"})
+        assert resp.status_code == 200
+        assert resp.text == "hewwo"
+    (c0_0,) = calls0
+    assert c0_0.method == "POST"
+    assert c0_0.content == b'{"a": "b"}'
+    assert c0_0.text() == '{"a": "b"}'
+    assert c0_0.json() == {"a": "b"}
+
+
 def test_remove_path():
     with WebServer("test").start() as server:
         client = Client(base_url=server.local_url())
