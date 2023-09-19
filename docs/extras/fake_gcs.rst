@@ -17,7 +17,8 @@ to the service.
     Requires the ``gcs`` extra. For more information, see our :ref:`installation guide <installation>`.
 
 .. class:: FakeGoogleCloudStorage(docker_client: docker.client.DockerClient,\
-    image : str="fsouza/fake-gcs-server:1.42", scheme: str = "https", command: str = "", **kwargs)
+    image : str="fsouza/fake-gcs-server:1.42", scheme: str = "https", command: str = "", *,\
+    container_create_kwargs: dict[str, typing.Any] | None = None, **kwargs)
 
     A service that runs an fake GCS server. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
     :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
@@ -30,6 +31,8 @@ to the service.
 
     :param command: additional suffix to the service startup command (:code:`docker run --rm fsouza/fake-gcs-server:latest
        -help` for a full list of commands)
+
+    :param container_create_kwargs: Additional keyword arguments passed to :meth:`docker.models.containers.ContainerCollection.create`.
 
     :param \*\*kwargs: Additional keyword arguments passed to :class:`~subclasses.SingleContainerService`.
 

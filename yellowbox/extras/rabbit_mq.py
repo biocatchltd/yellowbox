@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 from urllib.parse import quote
 
 import requests
@@ -7,7 +7,7 @@ from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.adapters.utils.connection_workflow import AMQPConnectorException
 from pika.exceptions import AMQPConnectionError
 
-from yellowbox.containers import create_and_pull, get_ports, upload_file
+from yellowbox.containers import create_and_pull_with_defaults, get_ports, upload_file
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 
@@ -29,15 +29,17 @@ class RabbitMQService(SingleContainerService, RunMixin, AsyncRunMixin):
         password="guest",
         virtual_host="/",
         enable_management=False,
+        container_create_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         self.user = user
         self.password = password
         self.virtual_host = virtual_host
         super().__init__(
-            create_and_pull(
+            create_and_pull_with_defaults(
                 docker_client,
                 image,
+                _kwargs=container_create_kwargs,
                 publish_all_ports=True,
                 detach=True,
                 ports={RABBIT_HTTP_API_PORT: 0},  # Forward management port by default.

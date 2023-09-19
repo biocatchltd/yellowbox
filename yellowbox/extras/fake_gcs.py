@@ -6,7 +6,7 @@ from warnings import warn
 import requests
 from docker import DockerClient
 
-from yellowbox.containers import create_and_pull, get_ports
+from yellowbox.containers import create_and_pull_with_defaults, get_ports
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
@@ -21,12 +21,16 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
         image: str = "fsouza/fake-gcs-server:1.42",
         scheme: str = "https",
         command: str = "",
+        *,
+        container_create_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         # note that fake-gcs-server 1.43.0 has a bug https://github.com/fsouza/fake-gcs-server/issues/1034
         command = f"-scheme {scheme} {command}"
         self.scheme = scheme
-        container = create_and_pull(docker_client, image, command, publish_all_ports=True)
+        container = create_and_pull_with_defaults(
+            docker_client, image, command, _kwargs=container_create_kwargs, publish_all_ports=True
+        )
         super().__init__(container, **kwargs)
 
     def client_port(self):

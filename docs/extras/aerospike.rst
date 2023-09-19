@@ -12,7 +12,8 @@ A :class:`~service.YellowService` for running Aerospike DB. Runs the official Ae
 
     Requires the ``aerospike`` extra. For more information, see our :ref:`installation guide <installation>`.
 
-.. class:: AerospikeService(docker_client: docker.client.DockerClient, image='aerospike:ce-5.7.0.8', **kwargs)
+.. class:: AerospikeService(docker_client: docker.client.DockerClient, image='aerospike:ce-5.7.0.8', *, \
+    container_create_kwargs: dict[str, typing.Any] | None = None, **kwargs)
 
     A service to run the aerospike database. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
     :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
@@ -20,6 +21,8 @@ A :class:`~service.YellowService` for running Aerospike DB. Runs the official Ae
     :param docker_client: The docker client to used to pull and create the container.
 
     :param image: The image name to create a container of.
+
+    :param container_create_kwargs: Additional keyword arguments passed to :meth:`docker.models.containers.ContainerCollection.create`.
 
     :param \*\*kwargs: Additional keyword arguments passed to :class:`~subclasses.SingleContainerService`.
 

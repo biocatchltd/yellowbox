@@ -1,8 +1,8 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from docker import DockerClient
 
-from yellowbox.containers import create_and_pull
+from yellowbox.containers import create_and_pull_with_defaults
 from yellowbox.extras.sql_base import ConnectionOptions, SQLService
 from yellowbox.subclasses import SingleContainerService
 
@@ -27,6 +27,7 @@ class MSSQLService(SQLService, SingleContainerService):
         accept_eula: Optional[str] = None,
         local_driver: Optional[str] = None,
         local_options: Optional[ConnectionOptions] = None,
+        container_create_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         self.admin_password = admin_password
@@ -54,9 +55,10 @@ class MSSQLService(SQLService, SingleContainerService):
             }
 
         super().__init__(
-            create_and_pull(
+            create_and_pull_with_defaults(
                 docker_client,
                 image,
+                _kwargs=container_create_kwargs,
                 publish_all_ports=True,
                 detach=True,
                 environment={"ACCEPT_EULA": accept_eula, "SA_PASSWORD": admin_password, "MSSQL_PID": product},

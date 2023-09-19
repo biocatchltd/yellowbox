@@ -2,25 +2,33 @@ from contextlib import contextmanager
 from typing import Any, Dict, Optional
 
 import aerospike
-from aerospike import exception as aerospike_exception
 from docker import DockerClient
 
 from yellowbox import RunMixin
-from yellowbox.containers import create_and_pull, get_ports
+from yellowbox.containers import create_and_pull_with_defaults, get_ports
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, SingleContainerService
 from yellowbox.utils import DOCKER_EXPOSE_HOST
 
 __all__ = ["AerospikeService", "AEROSPIKE_DEFAULT_PORT"]
 
-AerospikeError = aerospike_exception.AerospikeError  # aerospike doesn't let you import this on its own
+AerospikeError = aerospike.exception.AerospikeError  # aerospike doesn't let you import this on its own
 
 AEROSPIKE_DEFAULT_PORT = 3000
 
 
 class AerospikeService(SingleContainerService, RunMixin, AsyncRunMixin):
-    def __init__(self, docker_client: DockerClient, image="aerospike:ce-6.2.0.3", **kwargs):
-        container = create_and_pull(docker_client, image, publish_all_ports=True, detach=True)
+    def __init__(
+        self,
+        docker_client: DockerClient,
+        image="aerospike:ce-6.2.0.3",
+        *,
+        container_create_kwargs: Optional[Dict[str, Any]] = None,
+        **kwargs
+    ):
+        container = create_and_pull_with_defaults(
+            docker_client, image, _kwargs=container_create_kwargs, publish_all_ports=True, detach=True
+        )
         self.started = False
         super().__init__(container, **kwargs)
 

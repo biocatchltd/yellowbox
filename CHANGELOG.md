@@ -1,9 +1,11 @@
 # Yellowbox Changelog
 ## Next
+## 0.8.6
 ### Deprecated
 * the `file` parameter of build_image
 ### Added
-* duplicate the build_image function and make it asynchronous
+* added `container_create_kwargs` to all `SingleContainerService` extras.
+* build_image_async for asynchronous image building
 * `RecordedHTTPRequest.text` to get the request body as text
 * `RecordedHTTPRequest.json` to get the request body as json
 * `ExpectedHTTPRequest.json_submap` to expect a submap of the request body as json

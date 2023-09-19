@@ -8,7 +8,19 @@ import tarfile
 from contextlib import contextmanager
 from os import PathLike
 from tempfile import TemporaryFile
-from typing import IO, Container as AbstractContainer, Dict, Generator, List, Optional, Sequence, TypeVar, Union, cast
+from typing import (
+    IO,
+    Any,
+    Container as AbstractContainer,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import docker
 from docker import DockerClient
@@ -172,7 +184,7 @@ def removing(
             container.remove(force=force, v=True)
 
 
-def create_and_pull(docker_client: DockerClient, image: str, *args, **kwargs) -> Container:
+def create_and_pull(docker_client: DockerClient, image: str, *args, _kwargs=None, **kwargs) -> Container:
     """
     Create a docker container, pulling the image if necessary.
     Args:
@@ -197,6 +209,15 @@ def create_and_pull(docker_client: DockerClient, image: str, *args, **kwargs) ->
         docker_client.images.pull(image, platform=None)
         ret = docker_client.containers.create(image, *args, **kwargs)
     return ret
+
+
+def create_and_pull_with_defaults(*args, _kwargs: Optional[Dict[str, Any]] = None, **default_kwargs):
+    if _kwargs:
+        kwargs = {**default_kwargs, **_kwargs}
+    else:
+        kwargs = default_kwargs
+
+    return create_and_pull(*args, **kwargs)
 
 
 def is_removed(container: Container):
