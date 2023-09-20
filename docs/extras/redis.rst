@@ -13,7 +13,8 @@ A :class:`~service.YellowService` for running Redis DB. Runs the official Redis 
     Requires the ``redis`` extra. For more information, see our :ref:`installation guide <installation>`.
 
 .. class:: RedisService(docker_client: docker.client.DockerClient, image:str="redis:latest",\
-                        redis_file: typing.IO[bytes] | None=None, **kwargs)
+                        redis_file: typing.IO[bytes] | None=None, *, \
+                        container_create_kwargs: dict[str, typing.Any] | None = None, **kwargs)
 
     A service to run the redis database. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
     :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
@@ -25,6 +26,8 @@ A :class:`~service.YellowService` for running Redis DB. Runs the official Redis 
     :param redis_file: A bytes :term:`file object` for an RDB file used to load an existing Redis database. For more
      information read the official `redis manual <https://redis.io/topics/persistence>`_. Defaults to None for a fresh
      database.
+
+    :param container_create_kwargs: Additional keyword arguments passed to :meth:`docker.models.containers.ContainerCollection.create`.
 
     :param \*\*kwargs: Additional keyword arguments passed to :class:`~subclasses.SingleContainerService`.
 

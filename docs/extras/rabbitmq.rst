@@ -16,7 +16,8 @@ official docker container, with `Pika <https://pika.readthedocs.io/en/stable/>`_
 
 .. class:: RabbitMQService(docker_client: docker.client.DockerClient, image:str ="rabbitmq:latest", *,\
                            user: str="guest", password: str="guest", virtual_host: str="/",\
-                           enable_management: bool=False, **kwargs)
+                           enable_management: bool=False, container_create_kwargs: dict[str, typing.Any] | None = None,\
+                           **kwargs)
 
     A service that runs a rabbitmq queue. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
     :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
@@ -31,6 +32,8 @@ official docker container, with `Pika <https://pika.readthedocs.io/en/stable/>`_
     :param virtual_host: The virtual host to use in multi-tenant system. For more information see the
      `appropriate documentation <https://www.rabbitmq.com/vhosts.html>`_.
     :param enable_management: If set to true, rabbitMQ management will be automatically enabled for the service.
+
+    :param container_create_kwargs: Additional keyword arguments passed to :meth:`docker.models.containers.ContainerCollection.create`.
 
     :param \*\*kwargs: Additional keyword arguments passed to :class:`~subclasses.SingleContainerService`.
 

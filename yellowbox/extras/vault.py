@@ -1,12 +1,12 @@
 from contextlib import contextmanager
-from typing import Any, Iterable, Iterator, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterable, Iterator, List, Mapping, Optional, Tuple
 
 import hvac
 from docker import DockerClient
 from hvac.exceptions import VaultError
 from requests.exceptions import ConnectionError
 
-from yellowbox.containers import create_and_pull, get_ports
+from yellowbox.containers import create_and_pull_with_defaults, get_ports
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
@@ -29,7 +29,13 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
     """
 
     def __init__(
-        self, docker_client: DockerClient, image="hashicorp/vault:latest", root_token: str = "guest", **kwargs
+        self,
+        docker_client: DockerClient,
+        image="hashicorp/vault:latest",
+        root_token: str = "guest",
+        *,
+        container_create_kwargs: Optional[Dict[str, Any]] = None,
+        **kwargs,
     ):
         """
         Args:
@@ -38,9 +44,10 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
             root_token: the token string for the new vault container, with root access
             **kwargs: forwarded to SingleContainerService
         """
-        container = create_and_pull(
+        container = create_and_pull_with_defaults(
             docker_client,
             image,
+            _kwargs=container_create_kwargs,
             publish_all_ports=True,
             detach=True,
             environment={

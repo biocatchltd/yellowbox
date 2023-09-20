@@ -3,12 +3,12 @@ Azure Blob Storage module, for creating container, uploading files to it and dow
 """
 from __future__ import annotations
 
-from typing import List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 from docker import DockerClient
 from docker.models.networks import Network
 
-from yellowbox.containers import create_and_pull, get_ports, short_id
+from yellowbox.containers import create_and_pull_with_defaults, get_ports, short_id
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 
@@ -36,9 +36,20 @@ class AzuriteService(SingleContainerService, RunMixin, AsyncRunMixin):
     account_key = DEFAULT_ACCOUNT_KEY
 
     def __init__(
-        self, docker_client: DockerClient, image: str = "mcr.microsoft.com/azure-storage/azurite:latest", **kwargs
+        self,
+        docker_client: DockerClient,
+        image: str = "mcr.microsoft.com/azure-storage/azurite:latest",
+        *,
+        container_create_kwargs: Optional[Dict[str, Any]] = None,
+        **kwargs,
     ):
-        container = create_and_pull(docker_client, image, "azurite-blob --blobHost 0.0.0.0", publish_all_ports=True)
+        container = create_and_pull_with_defaults(
+            docker_client,
+            image,
+            "azurite-blob --blobHost 0.0.0.0",
+            _kwargs=container_create_kwargs,
+            publish_all_ports=True,
+        )
         super().__init__(container, **kwargs)
 
     def stop(self, signal: Union[str, int] = "SIGKILL"):

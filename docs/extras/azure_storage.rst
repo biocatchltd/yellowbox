@@ -23,7 +23,8 @@ to the service.
     `Azure Storage account <https://github.com/Azure/Azurite/blob/main/README.md#user-content-default-storage-account>`_.
 
 .. class:: AzuriteService(docker_client: docker.client.DockerClient,\
-    image : str="mcr.microsoft.com/azure-storage/azurite:latest", **kwargs)
+    image : str="mcr.microsoft.com/azure-storage/azurite:latest", *, \
+    container_create_kwargs: dict[str, typing.Any] | None = None, **kwargs)
 
     A service that runs an Azurite server. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
     :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
@@ -31,6 +32,8 @@ to the service.
     :param docker_client: The docker client to used to pull and create the Azurite container.
 
     :param image: The image name to create a container of.
+
+    :param container_create_kwargs: Additional keyword arguments passed to :meth:`docker.models.containers.ContainerCollection.create`.
 
     :param \*\*kwargs: Additional keyword arguments passed to :class:`~subclasses.SingleContainerService`.
 

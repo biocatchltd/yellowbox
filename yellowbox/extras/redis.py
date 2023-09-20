@@ -1,10 +1,10 @@
-from typing import IO, Any, Callable, ContextManager, Mapping, Optional, Sequence, TypeVar, Union, overload
+from typing import IO, Any, Callable, ContextManager, Dict, Mapping, Optional, Sequence, TypeVar, Union, overload
 
 from docker import DockerClient
 from redis import ConnectionError as RedisConnectionError, Redis
 
 from yellowbox import RunMixin
-from yellowbox.containers import create_and_pull, get_ports, upload_file
+from yellowbox.containers import create_and_pull_with_defaults, get_ports, upload_file
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, SingleContainerService
 
@@ -32,9 +32,17 @@ def append_state(client: Redis, db_state: RedisState):
 
 class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
     def __init__(
-        self, docker_client: DockerClient, image="redis:latest", redis_file: Optional[IO[bytes]] = None, **kwargs
+        self,
+        docker_client: DockerClient,
+        image="redis:latest",
+        redis_file: Optional[IO[bytes]] = None,
+        *,
+        container_create_kwargs: Optional[Dict[str, Any]] = None,
+        **kwargs
     ):
-        container = create_and_pull(docker_client, image, publish_all_ports=True, detach=True)
+        container = create_and_pull_with_defaults(
+            docker_client, image, _kwargs=container_create_kwargs, publish_all_ports=True, detach=True
+        )
         self.started = False
         super().__init__(container, **kwargs)
 

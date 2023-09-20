@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from deprecated import deprecated
 from docker import DockerClient
 from sqlalchemy import create_engine
 
-from yellowbox.containers import create_and_pull
+from yellowbox.containers import create_and_pull_with_defaults
 from yellowbox.extras.sql_base import ConnectionOptions, SQLService, as_default
 from yellowbox.subclasses import SingleContainerService
 
@@ -34,6 +34,7 @@ class PostgreSQLService(SQLService, SingleContainerService):
         user="postgres",
         password="guest",
         default_db: str = None,
+        container_create_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         """
@@ -49,9 +50,10 @@ class PostgreSQLService(SQLService, SingleContainerService):
         self.password = password
         self.default_db = default_db
         super().__init__(
-            create_and_pull(
+            create_and_pull_with_defaults(
                 docker_client,
                 image,
+                _kwargs=container_create_kwargs,
                 publish_all_ports=True,
                 detach=True,
                 environment={"POSTGRES_USER": user, "POSTGRES_PASSWORD": password, "POSTGRES_DB": default_db},

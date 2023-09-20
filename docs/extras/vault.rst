@@ -13,7 +13,7 @@ A :class:`~service.YellowService` for running a Hashicorp Vault service. Runs th
     Requires the ``vault`` extra. For more information, see our :ref:`installation guide <installation>`.
 
 .. class:: VaultService(docker_client: docker.client.DockerClient, image: str="redis:latest", root_token: str="guest",\
-                        **kwargs)
+                        *, container_create_kwargs: dict[str, typing.Any] | None = None, **kwargs)
 
     A service to run the redis database. Inherits from :class:`~subclasses.SingleContainerService`. Usable with
     :class:`~subclasses.RunMixin` and :class:`~subclasses.AsyncRunMixin`.
@@ -23,6 +23,8 @@ A :class:`~service.YellowService` for running a Hashicorp Vault service. Runs th
     :param image: The image name to create a container of.
 
     :param root_token: the root access token string for the new vault container.
+
+    :param container_create_kwargs: Additional keyword arguments passed to :meth:`docker.models.containers.ContainerCollection.create`.
 
     :param \*\*kwargs: Additional keyword arguments passed to :class:`~subclasses.SingleContainerService`.
 
