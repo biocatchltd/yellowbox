@@ -1,5 +1,7 @@
 # Yellowbox Changelog
 ## Next
+### Changed
+* before they are used, local images are now checked against remote repositories to see if they are up to date.
 ## 0.8.6
 ### Deprecated
 * the `file` parameter of build_image
