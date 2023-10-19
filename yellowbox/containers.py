@@ -204,11 +204,23 @@ def create_and_pull(docker_client: DockerClient, image: str, *args, _kwargs=None
     if not tag:
         raise ValueError("the image name must contain a tag")
     try:
-        ret = docker_client.containers.create(image, *args, **kwargs)
+        local_image = docker_client.images.get(image)
     except ImageNotFound:
-        docker_client.images.pull(image, platform=None)
-        ret = docker_client.containers.create(image, *args, **kwargs)
-    return ret
+        local_image = docker_client.images.pull(image, platform=None)
+    else:
+        # we check if we should update the local image by checking the remote repo digest
+        image_repo_digests = local_image.attrs.get("RepoDigests")
+        if image_repo_digests is None:
+            print("could not check local repo digest, skipping")
+        else:
+            try:
+                remote_repo = docker_client.images.get_registry_data(image)
+                remote_digest = remote_repo.id
+                if not any(repo_digest.endswith(remote_digest) for repo_digest in image_repo_digests):
+                    local_image = docker_client.images.pull(image, platform=None)
+            except Exception:
+                print("could not check remote repo digest, skipping")
+    return docker_client.containers.create(local_image, *args, **kwargs)
 
 
 def create_and_pull_with_defaults(*args, _kwargs: Optional[Dict[str, Any]] = None, **default_kwargs):
