@@ -218,7 +218,7 @@ def create_and_pull(docker_client: DockerClient, image: str, *args, _kwargs=None
                 remote_digest = remote_repo.id
                 if not any(repo_digest.endswith(remote_digest) for repo_digest in image_repo_digests):
                     local_image = docker_client.images.pull(image, platform=None)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 print("could not check remote repo digest, skipping")
     return docker_client.containers.create(local_image, *args, **kwargs)
 
