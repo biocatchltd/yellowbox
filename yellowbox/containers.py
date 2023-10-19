@@ -6,6 +6,7 @@ import shutil
 import stat
 import tarfile
 from contextlib import contextmanager
+from functools import lru_cache
 from os import PathLike
 from tempfile import TemporaryFile
 from typing import (
@@ -26,6 +27,7 @@ import docker
 from docker import DockerClient
 from docker.errors import ImageNotFound
 from docker.models.containers import Container
+from docker.models.images import Image
 from docker.models.networks import Network
 from requests import HTTPError
 
@@ -184,6 +186,28 @@ def removing(
             container.remove(force=force, v=True)
 
 
+@lru_cache(maxsize=32)
+def _get_up_to_date_image(docker_client: DockerClient, image: str) -> Image:
+    try:
+        local_image = docker_client.images.get(image)
+    except ImageNotFound:
+        return docker_client.images.pull(image, platform=None)
+    else:
+        # we check if we should update the local image by checking the remote repo digest
+        image_repo_digests = local_image.attrs.get("RepoDigests")
+        if image_repo_digests is None:
+            print("could not check local repo digest, skipping")
+        else:
+            try:
+                remote_repo = docker_client.images.get_registry_data(image)
+                remote_digest = remote_repo.id
+                if not any(repo_digest.endswith(remote_digest) for repo_digest in image_repo_digests):
+                    return docker_client.images.pull(image, platform=None)
+            except Exception:  # noqa: BLE001
+                print("could not check remote repo digest, skipping")
+        return local_image
+
+
 def create_and_pull(docker_client: DockerClient, image: str, *args, _kwargs=None, **kwargs) -> Container:
     """
     Create a docker container, pulling the image if necessary.
@@ -203,23 +227,7 @@ def create_and_pull(docker_client: DockerClient, image: str, *args, _kwargs=None
     name, _, tag = image.partition(":")
     if not tag:
         raise ValueError("the image name must contain a tag")
-    try:
-        local_image = docker_client.images.get(image)
-    except ImageNotFound:
-        local_image = docker_client.images.pull(image, platform=None)
-    else:
-        # we check if we should update the local image by checking the remote repo digest
-        image_repo_digests = local_image.attrs.get("RepoDigests")
-        if image_repo_digests is None:
-            print("could not check local repo digest, skipping")
-        else:
-            try:
-                remote_repo = docker_client.images.get_registry_data(image)
-                remote_digest = remote_repo.id
-                if not any(repo_digest.endswith(remote_digest) for repo_digest in image_repo_digests):
-                    local_image = docker_client.images.pull(image, platform=None)
-            except Exception:  # noqa: BLE001
-                print("could not check remote repo digest, skipping")
+    local_image = _get_up_to_date_image(docker_client, image)
     return docker_client.containers.create(local_image, *args, **kwargs)
 
 
