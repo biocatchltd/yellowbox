@@ -54,10 +54,14 @@ setuptools = "^67.3.3"
 ruff = {version=">=0.1", python=">=3.8"}
 typing-extensions = "^4.6.3"
 
-# aiohttp needs frozenlist which has trouble on both 3.7 and 3.12
+# these dependcies are split due to 3.7 and 3.12 incompatibilities 3.7 and 3.12
+aiohttp = [
+    {version=">=3.9", python=">=3.12"},
+    {version="*", python=">=3.7"}
+]
 frozenlist = [
     {version=">1.4", python=">=3.12"},
-    {version=">1", python=">=3.7"},
+    {version="*", python=">=3.7"},
 ]
 
 [tool.poetry.extras]

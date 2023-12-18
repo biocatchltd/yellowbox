@@ -4,7 +4,7 @@
 * before they are used, local images are now checked against remote repositories to see if they are up to date.
 ### Internal
 * changed documentation theme to furo
-* upgraded minimum frozenlist dependency to 1.4 for python 3.12
+* upgraded minimum frozenlist and aiohttp dependencies for python 3.12
 * changed internal formatter to ruff
 * fixed some tye hints that had implicit `Optional` types
 * added `overload` annotation for `containers.upload_file`
