@@ -8,6 +8,7 @@
 * changed internal formatter to ruff
 * fixed some tye hints that had implicit `Optional` types
 * added `overload` annotation for `containers.upload_file`
+* added 3.12 to unittests
 ## 0.8.6
 ### Deprecated
 * the `file` parameter of build_image
