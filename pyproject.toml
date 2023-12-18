@@ -43,17 +43,22 @@ mypy = ">=1"
 types-requests = "^2.25.0"
 types-redis = "^3.5.4"
 pytest-xdist = "^2.1.0"
-sphinx = {version="^6.1.3", python=">=3.8"}
-furo = {version="*", python=">=3.8.1"}
+sphinx = {version="^6.1.3", python=">=3.12"}
+furo = {version="*", python=">=3.12"}
 pytest-asyncio = "^0.18.2"
 coverage = "^6.3.2"
 types-Deprecated = "^1.2.7"
 google-cloud-storage = "^2.5.0"
 gcloud-aio-storage = "^8.0.0"
 setuptools = "^67.3.3"
-ruff = "^0.0.272"
-black = "^23.3.0"
+ruff = "^0.1.0"
 typing-extensions = "^4.6.3"
+
+# aiohttp needs frozenlist which has trouble on both 3.7 and 3.12
+frozenlist = [
+    {version=">1.4", python=">=3.12"},
+    {version=">1", python=">=3.7"},
+]
 
 [tool.poetry.extras]
 azure = ["azure-storage-blob", "cffi"]
@@ -136,6 +141,3 @@ raises-require-match-for = []
     "PLC1901", # simplify str == ""
     "B018",  # useless expression
 ]
-
-[tool.black]
-line-length = 120

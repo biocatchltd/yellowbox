@@ -4,6 +4,8 @@
 * before they are used, local images are now checked against remote repositories to see if they are up to date.
 ### Internal
 * changed documentation theme to furo
+* upgraded minimum frozenlist dependency to 1.4 for python 3.12
+* changed internal formatter to ruff
 ## 0.8.6
 ### Deprecated
 * the `file` parameter of build_image
