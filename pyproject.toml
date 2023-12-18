@@ -29,9 +29,14 @@ starlette = { version = ">=0.9.0", optional = true }
 uvicorn = { version = ">=0.13.0", optional = true }
 websockets = { version = "*", optional = true }
 hvac = { version = "*", optional = true }
-pyodbc = { version = ">=4.0.32", optional = true }
 Deprecated = ">=1.2.13"
 SQLAlchemy-Utils = { version = ">=0.38.2", optional = true }
+
+# these dependcies are split due to 3.7 and 3.12 incompatibilities
+pyodbc = [
+    { version = ">=5.0.0", optional = true, python = ">=3.8" },
+    { version = ">=4.0.32", optional = true, python = ">=3.7" }
+]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"
@@ -54,7 +59,7 @@ setuptools = "^67.3.3"
 ruff = {version=">=0.1", python=">=3.8"}
 typing-extensions = "^4.6.3"
 
-# these dependcies are split due to 3.7 and 3.12 incompatibilities 3.7 and 3.12
+# these dependcies are split due to 3.7 and 3.12 incompatibilities
 aiohttp = [
     {version=">=3.9", python=">=3.12"},
     {version="*", python=">=3.7"}
