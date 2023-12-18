@@ -323,7 +323,7 @@ class ExpectedWSTranscript(ScopeExpectation):
         elif not self.any_end:
             indices = (len(recorded) - len(self.expected_messages),)
         else:
-            indices = range(0, len(recorded) - len(self.expected_messages) + 1)
+            indices = range(len(recorded) - len(self.expected_messages) + 1)
 
         whynots = []
         for start_index in indices:

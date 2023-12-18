@@ -11,7 +11,6 @@ from yellowbox.subclasses import ContainerService
 
 __all__ = ["temp_network", "anonymous_network", "connect", "disconnecting"]
 
-_T = TypeVar("_T")
 _NT = TypeVar("_NT", bound=Network)
 
 

@@ -2,6 +2,14 @@
 ## Next
 ### Changed
 * before they are used, local images are now checked against remote repositories to see if they are up to date.
+* in python 3.12, confluent-kafka is used instead of kafka-python
+### Internal
+* changed documentation theme to furo
+* upgraded minimum frozenlist and aiohttp dependencies for python 3.12
+* changed internal formatter to ruff
+* fixed some tye hints that had implicit `Optional` types
+* added `overload` annotation for `containers.upload_file`
+* added 3.12 to unittests
 ## 0.8.6
 ### Deprecated
 * the `file` parameter of build_image

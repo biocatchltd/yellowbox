@@ -38,7 +38,7 @@ class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
         redis_file: Optional[IO[bytes]] = None,
         *,
         container_create_kwargs: Optional[Dict[str, Any]] = None,
-        **kwargs
+        **kwargs,
     ):
         container = create_and_pull_with_defaults(
             docker_client, image, _kwargs=container_create_kwargs, publish_all_ports=True, detach=True

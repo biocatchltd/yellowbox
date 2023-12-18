@@ -33,7 +33,7 @@ class PostgreSQLService(SQLService, SingleContainerService):
         *,
         user="postgres",
         password="guest",
-        default_db: str = None,
+        default_db: Optional[str] = None,
         container_create_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
@@ -79,8 +79,8 @@ class PostgreSQLService(SQLService, SingleContainerService):
         self,
         hostname: str,
         dialect: Union[str, AsDefault] = as_default,
-        driver: str = None,
-        database: str = None,
+        driver: Optional[str] = None,
+        database: Optional[str] = None,
         options: ConnectionOptions = None,
     ):
         database = database or self.default_db
@@ -89,8 +89,8 @@ class PostgreSQLService(SQLService, SingleContainerService):
     def host_connection_string(
         self,
         dialect: Union[str, AsDefault] = as_default,
-        driver: str = None,
-        database: str = None,
+        driver: Optional[str] = None,
+        database: Optional[str] = None,
         options: ConnectionOptions = None,
     ):
         database = database or self.default_db
