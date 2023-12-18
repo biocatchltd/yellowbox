@@ -48,6 +48,13 @@ docker images.
 
         Creates a kafka consumer for the service and wraps it in a closing context manager.
 
+        .. note:: 
+            due to version incompatibility, this methd is only available for python 3.11 and lower
+
     .. method:: producer() -> typing.ContextManager[kafka.KafkaProducer]
 
         Creates a kafka producer for the service and wraps it in a closing context manager.
+
+        .. note:: 
+            due to version incompatibility, this methd is only available for python 3.11 and lower
+

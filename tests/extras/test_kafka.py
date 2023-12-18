@@ -1,8 +1,11 @@
-from pytest import fail, fixture, mark
+from contextlib import closing
+
+from confluent_kafka import Consumer as ConfluentConsumer, Producer as ConfluentProducer
+from pytest import fixture, mark
 
 from yellowbox.extras.kafka import KafkaService
 from yellowbox.networks import connect, temp_network
-from yellowbox.utils import docker_host_name
+from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
 
 KAFKA_IMAGE_TAG = "latest"
 
@@ -13,38 +16,65 @@ def test_make_kafka(docker_client, bitnami_debug):
         pass
 
 
+def get_consumer(kafka_service: KafkaService):
+    return closing(
+        ConfluentConsumer(
+            {
+                "bootstrap.servers": f"{DOCKER_EXPOSE_HOST}:{kafka_service.connection_port()}",
+                "security.protocol": "PLAINTEXT",
+                "group.id": "yb-0",
+            }
+        )
+    )
+
+
+def get_producer(kafka_service: KafkaService):
+    return ConfluentProducer(
+        {
+            "bootstrap.servers": f"{DOCKER_EXPOSE_HOST}:{kafka_service.connection_port()}",
+            "security.protocol": "PLAINTEXT",
+        }
+    )
+
+
 def test_kafka_works(docker_client):
-    with KafkaService.run(
-        docker_client, spinner=False, tag_or_images=KAFKA_IMAGE_TAG
-    ) as service, service.consumer() as consumer, service.producer() as producer:
-        producer.send("test", b"hello world")
+    with KafkaService.run(docker_client, spinner=False, tag_or_images=KAFKA_IMAGE_TAG) as service, get_consumer(
+        service
+    ) as consumer:
+        producer = get_producer(service)
+        producer.produce("test", b"hello world")
+        producer.flush()
 
-        consumer.subscribe("test")
-        consumer.topics()
-        consumer.seek_to_beginning()
+        def on_assign(consumer, partitions):
+            for p in partitions:
+                p.offset = -2
+            consumer.assign(partitions)
 
-        for msg in consumer:
-            assert msg.value == b"hello world"
-            break
-        else:
-            fail("No message received")
+        consumer.subscribe(["test"], on_assign=on_assign)
+        msg = consumer.poll(10)
+        assert msg is not None
+        assert not msg.error()
+        assert msg.value() == b"hello world"
 
 
 @mark.asyncio
 async def test_kafka_works_async(docker_client):
     async with KafkaService.arun(docker_client, tag_or_images=KAFKA_IMAGE_TAG) as service:
-        with service.consumer() as consumer, service.producer() as producer:
-            producer.send("test", b"hello world")
+        with get_consumer(service) as consumer:
+            producer = get_producer(service)
+            producer.produce("test", b"hello world async")
+            producer.flush()
 
-            consumer.subscribe("test")
-            consumer.topics()
-            consumer.seek_to_beginning()
+            def on_assign(consumer, partitions):
+                for p in partitions:
+                    p.offset = -2
+                consumer.assign(partitions)
 
-            for msg in consumer:
-                assert msg.value == b"hello world"
-                break
-            else:
-                fail("No message received")
+            consumer.subscribe(["test"], on_assign=on_assign)
+            msg = consumer.poll(10)
+            assert msg is not None
+            assert not msg.error()
+            assert msg.value() == b"hello world async"
 
 
 @fixture(scope="module")

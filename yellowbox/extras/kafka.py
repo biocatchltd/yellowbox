@@ -1,9 +1,15 @@
 from contextlib import closing
-from typing import ContextManager, Optional, Tuple, Union, cast
+from typing import Any, ContextManager, Optional, Tuple, Union, cast
 from uuid import uuid1
 
 from docker import DockerClient
-from kafka import KafkaConsumer, KafkaProducer
+
+try:
+    from kafka import KafkaConsumer, KafkaProducer
+except ImportError:
+    KafkaConsumer = KafkaProducer = None
+    # python3.12 uses confluent_kafka
+    from confluent_kafka import Consumer as ConfluentConsumer
 from kafka.errors import KafkaError
 
 from yellowbox.containers import SafeContainerCreator, get_ports
@@ -85,18 +91,34 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
         ports = get_ports(self.broker)
         return ports[self.outer_port]
 
-    def consumer(self, **kwargs) -> ContextManager[KafkaConsumer]:
+    def _consumer(self, **kwargs) -> ContextManager[Any]:
         port = self.connection_port()
-        return cast(
-            "ContextManager[KafkaConsumer]",
-            closing(
+        if KafkaConsumer is not None:
+            return closing(
                 KafkaConsumer(
                     bootstrap_servers=[f"{DOCKER_EXPOSE_HOST}:{port}"], security_protocol="PLAINTEXT", **kwargs
                 )
-            ),
-        )
+            )
+        else:
+            return closing(
+                ConfluentConsumer(
+                    {
+                        "bootstrap.servers": f"{DOCKER_EXPOSE_HOST}:{port}",
+                        "security.protocol": "PLAINTEXT",
+                        "group.id": "yb-0",
+                        **kwargs,
+                    }
+                )
+            )
+
+    def consumer(self, **kwargs) -> ContextManager[KafkaConsumer]:
+        if KafkaConsumer is None:
+            raise ImportError("kafka-python is not installed")
+        return self._consumer(**kwargs)
 
     def producer(self, **kwargs) -> ContextManager[KafkaProducer]:
+        if KafkaProducer is None:
+            raise ImportError("kafka-python is not installed")
         port = self.connection_port()
         return cast(
             "ContextManager[KafkaProducer]",
@@ -110,14 +132,14 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
     def start(self, retry_spec: Optional[RetrySpec] = None):
         super().start()
         retry_spec = retry_spec or RetrySpec(attempts=20)
-        with retry_spec.retry(self.consumer, (KafkaError, ConnectionError, ValueError)):
+        with retry_spec.retry(self._consumer, (KafkaError, ConnectionError, ValueError)):
             pass
         return self
 
     async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
         super().start()
         retry_spec = retry_spec or RetrySpec(attempts=20)
-        with await retry_spec.aretry(self.consumer, (KafkaError, ConnectionError, ValueError)):
+        with await retry_spec.aretry(self._consumer, (KafkaError, ConnectionError, ValueError)):
             pass
 
     def stop(self, signal="SIGKILL"):

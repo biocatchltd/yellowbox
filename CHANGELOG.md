@@ -2,6 +2,7 @@
 ## Next
 ### Changed
 * before they are used, local images are now checked against remote repositories to see if they are up to date.
+* in python 3.12, confluent-kafka is used instead of kafka-python
 ### Internal
 * changed documentation theme to furo
 * upgraded minimum frozenlist and aiohttp dependencies for python 3.12

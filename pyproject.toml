@@ -15,7 +15,9 @@ requests = "*"
 
 redis = { version = ">=3.3.0", optional = true }
 pika = { version = "*", optional = true }
-kafka-python = { version = "*", optional = true }
+# python 3.11 and lower use kafka-python, 3.12 and higher use confluent-kafka
+kafka-python = { version = "*", optional = true, python="<3.12" }
+confluent-kafka = { version = "*", optional = true, python=">=3.12" }
 aerospike = { version = ">=10.0.1", optional = true }
 
 # note that any version between 12.7.0 and 12.11.0 will not work
@@ -58,6 +60,8 @@ gcloud-aio-storage = "^8.0.0"
 setuptools = "^67.3.3"
 ruff = {version=">=0.1", python=">=3.8"}
 typing-extensions = "^4.6.3"
+confluent-kafka = "^2.3.0"
+
 
 # these dependcies are split due to 3.7 and 3.12 incompatibilities
 aiohttp = [
@@ -71,7 +75,7 @@ frozenlist = [
 
 [tool.poetry.extras]
 azure = ["azure-storage-blob", "cffi"]
-kafka = ["kafka-python"]
+kafka = ["kafka-python", "confluent-kafka"]
 postgresql = ["sqlalchemy", "psycopg2", "SQLAlchemy-Utils"]
 mssql = ['sqlalchemy', "SQLAlchemy-Utils"]
 rabbit = ["pika"]
