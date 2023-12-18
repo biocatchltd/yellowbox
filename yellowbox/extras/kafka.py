@@ -6,11 +6,12 @@ from docker import DockerClient
 
 try:
     from kafka import KafkaConsumer, KafkaProducer
+    from kafka.errors import KafkaError
 except ImportError:
     KafkaConsumer = KafkaProducer = None
     # python3.12 uses confluent_kafka
     from confluent_kafka import Consumer as ConfluentConsumer
-from kafka.errors import KafkaError
+    from confluent_kafka.error import KafkaError
 
 from yellowbox.containers import SafeContainerCreator, get_ports
 from yellowbox.networks import anonymous_network
