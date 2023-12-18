@@ -42,7 +42,6 @@ pyodbc = [
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"
-httpx = "^0.20.0"
 pytest-cov = "^2.10"
 requests = "^2"
 websocket_client = "*"
@@ -63,7 +62,11 @@ typing-extensions = "^4.6.3"
 confluent-kafka = "^2.3.0"
 
 
-# these dependcies are split due to 3.7 and 3.12 incompatibilities
+# these dependencies are split due to 3.7 and 3.12 incompatibilities
+httpx = [
+    {version=">=0.25.1", python=">=3.12"},
+    {version=">=0.20", python=">=3.7"}
+]
 aiohttp = [
     {version=">=3.9", python=">=3.12"},
     {version="*", python=">=3.7"}
