@@ -21,6 +21,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    overload,
 )
 
 import docker
@@ -46,7 +47,6 @@ __all__ = [
 
 _DEFAULT_TIMEOUT = 10
 
-_T = TypeVar("_T")
 _CT = TypeVar("_CT", bound=Container)
 
 
@@ -266,7 +266,7 @@ def download_file(container: Container, path: Union[str, PathLike]) -> IO[bytes]
     except docker.errors.NotFound:
         exc = FileNotFoundError(realpath)
         exc.filename = realpath
-        raise exc
+        raise exc from None
 
     if stat.S_ISDIR(stats["mode"]):
         exc = IsADirectoryError(path)
@@ -285,8 +285,21 @@ def download_file(container: Container, path: Union[str, PathLike]) -> IO[bytes]
     return cast("IO[bytes]", tar_file.extractfile(member))
 
 
+@overload
+def upload_file(container: Container, path: Union[str, PathLike[str]], data: bytes) -> None:
+    ...
+
+
+@overload
+def upload_file(container: Container, path: Union[str, PathLike[str]], *, fileobj: IO[bytes]) -> None:
+    ...
+
+
 def upload_file(
-    container: Container, path: Union[str, PathLike[str]], data: bytes = None, fileobj: IO[bytes] = None
+    container: Container,
+    path: Union[str, PathLike[str]],
+    data: Optional[bytes] = None,
+    fileobj: Optional[IO[bytes]] = None,
 ) -> None:
     """Upload a file to the given container
 

@@ -107,7 +107,7 @@ class WebServer(YellowService):
         *,
         auto_read_body: bool = True,
         forbid_implicit_head_verb: bool = True,
-        name: str = None,
+        name: Optional[str] = None,
     ) -> MockHTTPEndpoint:
         ...
 
@@ -169,7 +169,7 @@ class WebServer(YellowService):
         *,
         auto_read_body: bool = True,
         forbid_implicit_head_verb: bool = True,
-        name: str = None,
+        name: Optional[str] = None,
     ) -> ContextManager[MockHTTPEndpoint]:
         ...
 
@@ -196,7 +196,12 @@ class WebServer(YellowService):
 
     @overload
     def add_ws_endpoint(
-        self, rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None, allow_abrupt_disconnect: bool = True
+        self,
+        rule_string: str,
+        side_effect: WS_SIDE_EFFECT,
+        *,
+        name: Optional[str] = None,
+        allow_abrupt_disconnect: bool = True,
     ) -> MockWSEndpoint:
         ...
 
@@ -253,7 +258,12 @@ class WebServer(YellowService):
 
     @overload
     def patch_ws_endpoint(
-        self, rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None, allow_abrupt_disconnect: bool = True
+        self,
+        rule_string: str,
+        side_effect: WS_SIDE_EFFECT,
+        *,
+        name: Optional[str] = None,
+        allow_abrupt_disconnect: bool = True,
     ) -> ContextManager[MockWSEndpoint]:
         ...
 

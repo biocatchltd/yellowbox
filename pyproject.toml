@@ -39,7 +39,7 @@ httpx = "^0.20.0"
 pytest-cov = "^2.10"
 requests = "^2"
 websocket_client = "*"
-mypy = ">=1"
+mypy = {version=">=1", python=">=3.8"}
 types-requests = "^2.25.0"
 types-redis = "^3.5.4"
 pytest-xdist = "^2.1.0"
@@ -51,7 +51,7 @@ types-Deprecated = "^1.2.7"
 google-cloud-storage = "^2.5.0"
 gcloud-aio-storage = "^8.0.0"
 setuptools = "^67.3.3"
-ruff = "^0.1.0"
+ruff = {version=">=0.1", python=">=3.8"}
 typing-extensions = "^4.6.3"
 
 # aiohttp needs frozenlist which has trouble on both 3.7 and 3.12
@@ -90,6 +90,7 @@ select = ["I", "E", "W", "F", "N", "BLE", "COM", "C4", "ISC", "ICN", "G", "PIE",
           "ERA", "PGH", "PLC", "PLE", "PLR", "PLW", "RUF", "PT", "B"]
 # should be included later: UP, ANN, RET?, ARG, TRY, S
 ignore = [
+    "ISC001",  # irnored by linter because of formatter
     "COM812",  # trailing comma, handled by black
     "PLR2004",  # Magic value used in comparison
     "PLR0913",  # Too many arguments to function call

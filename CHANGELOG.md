@@ -6,6 +6,8 @@
 * changed documentation theme to furo
 * upgraded minimum frozenlist dependency to 1.4 for python 3.12
 * changed internal formatter to ruff
+* fixed some tye hints that had implicit `Optional` types
+* added `overload` annotation for `containers.upload_file`
 ## 0.8.6
 ### Deprecated
 * the `file` parameter of build_image

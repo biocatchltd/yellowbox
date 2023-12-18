@@ -185,7 +185,12 @@ class MockHTTPEndpoint:
 
 @overload
 def http_endpoint(
-    methods: METHODS, rule_string: str, *, auto_read_body: bool = True, forbid_head_verb: bool = True, name: str = None
+    methods: METHODS,
+    rule_string: str,
+    *,
+    auto_read_body: bool = True,
+    forbid_head_verb: bool = True,
+    name: Optional[str] = None,
 ) -> Callable[[HTTP_SIDE_EFFECT], MockHTTPEndpoint]:
     ...
 
@@ -198,7 +203,7 @@ def http_endpoint(
     *,
     auto_read_body: bool = True,
     forbid_implicit_head_verb: bool = True,
-    name: str = None,
+    name: Optional[str] = None,
 ) -> MockHTTPEndpoint:
     ...
 
@@ -329,19 +334,21 @@ class MockWSEndpoint:
 
 @overload
 def ws_endpoint(
-    rule_string: str, *, name: str = None, allow_abrupt_disconnect: bool = True
+    rule_string: str, *, name: Optional[str] = None, allow_abrupt_disconnect: bool = True
 ) -> Callable[[WS_SIDE_EFFECT], MockWSEndpoint]:
     pass
 
 
 @overload
 def ws_endpoint(
-    rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str = None, allow_abrupt_disconnect: bool = True
+    rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: Optional[str] = None, allow_abrupt_disconnect: bool = True
 ) -> MockWSEndpoint:
     pass
 
 
-def ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None, *, name: str = None, **kwargs):
+def ws_endpoint(
+    rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None, *, name: Optional[str] = None, **kwargs
+):
     """
     Create a mock websocket endpoint.
     Args:
