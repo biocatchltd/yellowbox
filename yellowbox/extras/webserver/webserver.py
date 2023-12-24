@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from threading import Lock, Thread
 from time import sleep
 from typing import ContextManager, Iterator, Mapping, Optional, Union, overload
+from warnings import warn
 
 from requests import ConnectionError, RequestException, get
 from starlette.applications import Starlette
@@ -39,6 +40,7 @@ class WebServer(YellowService):
 
     _PORT_ACCESS_MAX_RETRIES = 100  # the maximum number of attempts to make when accessing a binding port.
     _PORT_ACCESS_INTERVAL = 0.01  # retry interval between attempts when accessing a binding port.
+    _SHUTDOWN_SERVE_THREAD_TIMEOUT = 5  # the maximum time to wait for the server thread to stop when shutting down
 
     _CLASS_ENDPOINT_TEMPLATES: Mapping[str, Union[HTTPEndpointTemplate, WSEndpointTemplate]] = {}
 
@@ -331,7 +333,9 @@ class WebServer(YellowService):
 
     def stop(self):
         self._server.should_exit = True
-        self._serve_thread.join()
+        self._serve_thread.join(self._SHUTDOWN_SERVE_THREAD_TIMEOUT)
+        if self._serve_thread.is_alive():
+            warn(f"server thread did not stop after {self._SHUTDOWN_SERVE_THREAD_TIMEOUT} seconds", stacklevel=2)
         super().stop()
         self.raise_from_pending()
 
