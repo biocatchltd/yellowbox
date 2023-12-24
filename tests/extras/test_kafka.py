@@ -1,4 +1,5 @@
 from contextlib import closing
+from time import sleep
 
 from confluent_kafka import Consumer as ConfluentConsumer, Producer as ConfluentProducer
 from pytest import fixture, mark
@@ -45,6 +46,8 @@ def test_kafka_works(docker_client):
         producer.produce("test", b"hello world")
         producer.flush()
 
+        sleep(1)
+
         def on_assign(consumer, partitions):
             for p in partitions:
                 p.offset = -2
@@ -64,6 +67,8 @@ async def test_kafka_works_async(docker_client):
             producer = get_producer(service)
             producer.produce("test", b"hello world async")
             producer.flush()
+
+            sleep(1)
 
             def on_assign(consumer, partitions):
                 for p in partitions:

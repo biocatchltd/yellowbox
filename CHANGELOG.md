@@ -1,5 +1,7 @@
 # Yellowbox Changelog
 ## Next
+### Fixed
+* webservers will now wait a maximum of 5 seconds for the service thread to shut down.
 ### Changed
 * before they are used, local images are now checked against remote repositories to see if they are up to date.
 * in python 3.12, confluent-kafka is used instead of kafka-python
