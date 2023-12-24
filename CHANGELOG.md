@@ -10,6 +10,7 @@
 * fixed some tye hints that had implicit `Optional` types
 * added `overload` annotation for `containers.upload_file`
 * added 3.12 to unittests
+* using 'Trust server certificate' option in sqlcmd (for testing)
 ## 0.8.6
 ### Deprecated
 * the `file` parameter of build_image
