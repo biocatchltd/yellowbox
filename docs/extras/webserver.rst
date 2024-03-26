@@ -502,7 +502,7 @@ of handling both HTTP and websocket routes.
         The request body.
     
     .. attribute:: time_received
-        :type: datetime
+        :type: datetime.datetime
 
         The time at which the request began processing. Not timezone-aware.
 
