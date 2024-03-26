@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Callable, Collection, List, Mapping, Optional, Pattern, Sequence, Tuple, Union, overload
 
 from starlette.requests import Request
@@ -244,9 +245,10 @@ class RecordedHTTPRequest:
     path_params: Mapping[str, Any]
     query_params: Mapping[str, Sequence[str]]
     content: bytes
+    time_received: datetime
 
     @classmethod
-    async def from_request(cls, request: Request):
+    async def from_request(cls, request: Request, time_received: datetime):
         """
         Create a new recorded request from a starlette request.
         Args:
@@ -273,7 +275,15 @@ class RecordedHTTPRequest:
             else:
                 query_args[k].append(v)
 
-        return cls(headers, request.method, request.url.path, request.path_params, query_args, await request.body())
+        return cls(
+            headers,
+            request.method,
+            request.url.path,
+            request.path_params,
+            query_args,
+            await request.body(),
+            time_received,
+        )
 
     def text(self, encoding="utf-8") -> str:
         return self.content.decode(encoding)

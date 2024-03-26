@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from datetime import datetime
 from traceback import print_exc
 from typing import (
     TYPE_CHECKING,
@@ -151,6 +152,7 @@ class MockHTTPEndpoint:
                 f"an exception in the webserver had previously occurred: {self.owner.pending_exception!r}",
                 status_code=HTTP_500_INTERNAL_SERVER_ERROR,
             )
+        time_received = datetime.now()
         try:
             if isinstance(self.side_effect, Response):
                 ret = self.side_effect
@@ -168,7 +170,7 @@ class MockHTTPEndpoint:
             if self.auto_read_body:
                 await request.body()
             if self._request_captures:  # recording the request reads its body, which we might not want
-                recorded = await RecordedHTTPRequest.from_request(request)
+                recorded = await RecordedHTTPRequest.from_request(request, time_received)
                 for c in self._request_captures:
                     c.append(recorded)
         return ret

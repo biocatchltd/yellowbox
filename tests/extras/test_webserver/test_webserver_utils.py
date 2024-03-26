@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from unittest.mock import MagicMock
 
 from pytest import fixture, mark, raises
@@ -124,7 +125,13 @@ def test_atleastmulti_multi_ne(other):
 )
 def test_match_recorded_http_call(expected):
     recorded = RecordedHTTPRequest(
-        {"a": ["1"], "b": ["2"], "c": ["3", "4"]}, "GET", "/foo/12/bar", {"x": 12}, {"y": ["15", "17"]}, b"15"
+        {"a": ["1"], "b": ["2"], "c": ["3", "4"]},
+        "GET",
+        "/foo/12/bar",
+        {"x": 12},
+        {"y": ["15", "17"]},
+        b"15",
+        datetime.now(),
     )
 
     assert expected.matches(recorded)
@@ -147,6 +154,7 @@ def test_match_recorded_http_call_json(expected):
         {"x": 12},
         {"y": ["15", "17"]},
         b'{"a": 15, "b": "hi", "c":[1,2,"f"]}',
+        datetime.now(),
     )
 
     assert expected.matches(recorded)
@@ -174,7 +182,13 @@ def test_match_recorded_http_call_json(expected):
 )
 def test_mismatch_recorded_http_call(expected):
     recorded = RecordedHTTPRequest(
-        {"a": ["1"], "b": ["2"], "c": ["3", "4"]}, "GET", "/foo/12/bar", {"x": 12}, {"y": ["15", "17"]}, b"15"
+        {"a": ["1"], "b": ["2"], "c": ["3", "4"]},
+        "GET",
+        "/foo/12/bar",
+        {"x": 12},
+        {"y": ["15", "17"]},
+        b"15",
+        datetime.now(),
     )
 
     assert not expected.matches(recorded)
@@ -253,9 +267,9 @@ def test_http_requests_empty():
 def test_http_requests_many():
     requests = RecordedHTTPRequests(
         [
-            RecordedHTTPRequest({}, "GET", "/bar", {}, {}, b"0"),
-            RecordedHTTPRequest({}, "GET", "/bar", {}, {}, b"1"),
-            RecordedHTTPRequest({}, "GET", "/bar", {}, {}, b"2"),
+            RecordedHTTPRequest({}, "GET", "/bar", {}, {}, b"0", datetime.now()),
+            RecordedHTTPRequest({}, "GET", "/bar", {}, {}, b"1", datetime.now()),
+            RecordedHTTPRequest({}, "GET", "/bar", {}, {}, b"2", datetime.now()),
         ]
     )
     with raises(AssertionError):
@@ -292,7 +306,7 @@ def test_http_requests_many():
 def test_http_requests_one():
     requests = RecordedHTTPRequests(
         [
-            RecordedHTTPRequest({}, "GET", "/bar", {}, {}, b"0"),
+            RecordedHTTPRequest({}, "GET", "/bar", {}, {}, b"0", datetime.now()),
         ]
     )
     with raises(AssertionError):
@@ -335,10 +349,10 @@ def test_repr_transcript(connection):
     transcript = RecordedWSTranscript.from_connection(connection)
     transcript.extend(
         [
-            RecordedWSMessage("sir if I may be so bold?", Sender.Server),
-            RecordedWSMessage("go ahead Jeeves", Sender.Client),
-            RecordedWSMessage(b"crunch", Sender.Server),
-            RecordedWSMessage("Jeeves! That is bold", Sender.Client),
+            RecordedWSMessage("sir if I may be so bold?", Sender.Server, datetime.now()),
+            RecordedWSMessage("go ahead Jeeves", Sender.Client, datetime.now()),
+            RecordedWSMessage(b"crunch", Sender.Server, datetime.now()),
+            RecordedWSMessage("Jeeves! That is bold", Sender.Client, datetime.now()),
         ]
     )
     assert (
@@ -371,10 +385,10 @@ def test_transcript_matches(close, expected_close, accepted, expected_accepted, 
     transcript = RecordedWSTranscript.from_connection(connection)
     transcript.extend(
         [
-            RecordedWSMessage("sir if I may be so bold?", Sender.Server),
-            RecordedWSMessage("go ahead Jeeves", Sender.Client),
-            RecordedWSMessage(b"crunch", Sender.Server),
-            RecordedWSMessage("Jeeves! That is bold", Sender.Client),
+            RecordedWSMessage("sir if I may be so bold?", Sender.Server, datetime.now()),
+            RecordedWSMessage("go ahead Jeeves", Sender.Client, datetime.now()),
+            RecordedWSMessage(b"crunch", Sender.Server, datetime.now()),
+            RecordedWSMessage("Jeeves! That is bold", Sender.Client, datetime.now()),
         ]
     )
     transcript.accepted = accepted
@@ -428,10 +442,10 @@ def test_transcript_mismatches(close, expected_close, accepted, expected_accepte
     transcript = RecordedWSTranscript.from_connection(connection)
     transcript.extend(
         [
-            RecordedWSMessage("sir if I may be so bold?", Sender.Server),
-            RecordedWSMessage("go ahead Jeeves", Sender.Client),
-            RecordedWSMessage(b"crunch", Sender.Server),
-            RecordedWSMessage("Jeeves! That is bold", Sender.Client),
+            RecordedWSMessage("sir if I may be so bold?", Sender.Server, datetime.now()),
+            RecordedWSMessage("go ahead Jeeves", Sender.Client, datetime.now()),
+            RecordedWSMessage(b"crunch", Sender.Server, datetime.now()),
+            RecordedWSMessage("Jeeves! That is bold", Sender.Client, datetime.now()),
         ]
     )
     transcript.accepted = accepted
@@ -474,10 +488,10 @@ def test_transcript_mismatches_body(connection):
     transcript = RecordedWSTranscript.from_connection(connection)
     transcript.extend(
         [
-            RecordedWSMessage("sir if I may be so bold?", Sender.Server),
-            RecordedWSMessage("go ahead Jeeves", Sender.Client),
-            RecordedWSMessage(b"crunch", Sender.Server),
-            RecordedWSMessage("Jeeves! That is bold", Sender.Client),
+            RecordedWSMessage("sir if I may be so bold?", Sender.Server, datetime.now()),
+            RecordedWSMessage("go ahead Jeeves", Sender.Client, datetime.now()),
+            RecordedWSMessage(b"crunch", Sender.Server, datetime.now()),
+            RecordedWSMessage("Jeeves! That is bold", Sender.Client, datetime.now()),
         ]
     )
     transcript.close = True
@@ -526,10 +540,10 @@ def test_transcript_mismatches_scope(connection):
     transcript = RecordedWSTranscript.from_connection(connection)
     transcript.extend(
         [
-            RecordedWSMessage("sir if I may be so bold?", Sender.Server),
-            RecordedWSMessage("go ahead Jeeves", Sender.Client),
-            RecordedWSMessage(b"crunch", Sender.Server),
-            RecordedWSMessage("Jeeves! That is bold", Sender.Client),
+            RecordedWSMessage("sir if I may be so bold?", Sender.Server, datetime.now()),
+            RecordedWSMessage("go ahead Jeeves", Sender.Client, datetime.now()),
+            RecordedWSMessage(b"crunch", Sender.Server, datetime.now()),
+            RecordedWSMessage("Jeeves! That is bold", Sender.Client, datetime.now()),
         ]
     )
     transcript.close = True
@@ -572,9 +586,9 @@ def test_transcripts_empty():
 
 def test_transcripts_multi(connection):
     t0 = RecordedWSTranscript.from_connection(connection)
-    t0.append(RecordedWSMessage("hi", Sender.Server))
+    t0.append(RecordedWSMessage("hi", Sender.Server, datetime.now()))
     t1 = RecordedWSTranscript.from_connection(connection)
-    t1.append(RecordedWSMessage("ho", Sender.Server))
+    t1.append(RecordedWSMessage("ho", Sender.Server, datetime.now()))
     t0.close = t1.close = (Sender.Server, 1000)
     t0.accepted = t1.accepted = True
     transcripts = RecordedWSTranscripts([t0, t1])
@@ -596,7 +610,7 @@ def test_transcripts_multi(connection):
 
 def test_transcripts_single(connection):
     t0 = RecordedWSTranscript.from_connection(connection)
-    t0.append(RecordedWSMessage("hi", Sender.Server))
+    t0.append(RecordedWSMessage("hi", Sender.Server, datetime.now()))
     t0.close = (Sender.Server, 1000)
     t0.accepted = True
     transcripts = RecordedWSTranscripts([t0])

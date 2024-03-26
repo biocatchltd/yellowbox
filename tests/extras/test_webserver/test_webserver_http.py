@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from io import StringIO
 
 from httpx import Client, HTTPError, get
@@ -35,6 +36,7 @@ def test_mock_callable(server, client):
 
 def test_capture(server, client):
     endpoint = server.add_http_endpoint("GET", "/api/foo", side_effect=PlainTextResponse("hewwo"))
+    now = datetime.now()
     with endpoint.capture_calls() as calls0:
         assert calls0 == []
 
@@ -49,6 +51,9 @@ def test_capture(server, client):
         assert c1.path == "/api/foo"
         assert c1.path_params == {}
         assert c1.query_params == {"a": ["15", "17"]}
+        delay = c1.time_received - now
+        assert delay.total_seconds() >= 0
+        assert delay.total_seconds() <= 1
 
         resp = client.get("/api/foo")
         assert resp.status_code == 200

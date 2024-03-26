@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import builtins
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum, auto
 from typing import (
     Any,
@@ -53,7 +54,7 @@ class WebSocketRecorder(WebSocket):
             data = message.get("text")
             if data is None:
                 data = message.get("bytes")
-            self.transcript.append(RecordedWSMessage(data, Sender.Client))
+            self.transcript.append(RecordedWSMessage(data, Sender.Client, datetime.now()))
         elif message_type == "websocket.disconnect":
             self.transcript.close = (Sender.Client, message.get("code", 1000))
         return message
@@ -70,7 +71,7 @@ class WebSocketRecorder(WebSocket):
             data = message.get("text")
             if data is None:
                 data = message.get("bytes")
-            self.transcript.append(RecordedWSMessage(data, Sender.Server))
+            self.transcript.append(RecordedWSMessage(data, Sender.Server, datetime.now()))
         await super().send(message)
 
 
@@ -98,7 +99,7 @@ class Sender(Enum):
     Examples:
         >>> import re
         ... expected_message = Sender.Server(re.compile('[a-z][a-z][0-9]'))
-        ... message = RecordedWSMessage('tk1', Sender.Server)
+        ... message = RecordedWSMessage('tk1', Sender.Server, ...)
         ... assert expected_message.matches(message)
     """
 
@@ -123,6 +124,7 @@ class RecordedWSMessage:
 
     data: Union[bytes, str]
     sender: Sender
+    time: datetime
 
     def __repr__(self):
         return f"RecordedWSMessage({self.data!r}, Sender.{self.sender.name})"

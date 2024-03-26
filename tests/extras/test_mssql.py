@@ -198,7 +198,7 @@ def test_remote_connection_string(service, db, engine, create_and_pull, docker_c
             service_alias[0],
             options={
                 "TrustServerCertificate": "yes",
-                "driver": "ODBC Driver 17 for SQL Server",
+                "driver": "ODBC Driver 18 for SQL Server",
             },
         )
         container = create_and_pull(
@@ -241,7 +241,7 @@ def test_remote_connection_string_host(service, db, engine, create_and_pull, doc
     conn_string = db.host_connection_string(
         options={
             "TrustServerCertificate": "yes",
-            "driver": "ODBC Driver 17 for SQL Server",
+            "driver": "ODBC Driver 18 for SQL Server",
         }
     )
     container = create_and_pull(
