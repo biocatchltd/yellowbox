@@ -14,7 +14,6 @@ from websocket import WebSocketBadStatusException
 
 from tests.extras.test_webserver.util import assert_ws_closed, do_some_math
 from yellowbox.extras.webserver import Sender, ws_endpoint
-from yellowbox.extras.webserver.ws_request_capture import RecordedWSMessage
 
 
 @fixture()
