@@ -1,10 +1,15 @@
 # Yellowbox Changelog
-## Next
+## 0.8.7
+### Deprecated
+* this will be the last release to support python 3.7
+### Added
+* recorded WS and HTTP messages now also include the time they were received
 ### Fixed
 * webservers will now wait a maximum of 5 seconds for the service thread to shut down.
 ### Changed
 * before they are used, local images are now checked against remote repositories to see if they are up to date.
 * in python 3.12, confluent-kafka is used instead of kafka-python
+* the type hint for `astart` has been changed to `object` to indicate that the response is not used.
 ### Internal
 * changed documentation theme to furo
 * upgraded minimum frozenlist and aiohttp dependencies for python 3.12

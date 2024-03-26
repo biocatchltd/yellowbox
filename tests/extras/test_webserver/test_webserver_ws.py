@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 from time import sleep
 
 from pytest import fixture, mark, raises
@@ -161,6 +162,7 @@ def test_ws_no_return(server, ws_client_factory, bridge_ep):
 
 
 def test_ws_calc_capture_calls(server, ws_client_factory, ws_calc):
+    start_time = datetime.now()
     with ws_calc.capture_calls() as transcripts:
         ws_client = ws_client_factory("/12/calc?tee=goo")
         assert json.loads(ws_client.recv()) == 12
@@ -172,14 +174,22 @@ def test_ws_calc_capture_calls(server, ws_client_factory, ws_calc):
         assert_ws_closed(ws_client, 1000)
 
     (transcript,) = transcripts
-    assert list(transcript) == [
-        RecordedWSMessage("12", Sender.Server),
-        RecordedWSMessage('{"op":"add", "value": 3}', Sender.Client),
-        RecordedWSMessage("15", Sender.Server),
-        RecordedWSMessage('{"op":"mul", "value": 10}', Sender.Client),
-        RecordedWSMessage("150", Sender.Server),
-        RecordedWSMessage('{"op":"done"}', Sender.Client),
-    ]
+    (msg0, msg1, msg2, msg3, msg4, msg5) = transcript
+    assert msg0.sender == Sender.Server
+    assert msg0.data == "12"
+    assert msg1.sender == Sender.Client
+    assert msg1.data == '{"op":"add", "value": 3}'
+    assert msg2.sender == Sender.Server
+    assert msg2.data == "15"
+    assert msg3.sender == Sender.Client
+    assert msg3.data == '{"op":"mul", "value": 10}'
+    assert msg4.sender == Sender.Server
+    assert msg4.data == "150"
+    assert msg5.sender == Sender.Client
+    assert msg5.data == '{"op":"done"}'
+    times = [msg.time for msg in transcript]
+    assert times == sorted(times)
+    assert start_time <= times[0] <= (start_time + timedelta(seconds=1))
     assert transcript.accepted
     assert transcript.close == (Sender.Server, 1000)
 

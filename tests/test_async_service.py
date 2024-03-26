@@ -28,7 +28,7 @@ class SleepService(BaseSleepService, RunMixin, AsyncRunMixin):
     def start(self):
         raise AssertionError("should not be called")
 
-    async def astart(self, retry_spec=None) -> None:
+    async def astart(self, retry_spec=None) -> object:
         super().start()
         await sleep(self.sleep_time)
 

@@ -500,6 +500,11 @@ of handling both HTTP and websocket routes.
         :type: bytes
 
         The request body.
+    
+    .. attribute:: time_received
+        :type: datetime
+
+        The time at which the request began processing. Not timezone-aware.
 
     .. method:: text(encoding='utf-8')->str
 
