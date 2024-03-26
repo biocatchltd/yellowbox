@@ -258,9 +258,9 @@ def test_ws_capture_client_close(server, ws_client_factory):
 
     sleep(0.1)  # give the server time to record the closing
     (transcript,) = transcripts
-    assert list(transcript) == [
-        RecordedWSMessage("do you like warhammer?", Sender.Server),
-    ]
+    (msg0,) = transcript
+    assert msg0.sender == Sender.Server
+    assert msg0.data == "do you like warhammer?"
     assert transcript.accepted
     assert transcript.close == (Sender.Client, 1000)
 
@@ -340,13 +340,20 @@ def test_ws_capture_empties(server, ws_client_factory):
         ws_client.close()
 
     (t,) = transcripts
-    assert list(t) == [
-        RecordedWSMessage(b"a", Sender.Client),
-        RecordedWSMessage(b"a", Sender.Server),
-        RecordedWSMessage(b"", Sender.Client),
-        RecordedWSMessage(b"", Sender.Server),
-        RecordedWSMessage("", Sender.Client),
-        RecordedWSMessage("", Sender.Server),
-        RecordedWSMessage("a", Sender.Client),
-        RecordedWSMessage("a", Sender.Server),
-    ]
+    (msg0, msg1, msg2, msg3, msg4, msg5, msg6, msg7) = t
+    assert msg0.sender == Sender.Client
+    assert msg0.data == b"a"
+    assert msg1.sender == Sender.Server
+    assert msg1.data == b"a"
+    assert msg2.sender == Sender.Client
+    assert msg2.data == b""
+    assert msg3.sender == Sender.Server
+    assert msg3.data == b""
+    assert msg4.sender == Sender.Client
+    assert msg4.data == ""
+    assert msg5.sender == Sender.Server
+    assert msg5.data == ""
+    assert msg6.sender == Sender.Client
+    assert msg6.data == "a"
+    assert msg7.sender == Sender.Server
+    assert msg7.data == "a"
