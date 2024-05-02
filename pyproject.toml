@@ -109,6 +109,7 @@ yellowbox = "yellowbox._pytest"
 [tool.ruff]
 line-length = 120
 output-format = "full"
+target-version = "py38"
 [tool.ruff.lint]
 # https://beta.ruff.rs/docs/rules/
 select = ["I", "E", "W", "F", "N", "BLE", "COM", "C4", "ISC", "ICN", "G", "PIE", "T20", "PYI", "Q", "SLF", "SIM",

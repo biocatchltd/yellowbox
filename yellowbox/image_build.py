@@ -21,7 +21,7 @@ class DockerfileParseError(BuildError):
 DockerfileParseException = DockerfileParseError  # legacy alias
 
 
-def _docker_build(docker_client: DockerClient, output: TextIO, **kwargs) -> str | None:
+def _docker_build(docker_client: DockerClient, output: TextIO, **kwargs) -> Optional[str]:
     build_log = docker_client.api.build(**kwargs)
     id = None
     for msg_b in build_log:
@@ -64,7 +64,7 @@ def _docker_build(docker_client: DockerClient, output: TextIO, **kwargs) -> str 
 @contextmanager
 def build_image(
     docker_client: DockerClient,
-    image_name: str | None,
+    image_name: Optional[str],
     remove_image: bool = True,
     file: Optional[TextIO] = ...,  # type: ignore[assignment]
     output: Optional[TextIO] = sys.stderr,
@@ -119,7 +119,7 @@ def build_image(
 @asynccontextmanager
 async def async_build_image(
     docker_client: DockerClient,
-    image_name: str | None,
+    image_name: Optional[str],
     remove_image: bool = True,
     output: Optional[TextIO] = sys.stderr,
     spinner: bool = True,
