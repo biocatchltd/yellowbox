@@ -97,8 +97,7 @@ class WebServer(YellowService):
         return self._port
 
     @overload
-    def add_http_endpoint(self, endpoint: MockHTTPEndpoint) -> MockHTTPEndpoint:
-        ...
+    def add_http_endpoint(self, endpoint: MockHTTPEndpoint) -> MockHTTPEndpoint: ...
 
     @overload
     def add_http_endpoint(
@@ -110,8 +109,7 @@ class WebServer(YellowService):
         auto_read_body: bool = True,
         forbid_implicit_head_verb: bool = True,
         name: Optional[str] = None,
-    ) -> MockHTTPEndpoint:
-        ...
+    ) -> MockHTTPEndpoint: ...
 
     def add_http_endpoint(self, *args, **kwargs) -> MockHTTPEndpoint:
         """
@@ -159,8 +157,7 @@ class WebServer(YellowService):
             endpoint.owner = None
 
     @overload
-    def patch_http_endpoint(self, endpoint: MockHTTPEndpoint) -> ContextManager[MockHTTPEndpoint]:
-        ...
+    def patch_http_endpoint(self, endpoint: MockHTTPEndpoint) -> ContextManager[MockHTTPEndpoint]: ...
 
     @overload
     def patch_http_endpoint(
@@ -172,8 +169,7 @@ class WebServer(YellowService):
         auto_read_body: bool = True,
         forbid_implicit_head_verb: bool = True,
         name: Optional[str] = None,
-    ) -> ContextManager[MockHTTPEndpoint]:
-        ...
+    ) -> ContextManager[MockHTTPEndpoint]: ...
 
     @contextmanager  # type:ignore[misc]
     def patch_http_endpoint(self, *args, **kwargs) -> Iterator[MockHTTPEndpoint]:
@@ -193,8 +189,7 @@ class WebServer(YellowService):
             self.remove_http_endpoint(ep)
 
     @overload
-    def add_ws_endpoint(self, endpoint: MockWSEndpoint) -> MockWSEndpoint:
-        ...
+    def add_ws_endpoint(self, endpoint: MockWSEndpoint) -> MockWSEndpoint: ...
 
     @overload
     def add_ws_endpoint(
@@ -204,8 +199,7 @@ class WebServer(YellowService):
         *,
         name: Optional[str] = None,
         allow_abrupt_disconnect: bool = True,
-    ) -> MockWSEndpoint:
-        ...
+    ) -> MockWSEndpoint: ...
 
     def add_ws_endpoint(self, *args, **kwargs):
         """
@@ -255,8 +249,7 @@ class WebServer(YellowService):
             endpoint.owner = None
 
     @overload
-    def patch_ws_endpoint(self, endpoint: MockWSEndpoint) -> ContextManager[MockWSEndpoint]:
-        ...
+    def patch_ws_endpoint(self, endpoint: MockWSEndpoint) -> ContextManager[MockWSEndpoint]: ...
 
     @overload
     def patch_ws_endpoint(
@@ -266,8 +259,7 @@ class WebServer(YellowService):
         *,
         name: Optional[str] = None,
         allow_abrupt_disconnect: bool = True,
-    ) -> ContextManager[MockWSEndpoint]:
-        ...
+    ) -> ContextManager[MockWSEndpoint]: ...
 
     @contextmanager  # type:ignore[misc]
     def patch_ws_endpoint(self, *args, **kwargs):

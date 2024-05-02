@@ -1,4 +1,11 @@
 # Yellowbox Changelog
+## NEXT
+### Removed
+* dropped support for python 3.7
+### Added
+* built images can now be anonymous by specifying a `None` `image_name`
+### Fixed
+* created containers now use the image tag to create the container, if one is available
 ## 0.8.7
 ### Deprecated
 * this will be the last release to support python 3.7

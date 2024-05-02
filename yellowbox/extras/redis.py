@@ -58,12 +58,10 @@ class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
         return get_ports(self.container)[REDIS_DEFAULT_PORT]
 
     @overload
-    def client(self, *, client_cls: Callable[..., _T], **kwargs) -> _T:
-        ...
+    def client(self, *, client_cls: Callable[..., _T], **kwargs) -> _T: ...
 
     @overload
-    def client(self, **kwargs) -> Redis:
-        ...
+    def client(self, **kwargs) -> Redis: ...
 
     def client(self, *, client_cls=Redis, **kwargs) -> Any:
         port = self.client_port()

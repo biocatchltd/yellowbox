@@ -290,7 +290,6 @@ class WebsocketService(YellowService):
             logger.error("Failed to stop the service gracefully. Timed out.")
 
         self._server.close()
-        return super().stop()
 
     def _get_generator(self, path: str) -> Union[_GEN_FUNCTION_TYPE, None]:
         """Get the IO generator function appropriate to the connected path.

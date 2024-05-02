@@ -21,8 +21,9 @@ class DockerfileParseError(BuildError):
 DockerfileParseException = DockerfileParseError  # legacy alias
 
 
-def _docker_build(docker_client: DockerClient, output: TextIO, **kwargs):
+def _docker_build(docker_client: DockerClient, output: TextIO, **kwargs) -> str | None:
     build_log = docker_client.api.build(**kwargs)
+    id = None
     for msg_b in build_log:
         msgs = str(msg_b, "utf-8").splitlines()
         for msg in msgs:
@@ -50,14 +51,20 @@ def _docker_build(docker_client: DockerClient, output: TextIO, **kwargs):
                     print(status, end="", flush=True, file=output)
                 elif aux is not None and output:
                     print(aux, end="", flush=True, file=output)
+                    if "ID" in aux:
+                        # ID, means that the image was created successfully
+                        id = aux["ID"]
                 else:
                     raise DockerException(parse_msg)
+    if id is None:
+        raise BuildError("No ID found in build log")
+    return id
 
 
 @contextmanager
 def build_image(
     docker_client: DockerClient,
-    image_name: str,
+    image_name: str | None,
     remove_image: bool = True,
     file: Optional[TextIO] = ...,  # type: ignore[assignment]
     output: Optional[TextIO] = sys.stderr,
@@ -85,18 +92,25 @@ def build_image(
         output = file
 
     # spinner splits into multiple lines in case stream is being printed at the same time
-    if ":" in image_name:
-        image_tag = image_name
+    kwargs = {"rm": True, "forcerm": True, **kwargs}
+    if image_name is None:
+        msg = "Creating anonymous image..."
+        image_tag = None
     else:
-        image_tag = f"{image_name}:test"
+        if ":" in image_name:
+            image_tag = image_name
+        else:
+            image_tag = f"{image_name}:test"
+        msg = f"Creating image {image_tag}..."
+        kwargs["tag"] = image_tag
     yaspin_spinner = _get_spinner(spinner)
-    with yaspin_spinner(f"Creating image {image_tag}..."):
-        kwargs = {"tag": image_tag, "rm": True, "forcerm": True, **kwargs}
-        _docker_build(docker_client, output, **kwargs)
-        yield image_tag
+    with yaspin_spinner(msg):
+        image_id = _docker_build(docker_client, output, **kwargs)
+        image_alias = image_tag if image_tag is not None else image_id
+        yield image_alias
         if remove_image:
             try:
-                docker_client.api.remove_image(image_tag)
+                docker_client.api.remove_image(image_alias)
             except ImageNotFound:
                 # if the image was already deleted
                 pass
@@ -105,7 +119,7 @@ def build_image(
 @asynccontextmanager
 async def async_build_image(
     docker_client: DockerClient,
-    image_name: str,
+    image_name: str | None,
     remove_image: bool = True,
     output: Optional[TextIO] = sys.stderr,
     spinner: bool = True,
@@ -121,36 +135,47 @@ async def async_build_image(
         file: a file-like object (stream)
     """
     # spinner splits into multiple lines in case stream is being printed at the same time
-    if ":" in image_name:
-        image_tag = image_name
-    else:
-        image_tag = f"{image_name}:test"
     file = StringIO()
     kwargs = {
         "docker_client": docker_client,
         "output": file,
-        "tag": image_tag,
         "rm": True,
         "forcerm": True,
         **kwargs,
     }
+    kwargs = {"rm": True, "forcerm": True, **kwargs}
+    if image_name is None:
+        start_msg = "Creating anonymous image..."
+        fail_msg = "failed building anonymous image"
+        ok_msg = "anonymous image built successfully"
+        image_tag = None
+    else:
+        if ":" in image_name:
+            image_tag = image_name
+        else:
+            image_tag = f"{image_name}:test"
+        start_msg = f".   Creating image {image_tag}..."
+        fail_msg = f"failed building image {image_tag}"
+        ok_msg = f".   image {image_tag} built successfully"
+        kwargs["tag"] = image_tag
     if spinner and output:
-        print(f".   building image {image_tag}...", file=output)
+        print(start_msg, file=output)
     try:
-        await get_event_loop().run_in_executor(None, partial(_docker_build, **kwargs))
+        image_id = await get_event_loop().run_in_executor(None, partial(_docker_build, **kwargs))
     except (DockerException, BuildError, DockerfileParseError) as e:
-        print(f"failed building image {image_tag}", file=sys.stderr)
+        print(fail_msg, file=sys.stderr)
         print(file.getvalue(), file=sys.stderr)
         raise e
-    else:
-        if spinner and output:
-            print(f".   image {image_tag} built successfully", file=output)
-            print(file.getvalue(), file=output)
 
-    yield image_tag
+    if spinner and output:
+        print(ok_msg, file=output)
+        print(file.getvalue(), file=output)
+
+    image_alias = image_id if image_tag is None else image_tag
+    yield image_alias
     if remove_image:
         try:
-            await get_event_loop().run_in_executor(None, docker_client.api.remove_image, image_tag)
+            await get_event_loop().run_in_executor(None, docker_client.api.remove_image, image_alias)
         except ImageNotFound:
             # if the image was already deleted
             pass
