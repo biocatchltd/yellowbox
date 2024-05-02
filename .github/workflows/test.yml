@@ -42,8 +42,3 @@ jobs:
     - name: Tests
       run: |
         poetry run sh scripts/unittest.sh
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
-      with:
-        file: ./coverage.xml
-        flags: unittests

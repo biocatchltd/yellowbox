@@ -8,6 +8,7 @@
 * created containers now use the image tag to create the container, if one is available
 ### Internal
 * changed base test dockerfiles to use alpine 3
+* removed codecov integration
 ## 0.8.7
 ### Deprecated
 * this will be the last release to support python 3.7
