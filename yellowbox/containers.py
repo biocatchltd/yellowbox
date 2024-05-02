@@ -191,11 +191,8 @@ def _get_up_to_date_image(docker_client: DockerClient, image: str) -> Image:
     try:
         local_image = docker_client.images.get(image)
     except ImageNotFound:
-        print("!!! A")
         return docker_client.images.pull(image, platform=None)
     else:
-        print("!!! B")
-        return local_image
         # we check if we should update the local image by checking the remote repo digest
         image_repo_digests = local_image.attrs.get("RepoDigests")
         if image_repo_digests is None:
