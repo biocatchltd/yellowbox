@@ -1,4 +1,5 @@
 from asyncio import gather
+from time import sleep
 
 from docker.errors import BuildError, DockerException, ImageNotFound
 from pytest import mark, raises
@@ -6,42 +7,49 @@ from pytest import mark, raises
 from yellowbox import async_build_image, build_image
 
 
-def test_valid_image_build(docker_client):
+@mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])
+def test_valid_image_build(docker_client, image_name):
     with build_image(
-        docker_client, "yellowbox", path=".", dockerfile="tests/resources/valid_dockerfile/Dockerfile"
+        docker_client, image_name, path=".", dockerfile="tests/resources/valid_dockerfile/Dockerfile"
     ) as image:
+        # sometimes we need to wait for the image to be acknowledged by docker
+        sleep(0.1)
         container = docker_client.containers.create(image)
         container.start()
         container.wait()  # wait for the container to end and close
         container.remove()
     # out of contextmanager, image should be deleted
     with raises(ImageNotFound):
-        docker_client.containers.create("yellowbox:test")
+        docker_client.containers.create(image)
 
 
 @mark.asyncio
-async def test_valid_image_build_async(docker_client):
+@mark.parametrize("image1_name", ["yellowbox:test1", None])
+@mark.parametrize("image2_name", ["yellowbox:test2", None])
+async def test_valid_image_build_async(docker_client, image1_name, image2_name):
     building_tasks = [
         async_build_image(
             docker_client,
-            image_name="yellowbox:test1",
+            image_name=image1_name,
             path=".",
             dockerfile="tests/resources/valid_dockerfile/Dockerfile",
         ),
         async_build_image(
             docker_client,
-            image_name="yellowbox:test2",
+            image_name=image2_name,
             path=".",
             dockerfile="tests/resources/valid_dockerfile/Dockerfile",
         ),
     ]
-    images = await gather(*(s.__aenter__() for s in building_tasks))
-    first_container = docker_client.containers.create(images[0])
+    image0, image1 = await gather(*(s.__aenter__() for s in building_tasks))
+    # sometimes we need to wait for the image to be acknowledged by docker
+    sleep(0.1)
+    first_container = docker_client.containers.create(image0)
     first_container.start()
     first_container.wait()  # wait for the container to end and close
     first_container.remove()
 
-    second_container = docker_client.containers.create(images[1])
+    second_container = docker_client.containers.create(image1)
     second_container.start()
     second_container.wait()  # wait for the container to end and close
     second_container.remove()
@@ -49,17 +57,18 @@ async def test_valid_image_build_async(docker_client):
 
     # out of contextmanager, image should be deleted
     with raises(ImageNotFound):
-        docker_client.containers.create("yellowbox:test1")
+        docker_client.containers.create(image0)
     with raises(ImageNotFound):
-        docker_client.containers.create("yellowbox:test2")
+        docker_client.containers.create(image1)
 
 
 @mark.asyncio
-async def test_invalid_image_build_async(docker_client, capsys):
+@mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])
+async def test_invalid_image_build_async(docker_client, capsys, image_name):
     async def build():
         async with async_build_image(
             docker_client,
-            image_name="yellowbox:test2",
+            image_name=image_name,
             path=".",
             dockerfile="tests/resources/invalid_run_dockerfile/Dockerfile",
         ) as image:
@@ -75,15 +84,17 @@ async def test_invalid_image_build_async(docker_client, capsys):
     assert "/bin/sh: file_not_exists.sh: not found" in captured.err
 
 
-def test_invalid_parse_image_build(docker_client):
+@mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])
+def test_invalid_parse_image_build(docker_client, image_name):
     with raises(DockerException), build_image(
-        docker_client, "yellowbox", path=".", dockerfile="tests/resources/invalid_parse_dockerfile/Dockerfile"
+        docker_client, image_name, path=".", dockerfile="tests/resources/invalid_parse_dockerfile/Dockerfile"
     ):
         pass
 
 
-def test_invalid_run_image_build(docker_client):
+@mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])
+def test_invalid_run_image_build(docker_client, image_name):
     with raises(DockerException), build_image(
-        docker_client, "yellowbox", path=".", dockerfile="tests/resources/invalid_run_dockerfile/Dockerfile"
+        docker_client, image_name, path=".", dockerfile="tests/resources/invalid_run_dockerfile/Dockerfile"
     ):
         pass

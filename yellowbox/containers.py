@@ -186,7 +186,7 @@ def removing(
             container.remove(force=force, v=True)
 
 
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=128)
 def _get_up_to_date_image(docker_client: DockerClient, image: str) -> Image:
     try:
         local_image = docker_client.images.get(image)
@@ -228,7 +228,13 @@ def create_and_pull(docker_client: DockerClient, image: str, *args, _kwargs=None
     if not tag:
         raise ValueError("the image name must contain a tag")
     local_image = _get_up_to_date_image(docker_client, image)
-    return docker_client.containers.create(local_image, *args, **kwargs)
+    # if we pass the image object to `create` it will label the container with a SHA image, we will try to extract the tag
+    # first
+    if local_image.tags:
+        local_image_spec = local_image.tags[0]
+    else:
+        local_image_spec = local_image.id
+    return docker_client.containers.create(local_image_spec, *args, **kwargs)
 
 
 def create_and_pull_with_defaults(*args, _kwargs: Optional[Dict[str, Any]] = None, **default_kwargs):
@@ -286,13 +292,11 @@ def download_file(container: Container, path: Union[str, PathLike]) -> IO[bytes]
 
 
 @overload
-def upload_file(container: Container, path: Union[str, PathLike[str]], data: bytes) -> None:
-    ...
+def upload_file(container: Container, path: Union[str, PathLike[str]], data: bytes) -> None: ...
 
 
 @overload
-def upload_file(container: Container, path: Union[str, PathLike[str]], *, fileobj: IO[bytes]) -> None:
-    ...
+def upload_file(container: Container, path: Union[str, PathLike[str]], *, fileobj: IO[bytes]) -> None: ...
 
 
 def upload_file(

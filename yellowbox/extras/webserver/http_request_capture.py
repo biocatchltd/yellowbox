@@ -16,8 +16,7 @@ _missing = object()
 
 class BodyValidator(ABC):
     @abstractmethod
-    def validate(self, content: bytes) -> Optional[MismatchReason]:
-        ...
+    def validate(self, content: bytes) -> Optional[MismatchReason]: ...
 
     def repr_map(self) -> Mapping[str, Any]:
         return {"content_predicate": self}
@@ -321,8 +320,7 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
             raise AssertionError("Multiple requests were made:" + "".join(f"\n\t{existing}" for existing in self))
 
     @overload
-    def assert_requested_with(self, expected: ExpectedHTTPRequest):
-        ...
+    def assert_requested_with(self, expected: ExpectedHTTPRequest): ...
 
     @overload
     def assert_requested_with(
@@ -343,8 +341,7 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         content_predicate: Optional[
             Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any], BodyValidator]
         ] = None,
-    ):
-        ...
+    ): ...
 
     def assert_requested_with(self, expected: Optional[ExpectedHTTPRequest] = None, **kwargs):
         """
@@ -368,8 +365,7 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
             raise AssertionError(str(match))
 
     @overload
-    def assert_requested_once_with(self, expected: ExpectedHTTPRequest):
-        ...
+    def assert_requested_once_with(self, expected: ExpectedHTTPRequest): ...
 
     @overload
     def assert_requested_once_with(
@@ -388,8 +384,7 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         json: Any = _missing,
         json_submap: Optional[Mapping[str, Any]] = None,
         content_predicate: Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None,
-    ):
-        ...
+    ): ...
 
     def assert_requested_once_with(self, expected: Optional[ExpectedHTTPRequest] = None, **kwargs):
         """
@@ -415,8 +410,7 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
             raise AssertionError(str(match))
 
     @overload
-    def assert_any_request(self, expected: ExpectedHTTPRequest):
-        ...
+    def assert_any_request(self, expected: ExpectedHTTPRequest): ...
 
     @overload
     def assert_any_request(
@@ -437,8 +431,7 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
         content_predicate: Optional[
             Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any], BodyValidator]
         ] = None,
-    ):
-        ...
+    ): ...
 
     def assert_any_request(self, expected: Optional[ExpectedHTTPRequest] = None, **kwargs):
         """

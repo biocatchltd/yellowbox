@@ -193,8 +193,7 @@ def http_endpoint(
     auto_read_body: bool = True,
     forbid_head_verb: bool = True,
     name: Optional[str] = None,
-) -> Callable[[HTTP_SIDE_EFFECT], MockHTTPEndpoint]:
-    ...
+) -> Callable[[HTTP_SIDE_EFFECT], MockHTTPEndpoint]: ...
 
 
 @overload
@@ -206,8 +205,7 @@ def http_endpoint(
     auto_read_body: bool = True,
     forbid_implicit_head_verb: bool = True,
     name: Optional[str] = None,
-) -> MockHTTPEndpoint:
-    ...
+) -> MockHTTPEndpoint: ...
 
 
 def http_endpoint(

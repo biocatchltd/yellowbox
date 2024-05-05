@@ -37,8 +37,7 @@ class EndpointTemplate(Generic[T]):
 
     if TYPE_CHECKING:
 
-        def __get__(self, instance, owner) -> T:
-            ...
+        def __get__(self, instance, owner) -> T: ...
 
 
 class HTTPEndpointTemplate(EndpointTemplate[MockHTTPEndpoint]):
@@ -65,8 +64,7 @@ def class_http_endpoint(
     auto_read_body: bool = True,
     forbid_implicit_head_verb: bool = True,
     name: Optional[str] = None,
-) -> Callable[[Any], HTTPEndpointTemplate]:
-    ...
+) -> Callable[[Any], HTTPEndpointTemplate]: ...
 
 
 @overload
@@ -78,8 +76,7 @@ def class_http_endpoint(
     auto_read_body: bool = True,
     forbid_implicit_head_verb: bool = True,
     name: Optional[str] = None,
-) -> HTTPEndpointTemplate:
-    ...
+) -> HTTPEndpointTemplate: ...
 
 
 def class_http_endpoint(methods: METHODS, rule_string: str, side_effect: Optional[HTTP_SIDE_EFFECT] = None, **kwargs):

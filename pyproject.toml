@@ -8,7 +8,7 @@ readme = "README.md"
 repository = "https://github.com/biocatchltd/yellowbox"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 docker = ">=4.2.0"
 yaspin = ">=1.0.0"
 requests = "*"
@@ -32,18 +32,18 @@ hvac = { version = "*", optional = true }
 Deprecated = ">=1.2.13"
 SQLAlchemy-Utils = { version = ">=0.38.2", optional = true }
 
-# these dependcies are split due to 3.7 and 3.12 incompatibilities
+# these dependcies are split due to 3.8 and 3.12 incompatibilities
 starlette = [
     { version = ">=0.30", optional = true, python = ">=3.12" },
-    { version = ">=0.9", optional = true, python = ">=3.7" }
+    { version = ">=0.9", optional = true, python = ">=3.8" }
 ]
 uvicorn = [
     { version = ">=0.24", optional = true, python = ">=3.12" },
-    { version = ">=0.13", optional = true, python = ">=3.7" }
+    { version = ">=0.13", optional = true, python = ">=3.8" }
 ]
 pyodbc = [
     { version = ">=5.0.0", optional = true, python = ">=3.12" },
-    { version = ">=4.0.32", optional = true, python = ">=3.7" }
+    { version = ">=4.0.32", optional = true, python = ">=3.8" }
 ]
 
 [tool.poetry.group.dev.dependencies]
@@ -51,7 +51,7 @@ pytest = "^7.0.0"
 pytest-cov = "^4.1"
 requests = "^2"
 websocket_client = "*"
-mypy = {version=">=1", python=">=3.8"}
+mypy = {version=">=1"}
 types-requests = "^2.25.0"
 types-redis = "^3.5.4"
 pytest-xdist = "^2.1.0"
@@ -63,23 +63,23 @@ types-Deprecated = "^1.2.7"
 google-cloud-storage = "^2.5.0"
 gcloud-aio-storage = "^8.0.0"
 setuptools = "^67.3.3"
-ruff = {version=">=0.1", python=">=3.8"}
+ruff = {version=">=0.1"}
 typing-extensions = "^4.6.3"
 confluent-kafka = "^2.3.0"
 
 
-# these dependencies are split due to 3.7 and 3.12 incompatibilities
+# these dependencies are split due to 3.8 and 3.12 incompatibilities
 httpx = [
     {version=">=0.25.1", python=">=3.12"},
-    {version=">=0.20", python=">=3.7"}
+    {version=">=0.20", python=">=3.8"}
 ]
 aiohttp = [
     {version=">=3.9", python=">=3.12"},
-    {version="*", python=">=3.7"}
+    {version="*", python=">=3.8"}
 ]
 frozenlist = [
     {version=">1.4", python=">=3.12"},
-    {version="*", python=">=3.7"},
+    {version="*", python=">=3.8"},
 ]
 
 [tool.poetry.extras]
@@ -107,6 +107,10 @@ build-backend = "poetry.masonry.api"
 yellowbox = "yellowbox._pytest"
 
 [tool.ruff]
+line-length = 120
+output-format = "full"
+target-version = "py38"
+[tool.ruff.lint]
 # https://beta.ruff.rs/docs/rules/
 select = ["I", "E", "W", "F", "N", "BLE", "COM", "C4", "ISC", "ICN", "G", "PIE", "T20", "PYI", "Q", "SLF", "SIM",
           "ERA", "PGH", "PLC", "PLE", "PLR", "PLW", "RUF", "PT", "B"]
@@ -132,8 +136,6 @@ ignore = [
     "PT013",  # Found incorrect import of pytest, use simple `import pytest` instead
     "B905", # `zip()` without an explicit `strict=` parameter
 ]
-line-length = 120
-show-source = true
 exclude = [
     "yellowbox/extras/websocket.py",
     "yellowbox/extras/http_server.py",
@@ -142,13 +144,13 @@ exclude = [
     "docs/conf.py",
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 combine-as-imports=true
 
-[tool.ruff.flake8-pytest-style]
+[tool.ruff.lint.flake8-pytest-style]
 raises-require-match-for = []
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/**" = [
     "N802", # Function name should be lowercase
     "N803", # Argument name should be lowercase

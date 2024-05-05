@@ -7,6 +7,7 @@ from typing import IO
 import pytest
 
 from yellowbox.containers import download_file, is_removed, removing, upload_file
+from yellowbox.image_build import build_image
 
 
 def test_upload_file(docker_client, create_and_pull):
@@ -61,3 +62,18 @@ def test_removing_fails(docker_client, create_and_pull, expected_exit_code):
         container.start()
     assert container.wait()["StatusCode"] == 0
     assert not is_removed(container)
+
+
+def test_create_and_pull(docker_client, create_and_pull):
+    container = create_and_pull(docker_client, "alpine:latest", "sh -c exit 0")
+    assert "alpine:latest" in container.image.tags
+
+
+def test_create_and_pull_notag(docker_client, create_and_pull):
+    # we create an anonymous image to test this
+    with build_image(docker_client, None, path=".", dockerfile="tests/resources/valid_dockerfile/Dockerfile") as image:
+        container = create_and_pull(docker_client, image, "sh -c exit 0")
+        assert container.image.tags == []
+        with removing(container):
+            container.start()
+            assert container.wait()["StatusCode"] == 0

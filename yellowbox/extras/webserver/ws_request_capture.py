@@ -370,8 +370,7 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
             raise AssertionError(f"{len(self)} requests were made")
 
     @overload
-    def assert_requested_with(self, expected: ExpectedWSTranscript):
-        ...
+    def assert_requested_with(self, expected: ExpectedWSTranscript): ...
 
     @overload
     def assert_requested_with(
@@ -387,8 +386,7 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
         query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
         close: Optional[Tuple[Sender, int]] = None,
         accepted: Optional[bool] = True,
-    ):
-        ...
+    ): ...
 
     def assert_requested_with(self, expected: Optional[ExpectedWSTranscript] = None, **kwargs):
         """
@@ -412,8 +410,7 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
             raise AssertionError(str(match))
 
     @overload
-    def assert_requested_once_with(self, expected: ExpectedWSTranscript):
-        ...
+    def assert_requested_once_with(self, expected: ExpectedWSTranscript): ...
 
     @overload
     def assert_requested_once_with(
@@ -429,8 +426,7 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
         query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
         close: Optional[Tuple[Sender, int]] = None,
         accepted: Optional[bool] = True,
-    ):
-        ...
+    ): ...
 
     def assert_requested_once_with(self, expected: Optional[ExpectedWSTranscript] = None, **kwargs):
         """
@@ -456,8 +452,7 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
             raise AssertionError(str(match))
 
     @overload
-    def assert_any_request(self, expected: ExpectedWSTranscript):
-        ...
+    def assert_any_request(self, expected: ExpectedWSTranscript): ...
 
     @overload
     def assert_any_request(
@@ -473,8 +468,7 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
         query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
         close: Optional[Tuple[Sender, int]] = None,
         accepted: Optional[bool] = True,
-    ):
-        ...
+    ): ...
 
     def assert_any_request(self, expected: Optional[ExpectedWSTranscript] = None, **kwargs):
         """
