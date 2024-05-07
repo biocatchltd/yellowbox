@@ -32,9 +32,7 @@ jobs:
         python -m poetry install -E dev
     - name: Assert Version Correctness
       run: |
-        TOML_VER=$(poetry version | awk -F' ' '{ print $2 }')
-        echo toml "$TOML_VER"
-        GIT_VER=${{ github.event.release.tag_name }}
+        GIT_VER=$(poetry version | awk -F' ' '{ print $2 }')
         echo git "$GIT_VER"
         echo "__version__ = \"$GIT_VER\"" > yellowbox/_version.py
     - name: Publish
