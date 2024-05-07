@@ -1,0 +1,48 @@
+# label-bump-prs.yml
+name: Handle VLock PRs
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches:
+      - master
+
+jobs:
+  label-vlock-prs:
+    name: Handle Version Lock PRs
+    runs-on: ubuntu-latest
+    steps:
+      - name: check for new version
+        id: check-tag
+        uses: biocatchltd/gh-actions-is-new-version@main
+
+      - name: label prs
+        if: steps.check-tag.outputs.is-new == 'true'
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+            labels: version-lock
+
+      - name: check that vlock prs are good to release
+        if: steps.check-tag.outputs.is-new == 'true'
+        run: |
+            pip install --upgrade pip setuptools
+            pip install poetry==1.7.1
+            sh scripts/check-version.sh
+
+      - name: check no other version locks
+        id: check-vlock
+        if: steps.check-tag.outputs.is-new != 'true'
+        uses: juliangruber/find-pull-request-action@v1
+        with:
+            labels: version-lock
+            base: master
+
+      - name: block if vlock in progress
+        if: steps.check-tag.outputs.is-new != 'true'
+        uses: biocatchltd/gh-actions-block-with-comment@main
+        with:
+          fail-message: |
+            Version lock in progress. Please wait for it to close before merging (#${{steps.check-vlock.outputs.number}}).
+
+          comment_tag: version-lock
+          test: ${{steps.check-vlock.outputs.state != 'open'}}
