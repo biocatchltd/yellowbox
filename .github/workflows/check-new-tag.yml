@@ -29,4 +29,4 @@ jobs:
           tag_name: ${{ steps.check-tag.outputs.found-version }}
           target_commitish: ${{ github.sha }}
           prerelease: ${{ steps.check-tag.outputs.is-prerelease }}
-          token: ${{ secrets.BC_AUTOMATIONS_TOKEN }}
+          token: ${{ secrets.BC_AUTOMATIONS_PUBLIC_TOKEN }}
