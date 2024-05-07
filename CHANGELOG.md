@@ -1,5 +1,7 @@
 # Yellowbox Changelog
 ## NEXT
+### Changed
+* connecting container to network now has a fallback if `Alias` field is empty to `DNSNames`
 ### Removed
 * dropped support for python 3.7
 ### Added
