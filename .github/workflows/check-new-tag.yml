@@ -1,0 +1,32 @@
+# check-new-tag.yml
+
+name: Check for new tags
+on:
+  push:
+    branches:
+      - master
+      - pre/*
+      - post/*
+
+jobs:
+  check-tag:
+    permissions:
+      contents: write
+
+    name: check for new tags
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: check for new version
+        id: check-tag
+        uses: biocatchltd/gh-actions-is-new-version@main
+
+      - name: release a new version
+        if: steps.check-tag.outputs.is-new == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.check-tag.outputs.release-notes }}
+          tag_name: ${{ steps.check-tag.outputs.found-version }}
+          target_commitish: ${{ github.sha }}
+          prerelease: ${{ steps.check-tag.outputs.is-prerelease }}
+          token: ${{ secrets.BC_AUTOMATIONS_TOKEN }}
