@@ -135,6 +135,7 @@ ignore = [
     "T201",  # print found
     "PT013",  # Found incorrect import of pytest, use simple `import pytest` instead
     "B905", # `zip()` without an explicit `strict=` parameter
+    "SIM115", # Use a context manager for file operations, TODO: figure out if the warnings are justified
 ]
 exclude = [
     "yellowbox/extras/websocket.py",
