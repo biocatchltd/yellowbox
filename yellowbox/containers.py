@@ -33,16 +33,16 @@ from docker.models.networks import Network
 from requests import HTTPError
 
 __all__ = [
-    "get_ports",
+    "SafeContainerCreator",
+    "create_and_pull",
+    "download_file",
     "get_aliases",
+    "get_ports",
     "is_alive",
     "is_removed",
     "killing",
-    "create_and_pull",
-    "download_file",
-    "upload_file",
-    "SafeContainerCreator",
     "removing",
+    "upload_file",
 ]
 
 _DEFAULT_TIMEOUT = 10

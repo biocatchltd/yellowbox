@@ -70,8 +70,8 @@ def test_capture_json(server, client):
         assert resp.text == "hewwo"
     (c0_0,) = calls0
     assert c0_0.method == "POST"
-    assert c0_0.content == b'{"a": "b"}'
-    assert c0_0.text() == '{"a": "b"}'
+    assert c0_0.content == b'{"a":"b"}'
+    assert c0_0.text() == '{"a":"b"}'
     assert c0_0.json() == {"a": "b"}
 
 

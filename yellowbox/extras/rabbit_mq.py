@@ -11,7 +11,7 @@ from yellowbox.containers import create_and_pull_with_defaults, get_ports, uploa
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 
-__all__ = ["RabbitMQService", "RABBIT_DEFAULT_PORT", "RABBIT_HTTP_API_PORT"]
+__all__ = ["RABBIT_DEFAULT_PORT", "RABBIT_HTTP_API_PORT", "RabbitMQService"]
 
 from yellowbox.utils import DOCKER_EXPOSE_HOST
 

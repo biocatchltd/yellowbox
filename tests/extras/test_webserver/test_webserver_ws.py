@@ -16,7 +16,7 @@ from tests.extras.test_webserver.util import assert_ws_closed, do_some_math
 from yellowbox.extras.webserver import Sender, ws_endpoint
 
 
-@fixture()
+@fixture
 def ws_calc(server):
     ep = server.add_ws_endpoint(ws_endpoint("/{a:int}/calc", do_some_math))
     return ep
@@ -59,7 +59,7 @@ def test_ws_abrupt_shutdown(server, ws_calc, ws_client_factory, close_kind, clos
     assert_ws_closed(ws_client2)
 
 
-@fixture()
+@fixture
 def ws_squib(server):
     @server.add_ws_endpoint
     @ws_endpoint("/bar")
@@ -108,7 +108,7 @@ def test_ws_squib_ws_path(server, ws_client_factory, ws_squib, ws_calc):
     assert exc_info.value.status_code == HTTP_403_FORBIDDEN
 
 
-@fixture()
+@fixture
 def bridge_ep():
     @ws_endpoint("/bridge")
     async def bridge(websocket: WebSocket):
@@ -122,7 +122,7 @@ def bridge_ep():
     return bridge
 
 
-@fixture()
+@fixture
 def square_ep():
     @ws_endpoint("/square")
     async def square(websocket: WebSocket):
@@ -134,7 +134,7 @@ def square_ep():
     return square
 
 
-@fixture()
+@fixture
 def cube_ep():
     @ws_endpoint("/cube")
     async def cube(websocket: WebSocket):

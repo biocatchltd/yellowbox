@@ -1,4 +1,6 @@
 # Yellowbox Changelog
+## NEXT
+* removed deprecated github actions
 ## 0.8.8
 ### Changed
 * moved to trunk

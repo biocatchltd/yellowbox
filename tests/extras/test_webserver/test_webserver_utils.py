@@ -335,7 +335,7 @@ def test_http_requests_one():
         requests.assert_has_requests(ExpectedHTTPRequest(body=b"3"))
 
 
-@fixture()
+@fixture
 def connection():
     ret = MagicMock()
     ret.headers.raw = []

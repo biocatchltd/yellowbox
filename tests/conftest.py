@@ -7,7 +7,7 @@ from pytest import fixture
 from yellowbox.containers import create_and_pull as _create_and_pull, is_removed
 
 
-@fixture()
+@fixture
 def create_and_pull():
     """A wrapper around yellowbox's create_and_pull, to ensure that all created containers are removed"""
     created: List[Tuple[Container, bool]] = []

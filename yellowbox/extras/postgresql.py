@@ -13,7 +13,7 @@ from yellowbox.subclasses import SingleContainerService
 if TYPE_CHECKING:
     from yellowbox.extras.sql_base import AsDefault
 
-__all__ = ["PostgreSQLService", "POSTGRES_INTERNAL_PORT"]
+__all__ = ["POSTGRES_INTERNAL_PORT", "PostgreSQLService"]
 
 POSTGRES_INTERNAL_PORT = 5432
 

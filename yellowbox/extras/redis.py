@@ -8,7 +8,7 @@ from yellowbox.containers import create_and_pull_with_defaults, get_ports, uploa
 from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, SingleContainerService
 
-__all__ = ["RedisService", "REDIS_DEFAULT_PORT", "DEFAULT_RDB_PATH", "append_state"]
+__all__ = ["DEFAULT_RDB_PATH", "REDIS_DEFAULT_PORT", "RedisService", "append_state"]
 
 from yellowbox.utils import DOCKER_EXPOSE_HOST
 

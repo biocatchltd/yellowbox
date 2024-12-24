@@ -11,7 +11,7 @@ from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, SingleContainerService
 from yellowbox.utils import DOCKER_EXPOSE_HOST
 
-__all__ = ["AerospikeService", "AEROSPIKE_DEFAULT_PORT"]
+__all__ = ["AEROSPIKE_DEFAULT_PORT", "AerospikeService"]
 
 AerospikeError = aerospike_exception.AerospikeError  # aerospike doesn't let you import this on its own
 

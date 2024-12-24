@@ -57,13 +57,13 @@ def service(docker_client):
 db_name = fixture(unique_name_generator())
 
 
-@fixture()
+@fixture
 def db(service, db_name):
     with service.database(db_name) as db:
         yield db
 
 
-@fixture()
+@fixture
 def engine(db):
     engine = create_engine(db.local_connection_string())
     yield engine
