@@ -9,7 +9,7 @@ from docker.models.networks import Network
 from yellowbox.containers import get_aliases, is_removed
 from yellowbox.subclasses import ContainerService
 
-__all__ = ["temp_network", "anonymous_network", "connect", "disconnecting"]
+__all__ = ["anonymous_network", "connect", "disconnecting", "temp_network"]
 
 _NT = TypeVar("_NT", bound=Network)
 

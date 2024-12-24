@@ -9,7 +9,7 @@ import pytest
 from yellowbox.extras.logstash import FakeLogstashService
 
 
-@pytest.fixture()
+@pytest.fixture
 def logstash():
     with FakeLogstashService().start() as ls:
         yield ls

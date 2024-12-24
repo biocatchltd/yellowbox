@@ -11,7 +11,7 @@ from yellowbox.retry import RetrySpec
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleContainerService
 from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
 
-__all__ = ["VAULT_DEFAULT_PORT", "DEV_POLICY", "VaultService"]
+__all__ = ["DEV_POLICY", "VAULT_DEFAULT_PORT", "VaultService"]
 
 VAULT_DEFAULT_PORT = 8200
 

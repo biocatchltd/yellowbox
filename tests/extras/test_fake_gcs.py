@@ -34,14 +34,14 @@ def http_gcs(docker_client) -> FakeGoogleCloudStorage:
 _bucket_name = fixture(unique_name_generator())
 
 
-@fixture()
+@fixture
 def _bucket(http_gcs, _bucket_name):
     http_gcs.create_bucket(_bucket_name)
     yield
     http_gcs.delete_bucket(_bucket_name, force=True, missing_ok=True)
 
 
-@fixture()
+@fixture
 def bucket_name(_bucket, _bucket_name):
     return _bucket_name
 

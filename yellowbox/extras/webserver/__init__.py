@@ -6,16 +6,16 @@ from yellowbox.extras.webserver.webserver import WebServer
 from yellowbox.extras.webserver.ws_request_capture import ExpectedWSTranscript, Sender
 
 __all__ = [
-    "WebServer",
-    "http_endpoint",
-    "ws_endpoint",
     "ExpectedHTTPRequest",
     "ExpectedWSTranscript",
-    "Sender",
     "MockHTTPEndpoint",
     "MockWSEndpoint",
-    "class_ws_endpoint",
+    "Sender",
+    "WebServer",
     "class_http_endpoint",
+    "class_ws_endpoint",
+    "http_endpoint",
     "iter_side_effects",
     "verbose_http_side_effect",
+    "ws_endpoint",
 ]
