@@ -13,7 +13,7 @@ def test_valid_image_build(docker_client, image_name):
         docker_client, image_name, path=".", dockerfile="tests/resources/valid_dockerfile/Dockerfile"
     ) as image:
         # sometimes we need to wait for the image to be acknowledged by docker
-        sleep(0.1)
+        sleep(1)
         container = docker_client.containers.create(image)
         container.start()
         container.wait()  # wait for the container to end and close
@@ -43,7 +43,7 @@ async def test_valid_image_build_async(docker_client, image1_name, image2_name):
     ]
     image0, image1 = await gather(*(s.__aenter__() for s in building_tasks))
     # sometimes we need to wait for the image to be acknowledged by docker
-    sleep(0.1)
+    sleep(1)
     first_container = docker_client.containers.create(image0)
     first_container.start()
     first_container.wait()  # wait for the container to end and close
