@@ -74,7 +74,7 @@ class _WebsocketTemplate(WebSocket):
             generator_function = get_generator(path)
 
             if generator_function is None:
-                logger.info(f"No handler assigned to {path}. " "Closing connection.")
+                logger.info(f"No handler assigned to {path}. Closing connection.")
                 return
 
             self._generator = generator_function(self)

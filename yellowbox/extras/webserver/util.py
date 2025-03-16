@@ -68,7 +68,7 @@ def _default_verbose_message_factory(endpoint: MockHTTPEndpoint, request: Reques
     if request.url.query:
         relative_path += f"?{request.url.query}"
     return (
-        f'{datetime.now().isoformat(sep=" ", timespec="seconds")} {endpoint.owner.__name__}:{endpoint.__name__} '
+        f"{datetime.now().isoformat(sep=' ', timespec='seconds')} {endpoint.owner.__name__}:{endpoint.__name__} "
         f"{client} - {request.method} {relative_path} {response.status_code} ({len(response.body)} bytes)"
     )
 
