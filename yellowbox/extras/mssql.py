@@ -72,6 +72,6 @@ class MSSQLService(SQLService, SingleContainerService):
     def userpass(self):
         return "sa", self.admin_password
 
-    def stop(self, signal="SIGINT"):
+    def stop(self, signal="SIGKILL"):
         # change in default
         return super().stop(signal)

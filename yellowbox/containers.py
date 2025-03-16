@@ -45,7 +45,7 @@ __all__ = [
     "upload_file",
 ]
 
-_DEFAULT_TIMEOUT = 20
+_DEFAULT_TIMEOUT = 10
 
 _CT = TypeVar("_CT", bound=Container)
 
