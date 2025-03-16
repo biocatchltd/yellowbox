@@ -76,11 +76,10 @@ class MSSQLService(SQLService, SingleContainerService):
     def stop(self, signal="SIGKILL"):
         # change in default
         return super().stop(signal)
-    
+
     def drop_database(self, name: str):
         # we need to kill all connections to the database
-        engine = create_engine(self.database("master").local_connection_string(), connect_args={'autocommit': True})
+        engine = create_engine(self.database("master").local_connection_string(), connect_args={"autocommit": True})
         with engine.connect() as conn:
             conn.execute(text(f"ALTER DATABASE {name} SET SINGLE_USER WITH ROLLBACK IMMEDIATE"))
             conn.execute(text(f"DROP DATABASE {name}"))
-
