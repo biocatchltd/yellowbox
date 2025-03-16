@@ -1,5 +1,6 @@
 # Yellowbox Changelog
-## NEXT
+## 0.8.9
+* fixed issue with newest release of python-kafka, where a type error could occur.
 * removed deprecated github actions
 ## 0.8.8
 ### Changed

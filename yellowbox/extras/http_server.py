@@ -182,8 +182,7 @@ class HttpService(YellowService):
                 handler.wfile.write(response)
             else:
                 raise TypeError(
-                    f"got response of type {type(response)}, type must be RouterHTTPRequestHandler, "
-                    f"int, str or bytes"
+                    f"got response of type {type(response)}, type must be RouterHTTPRequestHandler, int, str or bytes"
                 )
 
         def callback(handler: RouterHTTPRequestHandler):

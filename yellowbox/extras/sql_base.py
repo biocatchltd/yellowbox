@@ -145,8 +145,7 @@ class SQLService(
         options = _options_to_string(options)
 
         return (
-            f'{dialect}://{":".join(self.userpass())}@{self.LOCAL_HOSTNAME}:{self.external_port()}/'
-            f"{database}{options}"
+            f"{dialect}://{':'.join(self.userpass())}@{self.LOCAL_HOSTNAME}:{self.external_port()}/{database}{options}"
         )
 
     def container_connection_string(

@@ -133,14 +133,14 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
     def start(self, retry_spec: Optional[RetrySpec] = None):
         super().start()
         retry_spec = retry_spec or RetrySpec(attempts=20)
-        with retry_spec.retry(self._consumer, (KafkaError, ConnectionError, ValueError)):
+        with retry_spec.retry(self._consumer, (KafkaError, ConnectionError, ValueError, TypeError)):
             pass
         return self
 
     async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
         super().start()
         retry_spec = retry_spec or RetrySpec(attempts=20)
-        with await retry_spec.aretry(self._consumer, (KafkaError, ConnectionError, ValueError)):
+        with await retry_spec.aretry(self._consumer, (KafkaError, ConnectionError, ValueError, TypeError)):
             pass
 
     def stop(self, signal="SIGKILL"):

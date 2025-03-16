@@ -146,7 +146,7 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
             data = resp.json()
             for item in data["items"]:
                 ret.append(item["name"])
-                requests.delete(url + f'/storage/v1/b/{bucket_name}/o/{item["name"]}', verify=False).raise_for_status()
+                requests.delete(url + f"/storage/v1/b/{bucket_name}/o/{item['name']}", verify=False).raise_for_status()
             if "nextPageToken" in data:
                 page_token = data["next_page_token"]
             else:

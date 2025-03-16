@@ -81,7 +81,7 @@ async def test_invalid_image_build_async(docker_client, capsys, image_name):
     assert "Step 1/3 : FROM alpine:3.4" in captured.err
     assert "Step 2/3 : RUN apk update" in captured.err
     assert "Step 3/3 : RUN file_not_exists.sh" in captured.err
-    assert "/bin/sh: file_not_exists.sh: not found" in captured.err
+    assert "file_not_exists.sh: not found" in captured.err
 
 
 @mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])

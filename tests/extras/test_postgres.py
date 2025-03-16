@@ -237,9 +237,7 @@ def test_remote_connection_string_host(docker_client, create_and_pull, service, 
         container,
         "./main.py",
         bytes(
-            "import sqlalchemy as sa;"
-            f"e = sa.create_engine('{conn_string}');"
-            "e.execute('DELETE FROM foo WHERE x < 3');",
+            f"import sqlalchemy as sa;e = sa.create_engine('{conn_string}');e.execute('DELETE FROM foo WHERE x < 3');",
             "ascii",
         ),
     )
