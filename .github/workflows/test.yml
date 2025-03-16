@@ -23,6 +23,8 @@ jobs:
     - name: Install PIP
       run: |
         python -m pip install --upgrade pip
+    - name: Install MSSQL ODBC
+      uses: Yarden-zamir/install-mssql-odbc@main
     - name: Install dependencies
       run: |
         python -m pip install poetry
