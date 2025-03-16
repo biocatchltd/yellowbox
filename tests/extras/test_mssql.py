@@ -10,14 +10,14 @@ from yellowbox.utils import docker_host_name
 
 @mark.parametrize("spinner", [True, False])
 def test_make_mssql(docker_client, spinner):
-    with MSSQLService.run(docker_client, spinner=spinner):
+    with MSSQLService.run(docker_client, image="mcr.microsoft.com/mssql/server:2022-latest", spinner=spinner):
         pass
 
 
 @mark.asyncio
 async def test_local_connection_async(docker_client):
     service: MSSQLService
-    async with MSSQLService.arun(docker_client) as service:
+    async with MSSQLService.arun(docker_client, image="mcr.microsoft.com/mssql/server:2022-latest") as service:
         db = service.database("foobar")
         engine = create_engine(db.local_connection_string())
         with engine.begin() as connection:
@@ -51,7 +51,7 @@ async def test_local_connection_async(docker_client):
 
 @fixture(scope="module")
 def service(docker_client):
-    with MSSQLService.run(docker_client, spinner=False) as service:
+    with MSSQLService.run(docker_client, image="mcr.microsoft.com/mssql/server:2022-latest", spinner=False) as service:
         yield service
 
 
