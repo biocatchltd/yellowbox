@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional
 
 from docker import DockerClient
+from sqlalchemy import create_engine, text
 
 from yellowbox.containers import create_and_pull_with_defaults
 from yellowbox.extras.sql_base import ConnectionOptions, SQLService
@@ -75,3 +76,11 @@ class MSSQLService(SQLService, SingleContainerService):
     def stop(self, signal="SIGKILL"):
         # change in default
         return super().stop(signal)
+    
+    def drop_database(self, name: str):
+        # we need to kill all connections to the database
+        engine = create_engine(self.database("master").local_connection_string(), connect_args={'autocommit': True})
+        with engine.connect() as conn:
+            conn.execute(text(f"ALTER DATABASE {name} SET SINGLE_USER WITH ROLLBACK IMMEDIATE"))
+            conn.execute(text(f"DROP DATABASE {name}"))
+
