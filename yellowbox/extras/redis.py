@@ -1,4 +1,5 @@
-from typing import IO, Any, Callable, ContextManager, Dict, Mapping, Optional, Sequence, TypeVar, Union, overload
+from collections.abc import Callable, Mapping, Sequence
+from typing import IO, Any, ContextManager, TypeVar, Union, overload
 
 from docker import DockerClient
 from redis import ConnectionError as RedisConnectionError, Redis
@@ -35,9 +36,9 @@ class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
         self,
         docker_client: DockerClient,
         image="redis:latest",
-        redis_file: Optional[IO[bytes]] = None,
+        redis_file: IO[bytes] | None = None,
         *,
-        container_create_kwargs: Optional[Dict[str, Any]] = None,
+        container_create_kwargs: dict[str, Any] | None = None,
         **kwargs,
     ):
         container = create_and_pull_with_defaults(
@@ -67,7 +68,7 @@ class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
         port = self.client_port()
         return client_cls(host=DOCKER_EXPOSE_HOST, port=port, **kwargs)
 
-    def start(self, retry_spec: Optional[RetrySpec] = None):
+    def start(self, retry_spec: RetrySpec | None = None):
         super().start()
         client_cm: ContextManager[Redis] = self.client()
         with client_cm as client:
@@ -76,7 +77,7 @@ class RedisService(SingleContainerService, RunMixin, AsyncRunMixin):
         self.started = True
         return self
 
-    async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
+    async def astart(self, retry_spec: RetrySpec | None = None) -> None:
         super().start()
         client_cm: ContextManager[Redis] = self.client()
         with client_cm as client:

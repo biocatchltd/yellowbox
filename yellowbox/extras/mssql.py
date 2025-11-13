@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 from docker import DockerClient
 from sqlalchemy import create_engine, text
@@ -25,10 +25,10 @@ class MSSQLService(SQLService, SingleContainerService):
         *,
         admin_password: str = "Swordfish1!",
         product: str = "Developer",
-        accept_eula: Optional[str] = None,
-        local_driver: Optional[str] = None,
-        local_options: Optional[ConnectionOptions] = None,
-        container_create_kwargs: Optional[Dict[str, Any]] = None,
+        accept_eula: str | None = None,
+        local_driver: str | None = None,
+        local_options: ConnectionOptions | None = None,
+        container_create_kwargs: dict[str, Any] | None = None,
         **kwargs,
     ):
         self.admin_password = admin_password

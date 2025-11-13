@@ -1,5 +1,6 @@
+from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager
-from typing import Any, Dict, Iterable, Iterator, List, Mapping, Optional, Tuple
+from typing import Any
 
 import hvac
 from docker import DockerClient
@@ -34,7 +35,7 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
         image="hashicorp/vault:latest",
         root_token: str = "guest",
         *,
-        container_create_kwargs: Optional[Dict[str, Any]] = None,
+        container_create_kwargs: dict[str, Any] | None = None,
         **kwargs,
     ):
         """
@@ -87,7 +88,7 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
         with self.client() as client:
             client.lookup_token()
 
-    def start(self, retry_spec: Optional[RetrySpec] = None):
+    def start(self, retry_spec: RetrySpec | None = None):
         super().start()
 
         retry_spec = retry_spec or RetrySpec(attempts=10)
@@ -98,7 +99,7 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
         self.started = True
         return self
 
-    async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
+    async def astart(self, retry_spec: RetrySpec | None = None) -> None:
         super().start(retry_spec)
 
         retry_spec = retry_spec or RetrySpec(attempts=10)
@@ -109,7 +110,7 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
         self.started = True
 
     def set_users(
-        self, userpass: Iterable[Tuple[str, str]], policy_name="dev", policy: Optional[Mapping] = DEV_POLICY
+        self, userpass: Iterable[tuple[str, str]], policy_name="dev", policy: Mapping | None = DEV_POLICY
     ) -> None:
         """
         Create and set users with policies
@@ -149,7 +150,7 @@ class VaultService(SingleContainerService, RunMixin, AsyncRunMixin):
         with self.client() as client:
 
             def clear_recursive(path) -> None:
-                secret_names: List[str] = client.secrets.kv.list_secrets(path)["data"]["keys"]
+                secret_names: list[str] = client.secrets.kv.list_secrets(path)["data"]["keys"]
                 for name in secret_names:
                     if name.endswith("/"):
                         # is a directory

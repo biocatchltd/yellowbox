@@ -1,6 +1,7 @@
+from collections.abc import Iterable
 from contextlib import contextmanager
 from os import environ, getenv
-from typing import Any, Dict, Iterable, Optional
+from typing import Any
 from warnings import warn
 
 import requests
@@ -22,7 +23,7 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
         scheme: str = "https",
         command: str = "",
         *,
-        container_create_kwargs: Optional[Dict[str, Any]] = None,
+        container_create_kwargs: dict[str, Any] | None = None,
         **kwargs,
     ):
         # note that fake-gcs-server 1.43.0 has a bug https://github.com/fsouza/fake-gcs-server/issues/1034
@@ -36,7 +37,7 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
     def client_port(self):
         return get_ports(self.container)[FAKE_GCS_DEFAULT_PORT]
 
-    def local_url(self, scheme: Optional[str] = ...):  # type: ignore[assignment]
+    def local_url(self, scheme: str | None = ...):  # type: ignore[assignment]
         ret = f"{DOCKER_EXPOSE_HOST}:{self.client_port()}"
         if scheme is ...:
             scheme = self.scheme
@@ -44,7 +45,7 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
             ret = f"{self.scheme}://{ret}"
         return ret
 
-    def container_url(self, hostname: str, scheme: Optional[str] = ...):  # type: ignore[assignment]
+    def container_url(self, hostname: str, scheme: str | None = ...):  # type: ignore[assignment]
         ret = f"{hostname}:{FAKE_GCS_DEFAULT_PORT}"
         if scheme is ...:
             scheme = self.scheme
@@ -52,7 +53,7 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
             ret = f"{self.scheme}://{ret}"
         return ret
 
-    def host_url(self, scheme: Optional[str] = ...):  # type: ignore[assignment]
+    def host_url(self, scheme: str | None = ...):  # type: ignore[assignment]
         ret = f"{docker_host_name}:{self.client_port()}"
         if scheme is ...:
             scheme = self.scheme
@@ -60,7 +61,7 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
             ret = f"{self.scheme}://{ret}"
         return ret
 
-    def start(self, retry_spec: Optional[RetrySpec] = None):
+    def start(self, retry_spec: RetrySpec | None = None):
         super().start()
         url = self.local_url() + "/storage/v1/b"
         retry_spec = retry_spec or RetrySpec(attempts=15)
@@ -69,7 +70,7 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
         )
         return self
 
-    async def astart(self, retry_spec: Optional[RetrySpec] = None):
+    async def astart(self, retry_spec: RetrySpec | None = None):
         super().start()
         url = self.local_url() + "/storage/v1/b"
         retry_spec = retry_spec or RetrySpec(attempts=15)
@@ -123,7 +124,7 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
             gcloud_module.STORAGE_EMULATOR_HOST,
         ) = previous_state
 
-    def create_bucket(self, bucket_name: str) -> Dict[str, Any]:
+    def create_bucket(self, bucket_name: str) -> dict[str, Any]:
         url = self.local_url()
 
         resp = requests.post(url + "/storage/v1/b", json={"name": bucket_name}, verify=False)
@@ -131,7 +132,7 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
 
         return resp.json()
 
-    def clear_bucket(self, bucket_name: str, prefix: Optional[str] = None) -> Iterable[str]:
+    def clear_bucket(self, bucket_name: str, prefix: str | None = None) -> Iterable[str]:
         url = self.local_url()
         params = {}
         if prefix:

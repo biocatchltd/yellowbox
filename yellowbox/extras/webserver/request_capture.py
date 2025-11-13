@@ -1,6 +1,8 @@
 import re
 from collections import Counter
-from typing import Any, Collection, Iterable, Iterator, Mapping, Optional, Pattern, Tuple, TypeVar, Union
+from collections.abc import Collection, Iterable, Iterator, Mapping
+from re import Pattern
+from typing import Any, TypeVar
 
 from yellowbox.extras.webserver.util import MismatchReason, lower_keys, reason_is_ne
 
@@ -63,7 +65,7 @@ def _is_submultimap_of(submultimap: Mapping[K, Collection[V]], supermultimap: Ma
     return True
 
 
-def _to_expected_map(name: str, exact: Optional[T], submap: Optional[T]) -> Optional[Tuple[T, bool]]:
+def _to_expected_map(name: str, exact: T | None, submap: T | None) -> tuple[T, bool] | None:
     """
     A utility function to convert two parameters one representing an exact-match expectation and one a submap
      expectation, into a single value.
@@ -87,8 +89,8 @@ def _to_expected_map(name: str, exact: Optional[T], submap: Optional[T]) -> Opti
 
 
 def _matches_expected_map(
-    name: str, expected: Optional[Tuple[Mapping[K, V], bool]], recorded: Mapping[K, V]
-) -> Optional[str]:
+    name: str, expected: tuple[Mapping[K, V], bool] | None, recorded: Mapping[K, V]
+) -> str | None:
     """
     Matches a map against the return value of _to_expected_map
     Args:
@@ -112,8 +114,8 @@ def _matches_expected_map(
 
 
 def _matches_expected_multimap(
-    name: str, expected: Optional[Tuple[Mapping[K, Collection[V]], bool]], recorded: Mapping[K, Collection[V]]
-) -> Optional[str]:
+    name: str, expected: tuple[Mapping[K, Collection[V]], bool] | None, recorded: Mapping[K, Collection[V]]
+) -> str | None:
     """
     Matches a multimap against the return value of _to_expected_map
     Args:
@@ -136,7 +138,7 @@ def _matches_expected_multimap(
     return None
 
 
-def _repr_map(name: str, expected: Optional[Tuple[T, bool]]):
+def _repr_map(name: str, expected: tuple[T, bool] | None):
     """
     A utility function to convert the return value of _to_expected_map back to the provided parameters needed to
      construct it.
@@ -163,13 +165,13 @@ class ScopeExpectation:
 
     def __init__(
         self,
-        headers: Optional[Mapping[str, Collection[str]]] = None,
-        headers_submap: Optional[Mapping[str, Collection[str]]] = None,
-        path: Optional[Union[str, Pattern[str]]] = None,
-        path_params: Optional[Mapping[str, Any]] = None,
-        path_params_submap: Optional[Mapping[str, Any]] = None,
-        query_params: Optional[Mapping[str, Collection[str]]] = None,
-        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
+        headers: Mapping[str, Collection[str]] | None = None,
+        headers_submap: Mapping[str, Collection[str]] | None = None,
+        path: str | Pattern[str] | None = None,
+        path_params: Mapping[str, Any] | None = None,
+        path_params_submap: Mapping[str, Any] | None = None,
+        query_params: Mapping[str, Collection[str]] | None = None,
+        query_params_submap: Mapping[str, Collection[str]] | None = None,
     ):
         self.headers = _to_expected_map("headers", lower_keys(headers), lower_keys(headers_submap))
         if isinstance(path, str):

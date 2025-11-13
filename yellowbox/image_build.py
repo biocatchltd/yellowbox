@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager, contextmanager
 from functools import partial
 from io import StringIO
 from json import JSONDecodeError
-from typing import Optional, TextIO
+from typing import TextIO
 from warnings import warn
 
 from docker import DockerClient
@@ -21,7 +21,7 @@ class DockerfileParseError(BuildError):
 DockerfileParseException = DockerfileParseError  # legacy alias
 
 
-def _docker_build(docker_client: DockerClient, output: TextIO, **kwargs) -> Optional[str]:
+def _docker_build(docker_client: DockerClient, output: TextIO, **kwargs) -> str | None:
     build_log = docker_client.api.build(**kwargs)
     id = None
     for msg_b in build_log:
@@ -64,10 +64,10 @@ def _docker_build(docker_client: DockerClient, output: TextIO, **kwargs) -> Opti
 @contextmanager
 def build_image(
     docker_client: DockerClient,
-    image_name: Optional[str],
+    image_name: str | None,
     remove_image: bool = True,
-    file: Optional[TextIO] = ...,  # type: ignore[assignment]
-    output: Optional[TextIO] = sys.stderr,
+    file: TextIO | None = ...,  # type: ignore[assignment]
+    output: TextIO | None = sys.stderr,
     spinner: bool = True,
     **kwargs,
 ):
@@ -119,9 +119,9 @@ def build_image(
 @asynccontextmanager
 async def async_build_image(
     docker_client: DockerClient,
-    image_name: Optional[str],
+    image_name: str | None,
     remove_image: bool = True,
-    output: Optional[TextIO] = sys.stderr,
+    output: TextIO | None = sys.stderr,
     spinner: bool = True,
     **kwargs,
 ):
