@@ -40,7 +40,7 @@ class MSSQLService(SQLService, SingleContainerService):
 
         if local_driver in (None, "pyodbc") and local_options is None:
             try:
-                import pyodbc
+                import pyodbc  # noqa: PLC0415
             except ImportError as e:
                 raise ImportError("pyodbc is required if no other driver is specified") from e
             available_drivers = pyodbc.drivers()
