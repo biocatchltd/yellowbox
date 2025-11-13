@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## 0.9.0
+### Changed
+* Kafka: upgraded to official Kafka Apache image (with KRaft) instead of Kafka+Zookeeper Bitnami images, which were removed from Docker hub.
 ## 0.8.9
 * fixed issue with newest release of python-kafka, where a type error could occur.
 * removed deprecated github actions
