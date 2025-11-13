@@ -1,17 +1,12 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from deprecated import deprecated
 from docker import DockerClient
 from sqlalchemy import create_engine
 
 from yellowbox.containers import create_and_pull_with_defaults
-from yellowbox.extras.sql_base import ConnectionOptions, SQLService, as_default
+from yellowbox.extras.sql_base import AsDefault, ConnectionOptions, SQLService, as_default
 from yellowbox.subclasses import SingleContainerService
-
-if TYPE_CHECKING:
-    from yellowbox.extras.sql_base import AsDefault
 
 __all__ = ["POSTGRES_INTERNAL_PORT", "PostgreSQLService"]
 

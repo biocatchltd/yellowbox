@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import logging
 import selectors
@@ -212,7 +210,7 @@ class FakeLogstashService(YellowService):
                     sock.shutdown(socket.SHUT_RDWR)
                     sock.close()
 
-    def start(self) -> FakeLogstashService:
+    def start(self) -> "FakeLogstashService":
         self._root.listen()
         self._selector.register(self._root, selectors.EVENT_READ)
         self._selector.register(self._rshutdown, selectors.EVENT_READ)

@@ -1,16 +1,13 @@
-from __future__ import annotations
-
 import sys
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from datetime import datetime
 from functools import update_wrapper
-from typing import TYPE_CHECKING, AnyStr, TypeVar
+from typing import AnyStr, TypeVar
 
 from starlette.requests import Request
 from starlette.responses import Response
 
-if TYPE_CHECKING:
-    from yellowbox.extras.webserver.endpoints import BASE_HTTP_SIDE_EFFECT, HTTP_SIDE_EFFECT, MockHTTPEndpoint
+from yellowbox.extras.webserver.endpoints import BASE_HTTP_SIDE_EFFECT, HTTP_SIDE_EFFECT, MockHTTPEndpoint
 
 
 def reason_is_ne(field: str, expected, got) -> str:

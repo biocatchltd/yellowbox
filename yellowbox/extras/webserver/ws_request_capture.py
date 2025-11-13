@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import builtins
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
@@ -21,7 +19,7 @@ class WebSocketRecorder(WebSocket):
     messages are parsed as per https://asgi.readthedocs.io/en/latest/specs/www.html#websocket
     """
 
-    def __init__(self, scope, receive, send, sinks: Sequence[RecordedWSTranscripts]):
+    def __init__(self, scope, receive, send, sinks: Sequence["RecordedWSTranscripts"]):
         """
         Args:
             scope: forwarded to Websocket
@@ -72,7 +70,7 @@ class RecorderEndpoint:
         sinks: a list of transcripts that the record should be added to
     """
 
-    def __init__(self, function, sinks: Sequence[RecordedWSTranscripts]):
+    def __init__(self, function, sinks: Sequence["RecordedWSTranscripts"]):
         self.function = function
         self.sinks = sinks
 
@@ -95,7 +93,7 @@ class Sender(Enum):
     Server = auto()
     Client = auto()
 
-    def __call__(self, data: Pattern[str] | Pattern[bytes] | str | bytes | builtins.ellipsis) -> ExpectedWSMessage:
+    def __call__(self, data: Pattern[str] | Pattern[bytes] | str | bytes | builtins.ellipsis) -> "ExpectedWSMessage":
         """
         Create an expected message, originating from this caller
         Args:

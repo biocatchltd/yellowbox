@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from asyncio import get_running_loop
 from collections.abc import AsyncIterator, Iterator, Sequence
