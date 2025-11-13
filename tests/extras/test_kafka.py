@@ -11,9 +11,9 @@ from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
 KAFKA_IMAGE_TAG = "latest"
 
 
-@mark.parametrize("bitnami_debug", [True, False])
-def test_make_kafka(docker_client, bitnami_debug):
-    with KafkaService.run(docker_client, spinner=False, tag_or_images=KAFKA_IMAGE_TAG, bitnami_debug=bitnami_debug):
+@mark.parametrize("debug", [True, False])
+def test_make_kafka(docker_client, debug):
+    with KafkaService.run(docker_client, spinner=False, tag_or_images=KAFKA_IMAGE_TAG, debug=debug):
         pass
 
 

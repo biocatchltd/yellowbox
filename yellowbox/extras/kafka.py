@@ -1,3 +1,4 @@
+import warnings
 from contextlib import closing
 from typing import Any, ContextManager, Optional, Tuple, Union, cast
 from uuid import uuid1
@@ -27,70 +28,99 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
         self,
         docker_client: DockerClient,
         tag_or_images: Union[str, Tuple[str, str]] = "latest",
-        inner_port=0,
-        outer_port=0,
-        bitnami_debug: bool = False,
+        inner_port: Optional[int] = None,
+        outer_port: int = 0,
+        bitnami_debug: Optional[bool] = None,
+        debug: bool = False,
         **kwargs,
     ):
-        self.inner_port = inner_port or get_free_port()
-        self.outer_port = outer_port or get_free_port()
-        if isinstance(tag_or_images, str):
-            zookeeper_image = f"bitnami/zookeeper:{tag_or_images}"
-            broker_image = f"bitnami/kafka:{tag_or_images}"
-        else:
-            zookeeper_image, broker_image = tag_or_images
+        if inner_port is not None:
+            warnings.warn(
+                "`inner_port` is deprecated and ignored. "
+                "Apache Kafka uses fixed internal port 9092."
+                "To remove this warning, remove `inner_port` from your call.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        if bitnami_debug is not None:
+            warnings.warn(
+                "`bitnami_debug` is deprecated. To remove this warning, use `debug` parameter instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            debug = bitnami_debug
+        if not isinstance(tag_or_images, str):
+            tag_or_images = tag_or_images[1]
+            warnings.warn(
+                f"Zookeeper is no longer supported. Using {tag_or_images} as Kafka broker image. "
+                f"To remove this warning, pass a single broker image string instead of a tuple.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        self.inner_port = 9092  # Standard Kafka internal port for broker communication (same as for KRaft)
+        self.outer_port = outer_port or get_free_port()  # External port for host connection
+
+        broker_image = tag_or_images if ":" in tag_or_images else f"apache/kafka:{tag_or_images}"
 
         # broker must have a known alias at creation time
         self.static_broker_alias = f"broker-{uuid1()}"
 
         creator = SafeContainerCreator(docker_client)
 
-        extra_bitnami_env = {}
-        if bitnami_debug:
-            extra_bitnami_env["BITNAMI_DEBUG"] = "true"
+        # Base KRaft mode configuration
+        environment = {
+            "KAFKA_NODE_ID": "1",
+            "KAFKA_PROCESS_ROLES": "broker,controller",
+            "KAFKA_LISTENERS": "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093",
+            "KAFKA_ADVERTISED_LISTENERS": f"PLAINTEXT://localhost:{self.outer_port}",
+            "KAFKA_CONTROLLER_LISTENER_NAMES": "CONTROLLER",
+            "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP": "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT",
+            "KAFKA_CONTROLLER_QUORUM_VOTERS": "1@localhost:9093",
+            "KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR": "1",
+            "KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR": "1",
+            "KAFKA_TRANSACTION_STATE_LOG_MIN_ISR": "1",
+            "KAFKA_INTER_BROKER_LISTENER_NAME": "PLAINTEXT",
+            "KAFKA_LOG_DIRS": "/tmp/kraft-combined-logs",
+        }
 
-        self.zookeeper = creator.create_and_pull(
-            zookeeper_image,
-            detach=True,
-            publish_all_ports=True,
-            environment={
-                "ZOOKEEPER_CLIENT_PORT": "2181",
-                "ZOOKEEPER_TICK_TIME": "2000",
-                "ALLOW_ANONYMOUS_LOGIN": "yes",
-                **extra_bitnami_env,
-            },
-        )
+        # Enable debug logging if requested
+        if debug:
+            environment["KAFKA_LOG4J_ROOT_LOGLEVEL"] = "DEBUG"
+            environment["KAFKA_TOOLS_LOG4J_LOGLEVEL"] = "DEBUG"
 
         self.broker = creator.create_and_pull(
             broker_image,
             ports={
-                str(self.outer_port): ("0.0.0.0", self.outer_port),
-                str(self.inner_port): ("0.0.0.0", self.inner_port),
+                "9092/tcp": ("0.0.0.0", self.outer_port),
             },
             publish_all_ports=True,
             detach=True,
-            environment={
-                "KAFKA_CFG_ADVERTISED_LISTENERS": f"INNER://{self.static_broker_alias}:{self.inner_port},"
-                f"OUTER://localhost:{self.outer_port}",
-                "KAFKA_CFG_ZOOKEEPER_CONNECT": "zk/2181",
-                "ALLOW_PLAINTEXT_LISTENER": "yes",
-                "KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP": "INNER:PLAINTEXT,OUTER:PLAINTEXT",
-                "KAFKA_INTER_BROKER_LISTENER_NAME": "INNER",
-                "KAFKA_CFG_LISTENERS": f"INNER://:{self.inner_port},OUTER://:{self.outer_port}",
-                "KAFKA_ENABLE_KRAFT": "false",
-                **extra_bitnami_env,
-            },
+            environment=environment,
         )
 
         self.network = anonymous_network(docker_client)
-        self.network.connect(self.zookeeper, aliases=["zk"])
         self.network.connect(self.broker, aliases=[self.static_broker_alias])
-        super().__init__((self.zookeeper, self.broker), **kwargs)
+        super().__init__((self.broker,), **kwargs)
 
     def connection_port(self):
         self.broker.reload()
+        # After connecting to custom network, port mappings may not appear in NetworkSettings.Ports
+        # but they're still there in the HostConfig
+        hostconfig_ports = self.broker.attrs.get("HostConfig", {}).get("PortBindings", {}) or {}
+
+        # Try HostConfig first, then NetworkSettings
+        port_key = f"{self.inner_port}/tcp"
+        if hostconfig_ports.get(port_key):
+            return int(hostconfig_ports[port_key][0]["HostPort"])
+
+        # Fallback to NetworkSettings
         ports = get_ports(self.broker)
-        return ports[self.outer_port]
+        if self.inner_port in ports:
+            return ports[self.inner_port]
+
+        # If still not found, just return outer_port as it should match
+        return self.outer_port
 
     def _consumer(self, **kwargs) -> ContextManager[Any]:
         port = self.connection_port()
@@ -146,7 +176,6 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
     def stop(self, signal="SIGKILL"):
         # difference in default signal
         self.network.disconnect(self.broker)
-        self.network.disconnect(self.zookeeper)
         self.network.remove()
         super().stop(signal)
 
