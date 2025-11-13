@@ -110,7 +110,7 @@ def build_image(
         yield image_alias
         if remove_image:
             try:
-                docker_client.api.remove_image(image_alias, force=True)
+                docker_client.api.remove_image(image_alias)
             except ImageNotFound:
                 # if the image was already deleted
                 pass
@@ -175,7 +175,7 @@ async def async_build_image(
     yield image_alias
     if remove_image:
         try:
-            await get_event_loop().run_in_executor(None, docker_client.api.remove_image, image_alias, True)
+            await get_event_loop().run_in_executor(None, docker_client.api.remove_image, image_alias)
         except ImageNotFound:
             # if the image was already deleted
             pass
