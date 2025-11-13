@@ -69,7 +69,6 @@ def test_create_and_pull(docker_client, create_and_pull):
     assert "alpine:latest" in container.image.tags
 
 
-@mark.xfail(reason="I really don't know why it succeeds locally for me but fails on Github.")
 @mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])
 def test_build_create_and_pull(docker_client, create_and_pull, image_name):
     # we create an anonymous image to test this
