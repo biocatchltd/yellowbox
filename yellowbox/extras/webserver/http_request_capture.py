@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Collection, List, Mapping, Optional, Pattern, Sequence, Tuple, Union, overload
+from re import Pattern
+from typing import Any, overload
 
 from starlette.requests import Request
 
@@ -16,7 +18,7 @@ _missing = object()
 
 class BodyValidator(ABC):
     @abstractmethod
-    def validate(self, content: bytes) -> Optional[MismatchReason]: ...
+    def validate(self, content: bytes) -> MismatchReason | None: ...
 
     def repr_map(self) -> Mapping[str, Any]:
         return {"content_predicate": self}
@@ -26,7 +28,7 @@ class BodyValidator(ABC):
 class BodyValidatorContent(BodyValidator):
     expected_content: bytes
 
-    def validate(self, content: bytes) -> Optional[MismatchReason]:
+    def validate(self, content: bytes) -> MismatchReason | None:
         if content != self.expected_content:
             return MismatchReason(reason_is_ne("content", self.expected_content, content))
         return None
@@ -40,7 +42,7 @@ class BodyValidatorText(BodyValidator):
     expected_text: str
     encoding: str = "utf-8"
 
-    def validate(self, content: bytes) -> Optional[MismatchReason]:
+    def validate(self, content: bytes) -> MismatchReason | None:
         try:
             text = content.decode(self.encoding)
         except UnicodeDecodeError:
@@ -57,7 +59,7 @@ class BodyValidatorText(BodyValidator):
 class BodyValidatorJson(BodyValidator):
     expected_json: Any
 
-    def validate(self, content: bytes) -> Optional[MismatchReason]:
+    def validate(self, content: bytes) -> MismatchReason | None:
         try:
             parsed = json.loads(content)
         except json.JSONDecodeError:
@@ -74,7 +76,7 @@ class BodyValidatorJson(BodyValidator):
 class BodyValidatorJsonSubmap(BodyValidator):
     expected_json_submap: Mapping[str, Any]
 
-    def validate(self, content: bytes) -> Optional[MismatchReason]:
+    def validate(self, content: bytes) -> MismatchReason | None:
         try:
             parsed = json.loads(content)
         except json.JSONDecodeError:
@@ -91,7 +93,7 @@ class BodyValidatorJsonSubmap(BodyValidator):
 class BodyValidatorCustom(BodyValidator):
     predicate: Callable[[bytes], bool]
 
-    def validate(self, content: bytes) -> Optional[MismatchReason]:
+    def validate(self, content: bytes) -> MismatchReason | None:
         if not self.predicate(content):
             return MismatchReason("content_predicate did not match")
         return None
@@ -105,7 +107,7 @@ class BodyValidatorCustom2(BodyValidator):
     predicate: Callable[[bytes], Any]
     expected: Any
 
-    def validate(self, content: bytes) -> Optional[MismatchReason]:
+    def validate(self, content: bytes) -> MismatchReason | None:
         if self.predicate(content) != self.expected:
             return MismatchReason(reason_is_ne("content-predicate", self.expected, self.predicate(content)))
         return None
@@ -121,21 +123,19 @@ class ExpectedHTTPRequest(ScopeExpectation):
 
     def __init__(
         self,
-        headers: Optional[Mapping[str, Collection[str]]] = None,
-        headers_submap: Optional[Mapping[str, Collection[str]]] = None,
-        path: Optional[Union[str, Pattern[str]]] = None,
-        path_params: Optional[Mapping[str, Any]] = None,
-        path_params_submap: Optional[Mapping[str, Any]] = None,
-        query_params: Optional[Mapping[str, Collection[str]]] = None,
-        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-        method: Optional[str] = None,
-        body: Optional[bytes] = None,
-        text: Optional[str] = None,
+        headers: Mapping[str, Collection[str]] | None = None,
+        headers_submap: Mapping[str, Collection[str]] | None = None,
+        path: str | Pattern[str] | None = None,
+        path_params: Mapping[str, Any] | None = None,
+        path_params_submap: Mapping[str, Any] | None = None,
+        query_params: Mapping[str, Collection[str]] | None = None,
+        query_params_submap: Mapping[str, Collection[str]] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
+        text: str | None = None,
         json: Any = _missing,
-        json_submap: Optional[Mapping[str, Any]] = None,
-        content_predicate: Optional[
-            Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any], BodyValidator]
-        ] = None,
+        json_submap: Mapping[str, Any] | None = None,
+        content_predicate: None | (Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator) = None,
     ):
         """
         Args:
@@ -181,7 +181,7 @@ class ExpectedHTTPRequest(ScopeExpectation):
         ) >= 2:
             raise ValueError("only one of content, text, json, json_submap, or content_predicate must be set")
 
-        self.body_validator: Optional[BodyValidator]
+        self.body_validator: BodyValidator | None
         if body is not None:
             self.body_validator = BodyValidatorContent(body)
         elif text is not None:
@@ -199,7 +199,7 @@ class ExpectedHTTPRequest(ScopeExpectation):
         else:
             self.body_validator = None
 
-    def matches(self, recorded: RecordedHTTPRequest) -> Union[bool, MismatchReason]:
+    def matches(self, recorded: RecordedHTTPRequest) -> bool | MismatchReason:
         """
         Test if an http request meets the expectations of self
         Args:
@@ -291,7 +291,7 @@ class RecordedHTTPRequest:
         return json.loads(self.content)
 
 
-class RecordedHTTPRequests(List[RecordedHTTPRequest]):
+class RecordedHTTPRequests(list[RecordedHTTPRequest]):
     """
     A list of recorded HTTP requests, in the order they were received
     """
@@ -326,24 +326,22 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
     def assert_requested_with(
         self,
         *,
-        headers: Optional[Mapping[str, Collection[str]]] = None,
-        headers_submap: Optional[Mapping[str, Collection[str]]] = None,
-        path: Optional[Union[str, Pattern[str]]] = None,
-        path_params: Optional[Mapping[str, Any]] = None,
-        path_params_submap: Optional[Mapping[str, Any]] = None,
-        query_params: Optional[Mapping[str, Collection[str]]] = None,
-        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-        method: Optional[str] = None,
-        body: Optional[bytes] = None,
-        text: Optional[str] = None,
+        headers: Mapping[str, Collection[str]] | None = None,
+        headers_submap: Mapping[str, Collection[str]] | None = None,
+        path: str | Pattern[str] | None = None,
+        path_params: Mapping[str, Any] | None = None,
+        path_params_submap: Mapping[str, Any] | None = None,
+        query_params: Mapping[str, Collection[str]] | None = None,
+        query_params_submap: Mapping[str, Collection[str]] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
+        text: str | None = None,
         json: Any = _missing,
-        json_submap: Optional[Mapping[str, Any]] = None,
-        content_predicate: Optional[
-            Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any], BodyValidator]
-        ] = None,
+        json_submap: Mapping[str, Any] | None = None,
+        content_predicate: None | (Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator) = None,
     ): ...
 
-    def assert_requested_with(self, expected: Optional[ExpectedHTTPRequest] = None, **kwargs):
+    def assert_requested_with(self, expected: ExpectedHTTPRequest | None = None, **kwargs):
         """
         Asserts that the latest request recorded matches an expected request
         Args:
@@ -371,22 +369,22 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
     def assert_requested_once_with(
         self,
         *,
-        headers: Optional[Mapping[str, Collection[str]]] = None,
-        headers_submap: Optional[Mapping[str, Collection[str]]] = None,
-        path: Optional[Union[str, Pattern[str]]] = None,
-        path_params: Optional[Mapping[str, Any]] = None,
-        path_params_submap: Optional[Mapping[str, Any]] = None,
-        query_params: Optional[Mapping[str, Collection[str]]] = None,
-        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-        method: Optional[str] = None,
-        body: Optional[bytes] = None,
-        text: Optional[str] = None,
+        headers: Mapping[str, Collection[str]] | None = None,
+        headers_submap: Mapping[str, Collection[str]] | None = None,
+        path: str | Pattern[str] | None = None,
+        path_params: Mapping[str, Any] | None = None,
+        path_params_submap: Mapping[str, Any] | None = None,
+        query_params: Mapping[str, Collection[str]] | None = None,
+        query_params_submap: Mapping[str, Collection[str]] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
+        text: str | None = None,
         json: Any = _missing,
-        json_submap: Optional[Mapping[str, Any]] = None,
-        content_predicate: Optional[Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any]]] = None,
+        json_submap: Mapping[str, Any] | None = None,
+        content_predicate: Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | None = None,
     ): ...
 
-    def assert_requested_once_with(self, expected: Optional[ExpectedHTTPRequest] = None, **kwargs):
+    def assert_requested_once_with(self, expected: ExpectedHTTPRequest | None = None, **kwargs):
         """
         Asserts that there is only one request, and that it matches an expected request
         Args:
@@ -416,24 +414,22 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
     def assert_any_request(
         self,
         *,
-        headers: Optional[Mapping[str, Collection[str]]] = None,
-        headers_submap: Optional[Mapping[str, Collection[str]]] = None,
-        path: Optional[Union[str, Pattern[str]]] = None,
-        path_params: Optional[Mapping[str, Any]] = None,
-        path_params_submap: Optional[Mapping[str, Any]] = None,
-        query_params: Optional[Mapping[str, Collection[str]]] = None,
-        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-        method: Optional[str] = None,
-        body: Optional[bytes] = None,
-        text: Optional[str] = None,
+        headers: Mapping[str, Collection[str]] | None = None,
+        headers_submap: Mapping[str, Collection[str]] | None = None,
+        path: str | Pattern[str] | None = None,
+        path_params: Mapping[str, Any] | None = None,
+        path_params_submap: Mapping[str, Any] | None = None,
+        query_params: Mapping[str, Collection[str]] | None = None,
+        query_params_submap: Mapping[str, Collection[str]] | None = None,
+        method: str | None = None,
+        body: bytes | None = None,
+        text: str | None = None,
         json: Any = _missing,
-        json_submap: Optional[Mapping[str, Any]] = None,
-        content_predicate: Optional[
-            Union[Callable[[bytes], bool], Tuple[Callable[[bytes], Any], Any], BodyValidator]
-        ] = None,
+        json_submap: Mapping[str, Any] | None = None,
+        content_predicate: None | (Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator) = None,
     ): ...
 
-    def assert_any_request(self, expected: Optional[ExpectedHTTPRequest] = None, **kwargs):
+    def assert_any_request(self, expected: ExpectedHTTPRequest | None = None, **kwargs):
         """
         Asserts that at least one request recorded matches an expected request
         Args:
@@ -450,7 +446,7 @@ class RecordedHTTPRequests(List[RecordedHTTPRequest]):
 
         if not self:
             raise AssertionError("No requests were made")
-        whynots: List[Tuple[RecordedHTTPRequest, MismatchReason]] = []
+        whynots: list[tuple[RecordedHTTPRequest, MismatchReason]] = []
         for req in self:
             match = expected.matches(req)
             if match:

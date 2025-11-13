@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from itertools import count
 from time import perf_counter, sleep
-from typing import Callable, Iterable, Optional, Tuple, Type, TypeVar, Union
+from typing import TypeVar
 
 _T = TypeVar("_T")
 
@@ -19,11 +20,11 @@ class RetrySpec:
     """
     Time between attempts in seconds.
     """
-    attempts: Optional[int] = None
+    attempts: int | None = None
     """
     Max number of attempts. If None, infinite attempts are made.
     """
-    timeout: Optional[float] = None
+    timeout: float | None = None
     """
     A timeout for all the attempts (including the interval) combined.
     """
@@ -32,7 +33,7 @@ class RetrySpec:
         if self.attempts is self.timeout is None:
             raise ValueError("RetrySpec must have either a timeout or attempts")
 
-    def retry(self, func: Callable[[], _T], exceptions: Union[Type[Exception], Tuple[Type[Exception], ...]]) -> _T:
+    def retry(self, func: Callable[[], _T], exceptions: type[Exception] | tuple[type[Exception], ...]) -> _T:
         """
         Retry running func until it succeeds
 
@@ -71,9 +72,7 @@ class RetrySpec:
             sleep(self.interval)
         return func()
 
-    async def aretry(
-        self, func: Callable[[], _T], exceptions: Union[Type[Exception], Tuple[Type[Exception], ...]]
-    ) -> _T:
+    async def aretry(self, func: Callable[[], _T], exceptions: type[Exception] | tuple[type[Exception], ...]) -> _T:
         """
         Retry running func until it succeeds
 

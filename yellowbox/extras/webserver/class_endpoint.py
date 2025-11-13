@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from functools import update_wrapper
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generic, Optional, TypeVar, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, overload
 
 from yellowbox.extras.webserver.endpoints import (
     HTTP_SIDE_EFFECT,
@@ -63,7 +64,7 @@ def class_http_endpoint(
     *,
     auto_read_body: bool = True,
     forbid_implicit_head_verb: bool = True,
-    name: Optional[str] = None,
+    name: str | None = None,
 ) -> Callable[[Any], HTTPEndpointTemplate]: ...
 
 
@@ -75,11 +76,11 @@ def class_http_endpoint(
     *,
     auto_read_body: bool = True,
     forbid_implicit_head_verb: bool = True,
-    name: Optional[str] = None,
+    name: str | None = None,
 ) -> HTTPEndpointTemplate: ...
 
 
-def class_http_endpoint(methods: METHODS, rule_string: str, side_effect: Optional[HTTP_SIDE_EFFECT] = None, **kwargs):
+def class_http_endpoint(methods: METHODS, rule_string: str, side_effect: HTTP_SIDE_EFFECT | None = None, **kwargs):
     """
     Creates an HTTP endpoint template. Declare this as a class variable in your webserver subclass to automatically add
      the endpoint to all instances. Can be used as a decorator.
@@ -104,19 +105,19 @@ def class_http_endpoint(methods: METHODS, rule_string: str, side_effect: Optiona
 
 @overload
 def class_ws_endpoint(
-    rule_string: str, *, name: Optional[str] = None, allow_abrupt_disconnect: bool = True
+    rule_string: str, *, name: str | None = None, allow_abrupt_disconnect: bool = True
 ) -> Callable[[Any], WSEndpointTemplate]:
     pass
 
 
 @overload
 def class_ws_endpoint(
-    rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: Optional[str] = None, allow_abrupt_disconnect: bool = True
+    rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str | None = None, allow_abrupt_disconnect: bool = True
 ) -> WSEndpointTemplate:
     pass
 
 
-def class_ws_endpoint(rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None, **kwargs):
+def class_ws_endpoint(rule_string: str, side_effect: WS_SIDE_EFFECT | None = None, **kwargs):
     """
     Creates a websocket endpoint template. Declare this as a class variable in your webserver subclass to automatically
      add the endpoint to all instances. Can be used as a decorator.

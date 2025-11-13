@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from threading import Lock, Thread
 from time import sleep
-from typing import ContextManager, Iterator, Mapping, Optional, Union, overload
+from typing import ContextManager, overload
 from warnings import warn
 
 from requests import ConnectionError, RequestException, get
@@ -42,7 +43,7 @@ class WebServer(YellowService):
     _PORT_ACCESS_INTERVAL = 0.01  # retry interval between attempts when accessing a binding port.
     _SHUTDOWN_SERVE_THREAD_TIMEOUT = 5  # the maximum time to wait for the server thread to stop when shutting down
 
-    _CLASS_ENDPOINT_TEMPLATES: Mapping[str, Union[HTTPEndpointTemplate, WSEndpointTemplate]] = {}
+    _CLASS_ENDPOINT_TEMPLATES: Mapping[str, HTTPEndpointTemplate | WSEndpointTemplate] = {}
 
     def __init__(self, name: str, port: int = 0, **kwargs):
         """
@@ -57,7 +58,7 @@ class WebServer(YellowService):
 
         # since the main thread won't catch errors in handlers, this class will store any error raised while handling,
         #  and raise them in the main thread as soon as we can
-        self.pending_exception: Optional[Exception] = None
+        self.pending_exception: Exception | None = None
 
         if "log_config" not in kwargs:
             kwargs["log_config"] = None
@@ -108,7 +109,7 @@ class WebServer(YellowService):
         *,
         auto_read_body: bool = True,
         forbid_implicit_head_verb: bool = True,
-        name: Optional[str] = None,
+        name: str | None = None,
     ) -> MockHTTPEndpoint: ...
 
     def add_http_endpoint(self, *args, **kwargs) -> MockHTTPEndpoint:
@@ -168,7 +169,7 @@ class WebServer(YellowService):
         *,
         auto_read_body: bool = True,
         forbid_implicit_head_verb: bool = True,
-        name: Optional[str] = None,
+        name: str | None = None,
     ) -> ContextManager[MockHTTPEndpoint]: ...
 
     @contextmanager  # type:ignore[misc]
@@ -197,7 +198,7 @@ class WebServer(YellowService):
         rule_string: str,
         side_effect: WS_SIDE_EFFECT,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         allow_abrupt_disconnect: bool = True,
     ) -> MockWSEndpoint: ...
 
@@ -257,7 +258,7 @@ class WebServer(YellowService):
         rule_string: str,
         side_effect: WS_SIDE_EFFECT,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         allow_abrupt_disconnect: bool = True,
     ) -> ContextManager[MockWSEndpoint]: ...
 
@@ -278,7 +279,7 @@ class WebServer(YellowService):
         finally:
             self.remove_ws_endpoint(ep)
 
-    def local_url(self, schema: Optional[str] = "http") -> str:
+    def local_url(self, schema: str | None = "http") -> str:
         """
         Get the url to access this server from the local machine
         Args:
@@ -298,7 +299,7 @@ class WebServer(YellowService):
             return f"{docker_host_name}:{self.port}"
         return f"{schema}://{docker_host_name}:{self.port}"
 
-    def start(self, retry_spec: Optional[RetrySpec] = None) -> WebServer:
+    def start(self, retry_spec: RetrySpec | None = None) -> WebServer:
         if self._serve_thread.is_alive():
             raise RuntimeError("thread cannot be started twice")
         self._serve_thread.start()
@@ -311,7 +312,7 @@ class WebServer(YellowService):
 
         # add all the class endpoints
         for name, template in type(self)._CLASS_ENDPOINT_TEMPLATES.items():  # noqa: SLF001
-            ep: Union[MockHTTPEndpoint, MockWSEndpoint]
+            ep: MockHTTPEndpoint | MockWSEndpoint
             if isinstance(template, HTTPEndpointTemplate):
                 ep = template.construct(self)
                 self.add_http_endpoint(ep)

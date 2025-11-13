@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any
 from urllib.parse import quote
 
 import requests
@@ -29,7 +29,7 @@ class RabbitMQService(SingleContainerService, RunMixin, AsyncRunMixin):
         password="guest",
         virtual_host="/",
         enable_management=False,
-        container_create_kwargs: Optional[Dict[str, Any]] = None,
+        container_create_kwargs: dict[str, Any] | None = None,
         **kwargs,
     ):
         self.user = user
@@ -74,7 +74,7 @@ class RabbitMQService(SingleContainerService, RunMixin, AsyncRunMixin):
         )
         return BlockingConnection(connection_params)
 
-    def start(self, retry_spec: Optional[RetrySpec] = None):
+    def start(self, retry_spec: RetrySpec | None = None):
         super().start()
         retry_spec = retry_spec or RetrySpec(attempts=30)
         conn = retry_spec.retry(self.connection, (AMQPConnectionError, ConnectionError, AMQPConnectorException))
@@ -83,7 +83,7 @@ class RabbitMQService(SingleContainerService, RunMixin, AsyncRunMixin):
             self.enable_management()
         return self
 
-    async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
+    async def astart(self, retry_spec: RetrySpec | None = None) -> None:
         super().start()
         retry_spec = retry_spec or RetrySpec(attempts=30)
         conn = await retry_spec.aretry(self.connection, (AMQPConnectionError, ConnectionError, AMQPConnectorException))

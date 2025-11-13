@@ -1,23 +1,12 @@
 from __future__ import annotations
 
 import builtins
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
-from typing import (
-    Any,
-    Collection,
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Pattern,
-    Sequence,
-    Tuple,
-    Union,
-    overload,
-)
+from re import Pattern
+from typing import Any, overload
 
 from starlette.requests import HTTPConnection
 from starlette.websockets import WebSocket
@@ -106,7 +95,7 @@ class Sender(Enum):
     Server = auto()
     Client = auto()
 
-    def __call__(self, data: Union[Pattern[str], Pattern[bytes], str, bytes, builtins.ellipsis]) -> ExpectedWSMessage:
+    def __call__(self, data: Pattern[str] | Pattern[bytes] | str | bytes | builtins.ellipsis) -> ExpectedWSMessage:
         """
         Create an expected message, originating from this caller
         Args:
@@ -122,7 +111,7 @@ class RecordedWSMessage:
     A recorded websocket message, with a sender and value sent
     """
 
-    data: Union[bytes, str]
+    data: bytes | str
     sender: Sender
     time: datetime
 
@@ -130,7 +119,7 @@ class RecordedWSMessage:
         return f"RecordedWSMessage({self.data!r}, Sender.{self.sender.name})"
 
 
-class RecordedWSTranscript(List[RecordedWSMessage]):
+class RecordedWSTranscript(list[RecordedWSMessage]):
     """
     A transcript of a single websocket connection
     """
@@ -138,10 +127,10 @@ class RecordedWSTranscript(List[RecordedWSMessage]):
     def __init__(
         self,
         arg: Iterable[RecordedWSMessage],
-        headers: Dict[str, List[str]],
+        headers: dict[str, list[str]],
         path: str,
-        path_params: Dict[str, Any],
-        query_params: Dict[str, List[str]],
+        path_params: dict[str, Any],
+        query_params: dict[str, list[str]],
     ):
         """
         Args:
@@ -158,7 +147,7 @@ class RecordedWSTranscript(List[RecordedWSMessage]):
         self.query_params = query_params
         self.accepted: bool = False
         """Whether the message was ever accepted by the server"""
-        self.close: Optional[Tuple[Sender, int]] = None
+        self.close: tuple[Sender, int] | None = None
         """The sender who closed the connection, along with the close code"""
 
     @classmethod
@@ -168,7 +157,7 @@ class RecordedWSTranscript(List[RecordedWSMessage]):
         Args:
             connection: the http connection to use
         """
-        headers: Dict[str, List[str]] = {}
+        headers: dict[str, list[str]] = {}
         for h_k, h_v in connection.headers.items():
             h_k_lower = h_k.lower()
             h_lst = headers.get(h_k_lower)
@@ -178,7 +167,7 @@ class RecordedWSTranscript(List[RecordedWSMessage]):
                 h_lst.append(h_v)
         path = connection.url.path
         path_params = connection.path_params
-        query_params: Dict[str, List[str]] = {}
+        query_params: dict[str, list[str]] = {}
         for q_k, q_v in connection.query_params.multi_items():
             q_lst = query_params.get(q_k)
             if q_lst is None:
@@ -193,7 +182,7 @@ class ExpectedWSMessage:
     A single expected message in a websockets connection
     """
 
-    def __init__(self, data: Union[Pattern[str], Pattern[bytes], str, bytes, builtins.ellipsis], sender: Sender):
+    def __init__(self, data: Pattern[str] | Pattern[bytes] | str | bytes | builtins.ellipsis, sender: Sender):
         """
         Args:
             data: the expected data. Can be either a bytes or string for an exact match, a compiled pattern for a full
@@ -203,7 +192,7 @@ class ExpectedWSMessage:
         self.data = data
         self.sender = sender
 
-    def matches(self, message: RecordedWSMessage) -> Union[bool, MismatchReason]:
+    def matches(self, message: RecordedWSMessage) -> bool | MismatchReason:
         """
         Checks whether a recorded message matches the expectation
         Args:
@@ -240,16 +229,16 @@ class ExpectedWSTranscript(ScopeExpectation):
 
     def __init__(
         self,
-        messages: Sequence[Union[builtins.ellipsis, ExpectedWSMessage]] = (...,),
-        headers: Optional[Mapping[str, Collection[str]]] = None,
-        headers_submap: Optional[Mapping[str, Collection[str]]] = None,
-        path: Optional[Union[str, Pattern[str]]] = None,
-        path_params: Optional[Mapping[str, Any]] = None,
-        path_params_submap: Optional[Mapping[str, Any]] = None,
-        query_params: Optional[Mapping[str, Collection[str]]] = None,
-        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-        close: Optional[Tuple[Sender, int]] = None,
-        accepted: Optional[bool] = True,
+        messages: Sequence[builtins.ellipsis | ExpectedWSMessage] = (...,),
+        headers: Mapping[str, Collection[str]] | None = None,
+        headers_submap: Mapping[str, Collection[str]] | None = None,
+        path: str | Pattern[str] | None = None,
+        path_params: Mapping[str, Any] | None = None,
+        path_params_submap: Mapping[str, Any] | None = None,
+        query_params: Mapping[str, Collection[str]] | None = None,
+        query_params_submap: Mapping[str, Collection[str]] | None = None,
+        close: tuple[Sender, int] | None = None,
+        accepted: bool | None = True,
     ):
         """
         Args:
@@ -288,7 +277,7 @@ class ExpectedWSTranscript(ScopeExpectation):
         if any(m is ... for m in messages):
             raise TypeError("ExpectedWSTranscript can only contain ellipsis at the start and at the end")
 
-        self.expected_messages: Tuple[ExpectedWSMessage] = messages  # type:ignore[assignment]
+        self.expected_messages: tuple[ExpectedWSMessage] = messages  # type:ignore[assignment]
         self.accepted = accepted
         self.close = close
 
@@ -341,7 +330,7 @@ class ExpectedWSTranscript(ScopeExpectation):
         return MismatchReason("could not find expected calls" + "".join("\n\t" + wn for wn in whynots))
 
 
-class RecordedWSTranscripts(List[RecordedWSTranscript]):
+class RecordedWSTranscripts(list[RecordedWSTranscript]):
     """
     A list of recorded WS transcripts, in the order that the connections began
     """
@@ -376,19 +365,19 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
     def assert_requested_with(
         self,
         *,
-        messages: Sequence[Union[builtins.ellipsis, ExpectedWSMessage]] = (...,),
-        headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
-        headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
-        path: Optional[Union[str, Pattern[str]]] = None,
-        path_params: Optional[Mapping[str, Any]] = None,
-        path_params_submap: Optional[Mapping[str, Any]] = None,
-        query_params: Optional[Mapping[str, Collection[str]]] = None,
-        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-        close: Optional[Tuple[Sender, int]] = None,
-        accepted: Optional[bool] = True,
+        messages: Sequence[builtins.ellipsis | ExpectedWSMessage] = (...,),
+        headers: Mapping[bytes, Collection[bytes]] | None = None,
+        headers_submap: Mapping[bytes, Collection[bytes]] | None = None,
+        path: str | Pattern[str] | None = None,
+        path_params: Mapping[str, Any] | None = None,
+        path_params_submap: Mapping[str, Any] | None = None,
+        query_params: Mapping[str, Collection[str]] | None = None,
+        query_params_submap: Mapping[str, Collection[str]] | None = None,
+        close: tuple[Sender, int] | None = None,
+        accepted: bool | None = True,
     ): ...
 
-    def assert_requested_with(self, expected: Optional[ExpectedWSTranscript] = None, **kwargs):
+    def assert_requested_with(self, expected: ExpectedWSTranscript | None = None, **kwargs):
         """
         Asserts that the latest transcript recorded matches an expected transcript
         Args:
@@ -416,19 +405,19 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
     def assert_requested_once_with(
         self,
         *,
-        messages: Sequence[Union[builtins.ellipsis, ExpectedWSMessage]] = (...,),
-        headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
-        headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
-        path: Optional[Union[str, Pattern[str]]] = None,
-        path_params: Optional[Mapping[str, Any]] = None,
-        path_params_submap: Optional[Mapping[str, Any]] = None,
-        query_params: Optional[Mapping[str, Collection[str]]] = None,
-        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-        close: Optional[Tuple[Sender, int]] = None,
-        accepted: Optional[bool] = True,
+        messages: Sequence[builtins.ellipsis | ExpectedWSMessage] = (...,),
+        headers: Mapping[bytes, Collection[bytes]] | None = None,
+        headers_submap: Mapping[bytes, Collection[bytes]] | None = None,
+        path: str | Pattern[str] | None = None,
+        path_params: Mapping[str, Any] | None = None,
+        path_params_submap: Mapping[str, Any] | None = None,
+        query_params: Mapping[str, Collection[str]] | None = None,
+        query_params_submap: Mapping[str, Collection[str]] | None = None,
+        close: tuple[Sender, int] | None = None,
+        accepted: bool | None = True,
     ): ...
 
-    def assert_requested_once_with(self, expected: Optional[ExpectedWSTranscript] = None, **kwargs):
+    def assert_requested_once_with(self, expected: ExpectedWSTranscript | None = None, **kwargs):
         """
         Asserts that there is only one transcript, and that it matches an expected transcript
         Args:
@@ -458,19 +447,19 @@ class RecordedWSTranscripts(List[RecordedWSTranscript]):
     def assert_any_request(
         self,
         *,
-        messages: Sequence[Union[builtins.ellipsis, ExpectedWSMessage]] = (...,),
-        headers: Optional[Mapping[bytes, Collection[bytes]]] = None,
-        headers_submap: Optional[Mapping[bytes, Collection[bytes]]] = None,
-        path: Optional[Union[str, Pattern[str]]] = None,
-        path_params: Optional[Mapping[str, Any]] = None,
-        path_params_submap: Optional[Mapping[str, Any]] = None,
-        query_params: Optional[Mapping[str, Collection[str]]] = None,
-        query_params_submap: Optional[Mapping[str, Collection[str]]] = None,
-        close: Optional[Tuple[Sender, int]] = None,
-        accepted: Optional[bool] = True,
+        messages: Sequence[builtins.ellipsis | ExpectedWSMessage] = (...,),
+        headers: Mapping[bytes, Collection[bytes]] | None = None,
+        headers_submap: Mapping[bytes, Collection[bytes]] | None = None,
+        path: str | Pattern[str] | None = None,
+        path_params: Mapping[str, Any] | None = None,
+        path_params_submap: Mapping[str, Any] | None = None,
+        query_params: Mapping[str, Collection[str]] | None = None,
+        query_params_submap: Mapping[str, Collection[str]] | None = None,
+        close: tuple[Sender, int] | None = None,
+        accepted: bool | None = True,
     ): ...
 
-    def assert_any_request(self, expected: Optional[ExpectedWSTranscript] = None, **kwargs):
+    def assert_any_request(self, expected: ExpectedWSTranscript | None = None, **kwargs):
         """
         Asserts that the at least one transcript recorded matches an expected transcript
         Args:

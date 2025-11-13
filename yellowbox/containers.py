@@ -5,24 +5,12 @@ import os
 import shutil
 import stat
 import tarfile
+from collections.abc import Container as AbstractContainer, Generator, Sequence
 from contextlib import contextmanager
 from functools import lru_cache
 from os import PathLike
 from tempfile import TemporaryFile
-from typing import (
-    IO,
-    Any,
-    Container as AbstractContainer,
-    Dict,
-    Generator,
-    List,
-    Optional,
-    Sequence,
-    TypeVar,
-    Union,
-    cast,
-    overload,
-)
+from typing import IO, Any, TypeVar, cast, overload
 
 import docker
 from docker import DockerClient
@@ -50,7 +38,7 @@ _DEFAULT_TIMEOUT = 10
 _CT = TypeVar("_CT", bound=Container)
 
 
-def get_ports(container: Container) -> Dict[int, int]:
+def get_ports(container: Container) -> dict[int, int]:
     """Get the exposed (published) ports of a given container
 
     Useful for when the ports are assigned dynamically.
@@ -90,7 +78,7 @@ def get_ports(container: Container) -> Dict[int, int]:
     return ports
 
 
-def get_aliases(container: Container, network: Union[str, Network]) -> Sequence[str]:
+def get_aliases(container: Container, network: str | Network) -> Sequence[str]:
     if not isinstance(network, str):
         network = network.name
     network_attrs = container.attrs["NetworkSettings"]["Networks"][network]
@@ -119,9 +107,7 @@ def is_alive(container: Container) -> bool:
 
 
 @contextmanager
-def killing(
-    container: _CT, *, timeout: float = _DEFAULT_TIMEOUT, signal: str = "SIGKILL"
-) -> Generator[_CT, None, None]:
+def killing(container: _CT, *, timeout: float = _DEFAULT_TIMEOUT, signal: str = "SIGKILL") -> Generator[_CT]:
     """A context manager that kills a docker container upon completion.
 
     Example:
@@ -149,8 +135,8 @@ def killing(
 
 @contextmanager
 def removing(
-    container: _CT, *, expected_exit_code: Optional[Union[int, AbstractContainer[int]]] = 0, force=False
-) -> Generator[_CT, None, None]:
+    container: _CT, *, expected_exit_code: int | AbstractContainer[int] | None = 0, force=False
+) -> Generator[_CT]:
     """A context manager that removes a docker container upon completion.
 
     Example:
@@ -238,7 +224,7 @@ def create_and_pull(docker_client: DockerClient, image: str, *args, _kwargs=None
     return docker_client.containers.create(local_image_spec, *args, **kwargs)
 
 
-def create_and_pull_with_defaults(*args, _kwargs: Optional[Dict[str, Any]] = None, **default_kwargs):
+def create_and_pull_with_defaults(*args, _kwargs: dict[str, Any] | None = None, **default_kwargs):
     if _kwargs:
         kwargs = {**default_kwargs, **_kwargs}
     else:
@@ -255,7 +241,7 @@ def is_removed(container: Container):
     return False
 
 
-def download_file(container: Container, path: Union[str, PathLike]) -> IO[bytes]:
+def download_file(container: Container, path: str | PathLike) -> IO[bytes]:
     """Download a file from the given container
 
     Args:
@@ -293,18 +279,18 @@ def download_file(container: Container, path: Union[str, PathLike]) -> IO[bytes]
 
 
 @overload
-def upload_file(container: Container, path: Union[str, PathLike[str]], data: bytes) -> None: ...
+def upload_file(container: Container, path: str | PathLike[str], data: bytes) -> None: ...
 
 
 @overload
-def upload_file(container: Container, path: Union[str, PathLike[str]], *, fileobj: IO[bytes]) -> None: ...
+def upload_file(container: Container, path: str | PathLike[str], *, fileobj: IO[bytes]) -> None: ...
 
 
 def upload_file(
     container: Container,
-    path: Union[str, PathLike[str]],
-    data: Optional[bytes] = None,
-    fileobj: Optional[IO[bytes]] = None,
+    path: str | PathLike[str],
+    data: bytes | None = None,
+    fileobj: IO[bytes] | None = None,
 ) -> None:
     """Upload a file to the given container
 
@@ -368,7 +354,7 @@ class SafeContainerCreator:
 
     def __init__(self, client: DockerClient):
         self.client = client
-        self.created: List[Container] = []
+        self.created: list[Container] = []
 
     def create_and_pull(self, image, command=None, **kwargs):
         try:

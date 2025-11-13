@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Any, Dict, Optional
+from typing import Any
 
 import aerospike
 from aerospike import exception as aerospike_exception
@@ -24,7 +24,7 @@ class AerospikeService(SingleContainerService, RunMixin, AsyncRunMixin):
         docker_client: DockerClient,
         image="aerospike:ce-6.2.0.3",
         *,
-        container_create_kwargs: Optional[Dict[str, Any]] = None,
+        container_create_kwargs: dict[str, Any] | None = None,
         **kwargs,
     ):
         container = create_and_pull_with_defaults(
@@ -38,7 +38,7 @@ class AerospikeService(SingleContainerService, RunMixin, AsyncRunMixin):
     def client_port(self):
         return get_ports(self.container)[AEROSPIKE_DEFAULT_PORT]
 
-    def _client(self, config: Optional[Dict[str, Any]] = None) -> aerospike.Client:
+    def _client(self, config: dict[str, Any] | None = None) -> aerospike.Client:
         config = config or {}
         config = {
             **config,
@@ -47,14 +47,14 @@ class AerospikeService(SingleContainerService, RunMixin, AsyncRunMixin):
         return aerospike.client(config)
 
     @contextmanager
-    def client(self, config: Optional[Dict[str, Any]] = None):
+    def client(self, config: dict[str, Any] | None = None):
         ret = self._client(config)
         try:
             yield ret
         finally:
             ret.close()
 
-    def start(self, retry_spec: Optional[RetrySpec] = None, **kwargs):
+    def start(self, retry_spec: RetrySpec | None = None, **kwargs):
         super().start()
         retry_spec = retry_spec or RetrySpec(attempts=15)
         # for some reason it takes time before the container is ready to get a connection
@@ -63,7 +63,7 @@ class AerospikeService(SingleContainerService, RunMixin, AsyncRunMixin):
         self.started = True
         return self
 
-    async def astart(self, retry_spec: Optional[RetrySpec] = None, **kwargs) -> None:
+    async def astart(self, retry_spec: RetrySpec | None = None, **kwargs) -> None:
         super().start()
         retry_spec = retry_spec or RetrySpec(attempts=15)
         client = await retry_spec.aretry(self._client, AerospikeError)

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Awaitable, Callable, Iterable, Mapping
 from datetime import datetime
 from functools import update_wrapper
-from typing import TYPE_CHECKING, AnyStr, Awaitable, Callable, Dict, Iterable, Mapping, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, AnyStr, TypeVar
 
 from starlette.requests import Request
 from starlette.responses import Response
@@ -35,7 +36,7 @@ class MismatchReason(str):
 T = TypeVar("T")
 
 
-def iter_side_effects(side_effects: Iterable[Union[Callable[..., Awaitable[T]], T]]) -> Callable[..., Awaitable[T]]:
+def iter_side_effects(side_effects: Iterable[Callable[..., Awaitable[T]] | T]) -> Callable[..., Awaitable[T]]:
     """
     Args:
         side_effects: An iterable of side effects.
@@ -107,5 +108,5 @@ def verbose_http_side_effect(
 V = TypeVar("V")
 
 
-def lower_keys(d: Optional[Mapping[AnyStr, V]]) -> Optional[Dict[AnyStr, V]]:
+def lower_keys(d: Mapping[AnyStr, V] | None) -> dict[AnyStr, V] | None:
     return {k.lower(): v for k, v in d.items()} if d else None

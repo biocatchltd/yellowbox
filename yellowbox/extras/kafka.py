@@ -1,5 +1,5 @@
 from contextlib import closing
-from typing import Any, ContextManager, Optional, Tuple, Union, cast
+from typing import Any, ContextManager, cast
 from uuid import uuid1
 from warnings import warn
 
@@ -33,7 +33,7 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
     def __init__(
         self,
         docker_client: DockerClient,
-        tag_or_images: Union[str, Tuple[str, str]] = "latest",
+        tag_or_images: str | tuple[str, str] = "latest",
         inner_port=0,
         outer_port=0,
         bitnami_debug: bool = False,
@@ -137,14 +137,14 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
             ),
         )
 
-    def start(self, retry_spec: Optional[RetrySpec] = None):
+    def start(self, retry_spec: RetrySpec | None = None):
         super().start()
         retry_spec = retry_spec or RetrySpec(attempts=20)
         with retry_spec.retry(self._consumer, (KafkaError, ConnectionError, ValueError, TypeError)):
             pass
         return self
 
-    async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
+    async def astart(self, retry_spec: RetrySpec | None = None) -> None:
         super().start()
         retry_spec = retry_spec or RetrySpec(attempts=20)
         with await retry_spec.aretry(self._consumer, (KafkaError, ConnectionError, ValueError, TypeError)):

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Callable, Mapping
 from contextlib import contextmanager
 from functools import partial
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from re import Pattern
 from threading import Lock, Thread
 from types import new_class
-from typing import Callable, ClassVar, DefaultDict, List, Mapping, NamedTuple, Optional, Pattern, Set, Type, Union, cast
+from typing import ClassVar, DefaultDict, NamedTuple, Union, cast
 from urllib.parse import ParseResult, parse_qs, urlparse
 
 import requests
@@ -24,7 +26,7 @@ SideEffect = Union[Callable[["RouterHTTPRequestHandler"], SideEffectResponse], S
 class RoutedHandler(NamedTuple):
     method: str
     name: str
-    route: Union[Pattern[str], str]
+    route: Pattern[str] | str
     callback: Callable[[RouterHTTPRequestHandler], None]
 
     def route_match(self, path: str):
@@ -40,12 +42,12 @@ class RouterHTTPRequestHandler(BaseHTTPRequestHandler):
     """
 
     _parse_url: ParseResult
-    _body: Optional[bytes]
+    _body: bytes | None
 
-    routes_by_method: ClassVar[DefaultDict[str, Set[RoutedHandler]]]
+    routes_by_method: ClassVar[DefaultDict[str, set[RoutedHandler]]]
     route_lock: ClassVar[Lock]
 
-    def body(self) -> Optional[bytes]:
+    def body(self) -> bytes | None:
         try:
             return self._body
         except AttributeError:
@@ -57,7 +59,7 @@ class RouterHTTPRequestHandler(BaseHTTPRequestHandler):
                 self._body = self.rfile.read(length)
             return self._body
 
-    def path_params(self, **kwargs) -> Mapping[str, List[str]]:
+    def path_params(self, **kwargs) -> Mapping[str, list[str]]:
         """
         Extract the path parameters from the query
         Args:
@@ -148,7 +150,7 @@ class HttpService(YellowService):
 
     def __init__(self, host="0.0.0.0", port=0, name="anonymous_yellowbox_HTTPService"):
         self.router_cls = cast(
-            Type[RouterHTTPRequestHandler], new_class(name + "_RequestHandler", (RouterHTTPRequestHandler,))
+            type[RouterHTTPRequestHandler], new_class(name + "_RequestHandler", (RouterHTTPRequestHandler,))
         )
         self.server = HTTPServer((host, port), self.router_cls)
         self.server_thread = Thread(name=name + "_thread", target=self.server.serve_forever, daemon=True)
@@ -197,9 +199,9 @@ class HttpService(YellowService):
     def patch_route(
         self,
         method,
-        route: Union[str, Pattern[str]],
+        route: str | Pattern[str],
         side_effect: SideEffect = ...,  # type: ignore[assignment]
-        name: Optional[str] = None,
+        name: str | None = None,
     ):
         """
         Create a context manager that temporarily adds a route handler to the service.
@@ -243,14 +245,14 @@ class HttpService(YellowService):
 
         return _helper()
 
-    def start(self, retry_spec: Optional[RetrySpec] = None):
+    def start(self, retry_spec: RetrySpec | None = None):
         with self.patch_route("GET", "/health", 200):
             self.server_thread.start()
             retry_spec = retry_spec or RetrySpec(attempts=10)
             retry_spec.retry(
                 lambda: requests.get(self.local_url + "/health").raise_for_status(), (ConnectionError, HTTPError)
             )
-        return super(HttpService, self).start()
+        return super().start()
 
     def stop(self):
         self.server.shutdown()

@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from asyncio import get_running_loop
+from collections.abc import AsyncIterator, Iterator, Sequence
 from contextlib import asynccontextmanager, contextmanager, nullcontext
 from functools import partial
-from typing import AsyncIterator, ContextManager, Iterator, Optional, Sequence, Type, TypeVar
+from typing import ContextManager, TypeVar
 
 from docker import DockerClient
 from docker.models.containers import Container
 from docker.models.networks import Network
+from typing_extensions import Self
 
 import yellowbox.networks as networks_mod
 from yellowbox.containers import _DEFAULT_TIMEOUT, get_aliases, is_alive, is_removed
@@ -27,7 +29,7 @@ class ContainerService(YellowService):
         self.remove = remove
 
     @abstractmethod
-    def start(self, retry_spec: Optional[RetrySpec] = None):
+    def start(self, retry_spec: RetrySpec | None = None):
         """
         Start the service. Wait for startup by repeatedly attempting an operation until success
 
@@ -47,7 +49,7 @@ class ContainerService(YellowService):
                 continue
             c.start()
             c.reload()
-        return super(ContainerService, self).start()
+        return super().start()
 
     def stop(self, signal="SIGTERM"):
         for c in reversed(self.containers):
@@ -131,14 +133,14 @@ class RunMixin:
     @classmethod
     @contextmanager
     def run(
-        cls: Type[SelfRunMixin],
+        cls,
         docker_client: DockerClient,
         *,
         spinner: bool = True,
-        retry_spec: Optional[RetrySpec] = None,
-        network: Optional[Network] = None,
+        retry_spec: RetrySpec | None = None,
+        network: Network | None = None,
         **kwargs,
-    ) -> Iterator[SelfRunMixin]:
+    ) -> Iterator[Self]:
         """
         Args:
             docker_client: a DockerClient instance to use when creating the service
@@ -173,7 +175,7 @@ class AsyncRunMixin(ABC):
         return cls.__name__
 
     @abstractmethod
-    async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
+    async def astart(self, retry_spec: RetrySpec | None = None) -> None:
         """
         Start the service synchronously, but block and wait for startup asynchronously.
         """
@@ -195,14 +197,14 @@ class AsyncRunMixin(ABC):
     @classmethod
     @asynccontextmanager
     async def arun(
-        cls: Type[SelfARunMixin],
+        cls,
         docker_client: DockerClient,
         *,
         verbose: bool = True,
-        retry_spec: Optional[RetrySpec] = None,
-        network: Optional[Network] = None,
+        retry_spec: RetrySpec | None = None,
+        network: Network | None = None,
         **kwargs,
-    ) -> AsyncIterator[SelfARunMixin]:
+    ) -> AsyncIterator[Self]:
         """
         Same as RunMixin.run, but waits for startup asynchronously.
 

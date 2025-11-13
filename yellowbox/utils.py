@@ -1,8 +1,8 @@
 import os
 import platform
+from collections.abc import Callable
 from contextlib import AbstractContextManager, closing, contextmanager, nullcontext
 from socket import AF_INET, SO_REUSEADDR, SOCK_STREAM, SOL_SOCKET, socket
-from typing import Callable, Optional
 
 from yaspin import yaspin
 
@@ -48,7 +48,7 @@ else:
 DOCKER_EXPOSE_HOST = ""
 
 
-def update_docker_expose_host(value: Optional[str]):
+def update_docker_expose_host(value: str | None):
     """
     update the global docker expose host, attempting to infer from the environment
 

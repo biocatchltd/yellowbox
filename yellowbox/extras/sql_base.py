@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Mapping
 from enum import Enum, auto
-from typing import TYPE_CHECKING, ContextManager, Mapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, ContextManager, Union
 
 from sqlalchemy import create_engine
 from sqlalchemy.exc import InterfaceError, OperationalError
@@ -33,26 +34,26 @@ class Database(ContextManager["Database"]):
 
     def local_connection_string(
         self,
-        dialect: Union[str, AsDefault] = as_default,
-        driver: Optional[str] = None,
-        options: Union[ConnectionOptions, None, AsDefault] = as_default,
+        dialect: str | AsDefault = as_default,
+        driver: str | None = None,
+        options: ConnectionOptions | None | AsDefault = as_default,
     ):
         return self.owner.local_connection_string(dialect, driver, database=self.name, options=options)
 
     def container_connection_string(
         self,
         hostname: str,
-        dialect: Union[str, AsDefault] = as_default,
-        driver: Optional[str] = None,
-        options: Optional[ConnectionOptions] = None,
+        dialect: str | AsDefault = as_default,
+        driver: str | None = None,
+        options: ConnectionOptions | None = None,
     ):
         return self.owner.container_connection_string(hostname, dialect, driver, database=self.name, options=options)
 
     def host_connection_string(
         self,
-        dialect: Union[str, AsDefault] = as_default,
-        driver: Optional[str] = None,
-        options: Optional[ConnectionOptions] = None,
+        dialect: str | AsDefault = as_default,
+        driver: str | None = None,
+        options: ConnectionOptions | None = None,
     ):
         return self.owner.host_connection_string(dialect, driver, database=self.name, options=options)
 
@@ -63,7 +64,7 @@ class Database(ContextManager["Database"]):
         self.owner.drop_database(self.name)
 
 
-def _options_to_string(options: Optional[ConnectionOptions]) -> str:
+def _options_to_string(options: ConnectionOptions | None) -> str:
     if options is None:
         return ""
     if isinstance(options, Mapping):
@@ -86,8 +87,8 @@ class SQLService(
     def __init__(
         self,
         *args,
-        local_driver: Optional[str] = None,
-        local_options: Optional[ConnectionOptions] = None,
+        local_driver: str | None = None,
+        local_options: ConnectionOptions | None = None,
         default_database: str,
         **kwargs,
     ):
@@ -97,7 +98,7 @@ class SQLService(
         self.default_database = default_database
 
     @abstractmethod
-    def userpass(self) -> Tuple[str, str]:
+    def userpass(self) -> tuple[str, str]:
         pass
 
     def create_database(self, name: str):
@@ -117,11 +118,11 @@ class SQLService(
 
     def local_connection_string(
         self,
-        dialect: Union[str, AsDefault] = as_default,
-        driver: Union[str, AsDefault, None] = as_default,
+        dialect: str | AsDefault = as_default,
+        driver: str | AsDefault | None = as_default,
         *,
         database: str,
-        options: Union[ConnectionOptions, AsDefault, None] = as_default,
+        options: ConnectionOptions | AsDefault | None = as_default,
     ) -> str:
         """
         Generate an sqlalchemy-style connection string to the database in the service from the docker host.
@@ -151,11 +152,11 @@ class SQLService(
     def container_connection_string(
         self,
         hostname: str,
-        dialect: Union[str, AsDefault] = as_default,
-        driver: Optional[str] = None,
+        dialect: str | AsDefault = as_default,
+        driver: str | None = None,
         *,
         database: str,
-        options: Optional[ConnectionOptions] = None,
+        options: ConnectionOptions | None = None,
     ) -> str:
         """
         Generate an sqlalchemy-style connection string to the database in the service from another container on a
@@ -179,11 +180,11 @@ class SQLService(
 
     def host_connection_string(
         self,
-        dialect: Union[str, AsDefault] = as_default,
-        driver: Optional[str] = None,
+        dialect: str | AsDefault = as_default,
+        driver: str | None = None,
         *,
         database: str,
-        options: Optional[ConnectionOptions] = None,
+        options: ConnectionOptions | None = None,
     ) -> str:
         """
         Generate an sqlalchemy-style connection string to the database in the service from another container.
@@ -214,14 +215,14 @@ class SQLService(
         with engine.connect():
             return
 
-    def start(self, retry_spec: Optional[RetrySpec] = None):
+    def start(self, retry_spec: RetrySpec | None = None):
         super().start(retry_spec)
         retry_spec = retry_spec or self.DEFAULT_START_RETRYSPEC
 
         retry_spec.retry(self._connect, (OperationalError, InterfaceError))
         return self
 
-    async def astart(self, retry_spec: Optional[RetrySpec] = None) -> None:
+    async def astart(self, retry_spec: RetrySpec | None = None) -> None:
         super().start(retry_spec)
         retry_spec = retry_spec or self.DEFAULT_START_RETRYSPEC
 

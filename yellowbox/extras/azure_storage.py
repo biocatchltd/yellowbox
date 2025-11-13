@@ -4,7 +4,8 @@ Azure Blob Storage module, for creating container, uploading files to it and dow
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Any
 
 from docker import DockerClient
 from docker.models.networks import Network
@@ -41,7 +42,7 @@ class AzuriteService(SingleContainerService, RunMixin, AsyncRunMixin):
         docker_client: DockerClient,
         image: str = "mcr.microsoft.com/azure-storage/azurite:latest",
         *,
-        container_create_kwargs: Optional[Dict[str, Any]] = None,
+        container_create_kwargs: dict[str, Any] | None = None,
         **kwargs,
     ):
         container = create_and_pull_with_defaults(
@@ -53,7 +54,7 @@ class AzuriteService(SingleContainerService, RunMixin, AsyncRunMixin):
         )
         super().__init__(container, **kwargs)
 
-    def stop(self, signal: Union[str, int] = "SIGKILL"):
+    def stop(self, signal: str | int = "SIGKILL"):
         """
         We override to change the signal.
         """
@@ -116,7 +117,7 @@ class AzuriteService(SingleContainerService, RunMixin, AsyncRunMixin):
         if b"Azurite Blob service successfully listens on" not in self.container.logs():
             raise _ResourceNotReadyError
 
-    def start(self, retry_spec: Optional[RetrySpec] = None):
+    def start(self, retry_spec: RetrySpec | None = None):
         super().start()
 
         retry_spec = retry_spec or RetrySpec(attempts=10)
@@ -124,7 +125,7 @@ class AzuriteService(SingleContainerService, RunMixin, AsyncRunMixin):
         retry_spec.retry(self._check_ready, _ResourceNotReadyError)
         return self
 
-    async def astart(self, retry_spec: Optional[RetrySpec] = None):
+    async def astart(self, retry_spec: RetrySpec | None = None):
         super().start()
 
         retry_spec = retry_spec or RetrySpec(attempts=10)
@@ -132,7 +133,7 @@ class AzuriteService(SingleContainerService, RunMixin, AsyncRunMixin):
         await retry_spec.aretry(self._check_ready, _ResourceNotReadyError)
         return self
 
-    def connect(self, network: Network, aliases: Optional[List[str]] = None, **kwargs) -> Sequence[str]:
+    def connect(self, network: Network, aliases: list[str] | None = None, **kwargs) -> Sequence[str]:
         # Make sure the id is in the aliases list. Needed for the container
         # connection string.
         if aliases is not None:
