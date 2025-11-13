@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## 0.11.0
+### Changed
+* psycopg: upgrade from psycopg2 to psycopg (v3)
 ## 0.10.0
 ### Removed
 * dropped support for python 3.8, 3.9
