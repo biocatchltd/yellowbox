@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## 0.10.0
+### Changed
+* psycopg: upgrade from psycopg2 to psycopg (v3)
 ## 0.9.0
 ### Changed
 * Kafka: bitnami is gone! use `yellowbox-kraft` instead (deprecation warning)
