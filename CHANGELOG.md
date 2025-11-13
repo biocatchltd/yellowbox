@@ -1,4 +1,9 @@
 # Yellowbox Changelog
+## 0.10.0
+### Removed
+* dropped support for python 3.8, 3.9
+### Changed
+* use typing style of Python 3.10+
 ## 0.9.0
 ### Changed
 * Kafka: bitnami is gone! use `yellowbox-kraft` instead (deprecation warning)
