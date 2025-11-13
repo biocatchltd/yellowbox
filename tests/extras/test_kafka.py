@@ -9,7 +9,7 @@ from yellowbox.extras.kafka import KafkaService
 from yellowbox.networks import connect, temp_network
 from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
 
-pytest.xfail("bitnami is gone! use `yellowbox-kraft` instead")
+pytestmark = pytest.mark.xfail(reason="bitnami is gone! use `yellowbox-kraft` instead")
 
 KAFKA_IMAGE_TAG = "latest"
 
