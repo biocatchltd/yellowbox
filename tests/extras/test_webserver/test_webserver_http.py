@@ -58,7 +58,7 @@ def test_capture(server, client):
         resp = client.get("/api/foo")
         assert resp.status_code == 200
         assert resp.text == "hewwo"
-    c0_0, c0_1 = calls0
+    c0_0, _c0_1 = calls0
     assert c0_0 == c1
 
 

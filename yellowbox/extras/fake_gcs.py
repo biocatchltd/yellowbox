@@ -79,7 +79,7 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
 
     @contextmanager
     def patch_gcloud_aio(self):
-        from gcloud.aio.storage import __version__ as gcloud_aio_version
+        from gcloud.aio.storage import __version__ as gcloud_aio_version  # noqa: PLC0415
 
         if not gcloud_aio_version.startswith("7."):
             # for newer gcloud_aio, we can just adjust the environment
@@ -96,7 +96,7 @@ class FakeGoogleCloudStorage(SingleContainerService, RunMixin, AsyncRunMixin):
             else:
                 environ["STORAGE_EMULATOR_HOST"] = prev_env
             return
-        import gcloud.aio.storage.storage as gcloud_module
+        import gcloud.aio.storage.storage as gcloud_module  # noqa: PLC0415
 
         previous_state = (
             gcloud_module.API_ROOT,

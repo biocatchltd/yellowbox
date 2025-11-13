@@ -1,6 +1,7 @@
 from contextlib import closing
 from typing import Any, ContextManager, Optional, Tuple, Union, cast
 from uuid import uuid1
+from warnings import warn
 
 from docker import DockerClient
 
@@ -20,6 +21,12 @@ from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleEndpointService
 from yellowbox.utils import DOCKER_EXPOSE_HOST, get_free_port
 
 __all__ = ["KafkaService"]
+
+warn(
+    "bitnami is gone! use `yellowbox-kraft` instead",
+    DeprecationWarning,
+    stacklevel=1,
+)
 
 
 class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):

@@ -142,7 +142,7 @@ class RunMixin:
         """
         Args:
             docker_client: a DockerClient instance to use when creating the service
-            spinner: whether or not to use a yaspin spinner
+            spinner: whether to use a yaspin spinner
             retry_spec: forwarded to cls.start
             network: connect service to network
             **kwargs: all keyword arguments are forwarded to the class's constructor
@@ -208,7 +208,7 @@ class AsyncRunMixin(ABC):
 
         Args:
             docker_client: a DockerClient instance to use when creating the service
-            verbose: whether or not to print progress information when setting up the service
+            verbose: whether to print progress information when setting up the service
             retry_spec: forwarded to cls.start
             network: connect service to network
             **kwargs: all keyword arguments are forwarded to the class's constructor

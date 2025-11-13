@@ -25,8 +25,8 @@ async def test_make_gcs_async(docker_client):
 @fixture(scope="module")
 def http_gcs(docker_client) -> FakeGoogleCloudStorage:
     with FakeGoogleCloudStorage.run(docker_client, scheme="http") as service, MonkeyPatch.context() as monkeypatch:
-        # this will only really work for teh standard storage library, for gcloud-aio, we patch with a special
-        # function
+        # this will only really work for the standard storage library,
+        # for gcloud-aio, we patch with a special function
         monkeypatch.setenv("STORAGE_EMULATOR_HOST", service.local_url())
         yield service
 

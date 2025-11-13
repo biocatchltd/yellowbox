@@ -1,16 +1,10 @@
 from __future__ import annotations
 
 import logging
-from contextlib import contextmanager
-
-try:
-    from functools import cached_property  # type: ignore
-# Support 3.7
-except ImportError:
-    cached_property = property  # type: ignore
-
 import re
 import threading
+from contextlib import contextmanager
+from functools import cached_property
 from functools import partial, wraps
 from threading import RLock
 from typing import (

@@ -1,4 +1,9 @@
 # Yellowbox Changelog
+## 0.9.0
+### Changed
+* Kafka: bitnami is gone! use `yellowbox-kraft` instead (deprecation warning)
+### Added
+* added support for python 3.13, 3.14
 ## 0.8.9
 * fixed issue with newest release of python-kafka, where a type error could occur.
 * removed deprecated github actions
