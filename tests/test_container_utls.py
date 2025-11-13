@@ -83,7 +83,7 @@ def test_create_and_pull_notag(docker_client, create_and_pull):
             assert container.wait()["StatusCode"] == 0
 
 
-@mark.xfail(reason="I really don't know why it fails on Github but succeeds locally.")
+@mark.xfail(reason="I really don't know why it succeeds locally for me but fails on Github.")
 @mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])
 def test_build_create_and_pull(docker_client, create_and_pull, image_name):
     # we create an anonymous image to test this
