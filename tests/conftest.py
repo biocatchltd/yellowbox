@@ -8,6 +8,14 @@ from yellowbox.containers import create_and_pull as _create_and_pull, is_removed
 
 
 @fixture
+def sqlalchemy_version():
+    """Provide the installed SQLAlchemy version for tests that need to install it in containers"""
+    import sqlalchemy  # noqa: PLC0415
+
+    return sqlalchemy.__version__
+
+
+@fixture
 def create_and_pull():
     """A wrapper around yellowbox's create_and_pull, to ensure that all created containers are removed"""
     created: List[Tuple[Container, bool]] = []
