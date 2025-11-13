@@ -77,9 +77,9 @@ def build_image(
     Args:
         docker_client: DockerClient to be used to create the image
         image_name: Name of the image to be created. If no tag is provided, the tag "test" will be added.
-        remove_image: boolean, whether or not to delete the image at the end, default as True
+        remove_image: boolean, whether to delete the image at the end, default as True
         file: a file-like object (stream); defaults to the current sys.stderr. if set to None, will disable printing
-        spinner: boolean, whether or not to use spinner (default as True), note that this param is set to False in
+        spinner: boolean, whether to use spinner (default as True), note that this param is set to False in
         case `file` param is not None
     """
     spinner = spinner and file is None
@@ -131,7 +131,7 @@ async def async_build_image(
     Args:
         docker_client: DockerClient to be used to create the image
         image_name: Name of the image to be created. If no tag is provided, the tag "test" will be added.
-        remove_image: boolean, whether or not to delete the image at the end, default as True
+        remove_image: boolean, whether to delete the image at the end, default as True
         file: a file-like object (stream)
     """
     # spinner splits into multiple lines in case stream is being printed at the same time
