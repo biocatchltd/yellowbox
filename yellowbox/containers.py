@@ -225,7 +225,7 @@ def create_and_pull(docker_client: DockerClient, image: str, *args, _kwargs=None
         Due to inconsistent behaviour of docker's "pull" command across
         platforms, this function will raise an error if no tag is specified
     """
-    name, _, tag = image.partition(":")
+    _name, _, tag = image.partition(":")
     if not tag:
         raise ValueError("the image name must contain a tag")
     local_image = _get_up_to_date_image(docker_client, image)

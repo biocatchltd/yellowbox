@@ -1,16 +1,10 @@
 from __future__ import annotations
 
 import logging
-from contextlib import contextmanager
-
-try:
-    from functools import cached_property  # type: ignore
-# Support 3.7
-except ImportError:
-    cached_property = property  # type: ignore
-
 import re
 import threading
+from contextlib import contextmanager
+from functools import cached_property
 from functools import partial, wraps
 from threading import RLock
 from typing import (
@@ -145,7 +139,6 @@ def _to_generator(side_effect: SIDE_EFFECT_TYPE) -> _GEN_FUNCTION_TYPE:
     """
     # Side effect == normal string
     if isinstance(side_effect, (str, bytes, bytearray, memoryview)):
-
         def gen(*args: Any, **kwargs: Any) -> _GENERAOTR_TYPE:
             return side_effect
             yield  # On purpose.
@@ -312,7 +305,7 @@ class WebsocketService(YellowService):
         return None
 
     def route(
-        self, path: Optional[str] = None, *, regex: Optional[Union[Pattern[str], str]] = None
+            self, path: Optional[str] = None, *, regex: Optional[Union[Pattern[str], str]] = None
     ) -> Callable[[SIDE_EFFECT_TYPE], None]:
         """Add a route using a decorator syntax.
 
@@ -344,12 +337,12 @@ class WebsocketService(YellowService):
         return partial(self.add, path=path, regex=regex)
 
     def add(
-        self,
-        side_effect: SIDE_EFFECT_TYPE,
-        path: Optional[str] = None,
-        *,
-        regex: Optional[Union[Pattern[str], str]] = None,
-        _overwrite: bool = False,
+            self,
+            side_effect: SIDE_EFFECT_TYPE,
+            path: Optional[str] = None,
+            *,
+            regex: Optional[Union[Pattern[str], str]] = None,
+            _overwrite: bool = False,
     ) -> None:
         """Add a route.
 
@@ -394,11 +387,11 @@ class WebsocketService(YellowService):
 
     @contextmanager
     def patch(
-        self,
-        side_effect: SIDE_EFFECT_TYPE,
-        path: Optional[str] = None,
-        *,
-        regex: Optional[Union[Pattern[str], str]] = None,
+            self,
+            side_effect: SIDE_EFFECT_TYPE,
+            path: Optional[str] = None,
+            *,
+            regex: Optional[Union[Pattern[str], str]] = None,
     ) -> Iterator[None]:
         """Temporarily patch a route.
 
@@ -411,11 +404,11 @@ class WebsocketService(YellowService):
             self.remove(path, regex=regex)
 
     def set(
-        self,
-        side_effect: SIDE_EFFECT_TYPE,
-        path: Optional[str] = None,
-        *,
-        regex: Optional[Union[Pattern[str], str]] = None,
+            self,
+            side_effect: SIDE_EFFECT_TYPE,
+            path: Optional[str] = None,
+            *,
+            regex: Optional[Union[Pattern[str], str]] = None,
     ) -> None:
         """Set a route.
 

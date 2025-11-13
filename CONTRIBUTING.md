@@ -8,15 +8,14 @@ Before submitting your PR. You need to make sure it would pass some basic automa
 ```shell script
 #!/bin/bash
 # install poetry
-python -m pip install poetry==1.1.15
+python -m pip install poetry==2.2.0
 python -m poetry update --lock
 python -m poetry install -E dev
-# run linting, linting will only be properly performed for python 3.7 but should also pass for python 3.8
-sh scripts/lint.sh
+poetry run sh scripts/lint.sh
 # run testing
-sh scripts/unittest.sh 
+poetry run sh scripts/unittest.sh 
 ```
-The tests should run and pass for python 3.7 and 3.8, across Windows, macOS and Linux. You should also add new tests for whatever issue or feature you fixed/added, and add it to `CHANGELOG.md`.
+The tests should run and pass for python 3.10, 3.11, 3.12, 3.14, across Windows, macOS and Linux. You should also add new tests for whatever issue or feature you fixed/added, and add it to `CHANGELOG.md`.
 
 # Submit your PR
 Submit a PR with changes. Your code should be well documented and efficient. Your code must pass the unit tests as well as receive an approval from at least one code owner.
