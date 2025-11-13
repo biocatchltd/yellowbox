@@ -1,9 +1,9 @@
-import builtins
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
 from re import Pattern
+from types import EllipsisType
 from typing import Any, overload
 
 from starlette.requests import HTTPConnection
@@ -93,7 +93,7 @@ class Sender(Enum):
     Server = auto()
     Client = auto()
 
-    def __call__(self, data: Pattern[str] | Pattern[bytes] | str | bytes | builtins.ellipsis) -> "ExpectedWSMessage":
+    def __call__(self, data: Pattern[str] | Pattern[bytes] | str | bytes | EllipsisType) -> "ExpectedWSMessage":
         """
         Create an expected message, originating from this caller
         Args:
@@ -180,7 +180,7 @@ class ExpectedWSMessage:
     A single expected message in a websockets connection
     """
 
-    def __init__(self, data: Pattern[str] | Pattern[bytes] | str | bytes | builtins.ellipsis, sender: Sender):
+    def __init__(self, data: Pattern[str] | Pattern[bytes] | str | bytes | EllipsisType, sender: Sender):
         """
         Args:
             data: the expected data. Can be either a bytes or string for an exact match, a compiled pattern for a full
@@ -227,7 +227,7 @@ class ExpectedWSTranscript(ScopeExpectation):
 
     def __init__(
         self,
-        messages: Sequence[builtins.ellipsis | ExpectedWSMessage] = (...,),
+        messages: Sequence[EllipsisType | ExpectedWSMessage] = (...,),
         headers: Mapping[str, Collection[str]] | None = None,
         headers_submap: Mapping[str, Collection[str]] | None = None,
         path: str | Pattern[str] | None = None,
@@ -363,7 +363,7 @@ class RecordedWSTranscripts(list[RecordedWSTranscript]):
     def assert_requested_with(
         self,
         *,
-        messages: Sequence[builtins.ellipsis | ExpectedWSMessage] = (...,),
+        messages: Sequence[EllipsisType | ExpectedWSMessage] = (...,),
         headers: Mapping[bytes, Collection[bytes]] | None = None,
         headers_submap: Mapping[bytes, Collection[bytes]] | None = None,
         path: str | Pattern[str] | None = None,
@@ -403,7 +403,7 @@ class RecordedWSTranscripts(list[RecordedWSTranscript]):
     def assert_requested_once_with(
         self,
         *,
-        messages: Sequence[builtins.ellipsis | ExpectedWSMessage] = (...,),
+        messages: Sequence[EllipsisType | ExpectedWSMessage] = (...,),
         headers: Mapping[bytes, Collection[bytes]] | None = None,
         headers_submap: Mapping[bytes, Collection[bytes]] | None = None,
         path: str | Pattern[str] | None = None,
@@ -445,7 +445,7 @@ class RecordedWSTranscripts(list[RecordedWSTranscript]):
     def assert_any_request(
         self,
         *,
-        messages: Sequence[builtins.ellipsis | ExpectedWSMessage] = (...,),
+        messages: Sequence[EllipsisType | ExpectedWSMessage] = (...,),
         headers: Mapping[bytes, Collection[bytes]] | None = None,
         headers_submap: Mapping[bytes, Collection[bytes]] | None = None,
         path: str | Pattern[str] | None = None,

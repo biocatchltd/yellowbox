@@ -2,7 +2,7 @@ from collections.abc import Awaitable, Callable, Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime
 from traceback import print_exc
-from typing import ContextManager, Optional, Union, overload
+from typing import TYPE_CHECKING, ContextManager, Optional, Union, overload
 
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
@@ -12,20 +12,22 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 from websockets.exceptions import ConnectionClosed
 
 from yellowbox.extras.webserver.http_request_capture import RecordedHTTPRequest, RecordedHTTPRequests
-from yellowbox.extras.webserver.webserver import WebServer
 from yellowbox.extras.webserver.ws_request_capture import RecordedWSTranscripts, RecorderEndpoint
 
 BASE_HTTP_SIDE_EFFECT = Union[Response, Callable[[Request], Awaitable[Response]]]
 BASE_WS_SIDE_EFFECT = Callable[[WebSocket], Awaitable[Optional[int]]]
-
 HTTP_SIDE_EFFECT = Union[BASE_HTTP_SIDE_EFFECT, Callable[["MockHTTPEndpoint"], BASE_HTTP_SIDE_EFFECT]]
 WS_SIDE_EFFECT = Union[BASE_WS_SIDE_EFFECT, Callable[["MockWSEndpoint"], BASE_WS_SIDE_EFFECT]]
+
 METHODS = Union[str, Iterable[str]]
+
+if TYPE_CHECKING:
+    from yellowbox.extras.webserver.webserver import WebServer
 
 
 class EndpointPatch(ContextManager):
     """
-    A the return value of endpoint side effect patches, restores the original side effect if ever exited
+    A return value of endpoint side effect patches, restores the original side effect if ever exited
     """
 
     def __init__(self, endpoint: "MockHTTPEndpoint | MockWSEndpoint", restore_side_effect):
