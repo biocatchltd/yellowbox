@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import tempfile
+from time import sleep
 from typing import IO
 
 import pytest
@@ -76,6 +77,8 @@ def test_build_create_and_pull(docker_client, create_and_pull, image_name):
     with build_image(
         docker_client, image_name, path=".", dockerfile="tests/resources/valid_dockerfile/Dockerfile"
     ) as image:
+        # sometimes we need to wait for the image to be acknowledged by docker
+        sleep(1)
         container = create_and_pull(docker_client, image, "sh -c exit 0")
         expected_tags = [] if image_name is None else ["yellowbox:test"]
         assert container.image.tags == expected_tags
