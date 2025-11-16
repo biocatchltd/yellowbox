@@ -35,7 +35,7 @@ class Database(ContextManager["Database"]):
     def local_connection_string(
         self,
         dialect: str | AsDefault = as_default,
-        driver: str | None = None,
+        driver: str | AsDefault | None = as_default,
         options: ConnectionOptions | None | AsDefault = as_default,
     ):
         return self.owner.local_connection_string(dialect, driver, database=self.name, options=options)
@@ -44,7 +44,7 @@ class Database(ContextManager["Database"]):
         self,
         hostname: str,
         dialect: str | AsDefault = as_default,
-        driver: str | None = None,
+        driver: str | AsDefault | None = as_default,
         options: ConnectionOptions | None = None,
     ):
         return self.owner.container_connection_string(hostname, dialect, driver, database=self.name, options=options)
@@ -52,7 +52,7 @@ class Database(ContextManager["Database"]):
     def host_connection_string(
         self,
         dialect: str | AsDefault = as_default,
-        driver: str | None = None,
+        driver: str | AsDefault | None = as_default,
         options: ConnectionOptions | None = None,
     ):
         return self.owner.host_connection_string(dialect, driver, database=self.name, options=options)
@@ -125,7 +125,7 @@ class SQLService(
         options: ConnectionOptions | AsDefault | None = as_default,
     ) -> str:
         """
-        Generate an sqlalchemy-style connection string to the database in the service from the docker host.
+        Generate a sqlalchemy-style connection string to the database in the service from the docker host.
         Args:
             dialect: The dialect of the sql server.
             driver: additional driver for sqlalchemy to use.
@@ -153,13 +153,13 @@ class SQLService(
         self,
         hostname: str,
         dialect: str | AsDefault = as_default,
-        driver: str | None = None,
+        driver: str | AsDefault | None = as_default,
         *,
         database: str,
         options: ConnectionOptions | None = None,
     ) -> str:
         """
-        Generate an sqlalchemy-style connection string to the database in the service from another container on a
+        Generate a sqlalchemy-style connection string to the database in the service from another container on a
          common network.
         Args:
             hostname: the alias of the container.
@@ -171,6 +171,8 @@ class SQLService(
         if dialect is as_default:
             dialect = self.DIALECT
 
+        if driver is as_default:
+            driver = self.local_driver
         if driver is not None:
             dialect += "+" + driver
 
@@ -181,13 +183,13 @@ class SQLService(
     def host_connection_string(
         self,
         dialect: str | AsDefault = as_default,
-        driver: str | None = None,
+        driver: str | AsDefault | None = as_default,
         *,
         database: str,
         options: ConnectionOptions | None = None,
     ) -> str:
         """
-        Generate an sqlalchemy-style connection string to the database in the service from another container.
+        Generate a sqlalchemy-style connection string to the database in the service from another container.
         Args:
             dialect: The dialect of the sql server.
             driver: additional driver for sqlalchemy to use.
@@ -197,6 +199,8 @@ class SQLService(
         if dialect is as_default:
             dialect = self.DIALECT
 
+        if driver is as_default:
+            driver = self.local_driver
         if driver is not None:
             dialect += "+" + driver
 

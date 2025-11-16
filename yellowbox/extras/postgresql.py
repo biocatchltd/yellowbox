@@ -25,6 +25,7 @@ class PostgreSQLService(SQLService, SingleContainerService):
 
     INTERNAL_PORT = POSTGRES_INTERNAL_PORT
     DIALECT = "postgresql"
+    DEFAULT_DRIVER = "psycopg"  # Use psycopg (v3) instead of deprecated psycopg2
 
     def __init__(
         self,
@@ -49,6 +50,10 @@ class PostgreSQLService(SQLService, SingleContainerService):
         self.user = user
         self.password = password
         self.default_db = default_db
+
+        if "local_driver" not in kwargs:
+            kwargs["local_driver"] = self.DEFAULT_DRIVER
+
         super().__init__(
             create_and_pull_with_defaults(
                 docker_client,
@@ -79,7 +84,7 @@ class PostgreSQLService(SQLService, SingleContainerService):
         self,
         hostname: str,
         dialect: str | AsDefault = as_default,
-        driver: str | None = None,
+        driver: str | AsDefault | None = as_default,
         database: str | None = None,
         options: ConnectionOptions = None,
     ):
@@ -89,7 +94,7 @@ class PostgreSQLService(SQLService, SingleContainerService):
     def host_connection_string(
         self,
         dialect: str | AsDefault = as_default,
-        driver: str | None = None,
+        driver: str | AsDefault | None = as_default,
         database: str | None = None,
         options: ConnectionOptions = None,
     ):
@@ -109,7 +114,7 @@ class PostgreSQLService(SQLService, SingleContainerService):
     )
     def connection(self, **kwargs):
         """
-        Create an sqlalchemy Connection connected to the service's default db.
+        Create a sqlalchemy Connection connected to the service's default db.
         """
         return self.engine().connect(**kwargs)
 

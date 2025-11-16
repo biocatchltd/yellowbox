@@ -177,7 +177,7 @@ def test_alchemy_usage(docker_client, engine):
     assert vals == [2, 3, 10]
 
 
-def test_remote_connection_string(docker_client, create_and_pull, service, engine, db):
+def test_remote_connection_string(docker_client, create_and_pull, service, engine, db, sqlalchemy_version: str):
     with temp_network(docker_client) as network, connect(network, service) as service_alias:
         with engine.begin() as connection:
             connection.execute(
@@ -192,16 +192,17 @@ def test_remote_connection_string(docker_client, create_and_pull, service, engin
         container = create_and_pull(
             docker_client,
             "python:latest",
-            'sh -c "pip install sqlalchemy==1.4.46 psycopg2 && python ./main.py"',
+            f"sh -c \"pip install sqlalchemy=={sqlalchemy_version} 'psycopg[binary]' && python ./main.py\"",
             detach=True,
         )
         upload_file(
             container,
             "./main.py",
             bytes(
-                "import sqlalchemy as sa;"
-                f"e = sa.create_engine('{conn_string}');"
-                "e.execute('DELETE FROM foo WHERE x < 3');",
+                "import sqlalchemy as sa\n"
+                f"e = sa.create_engine('{conn_string}')\n"
+                "with e.begin() as conn:\n"
+                "    conn.execute(sa.text('DELETE FROM foo WHERE x < 3'))\n",
                 "ascii",
             ),
         )
@@ -216,7 +217,7 @@ def test_remote_connection_string(docker_client, create_and_pull, service, engin
         assert vals == ["three", "ten"]
 
 
-def test_remote_connection_string_host(docker_client, create_and_pull, service, engine, db):
+def test_remote_connection_string_host(docker_client, create_and_pull, service, engine, db, sqlalchemy_version: str):
     with engine.begin() as connection:
         connection.execute(
             text(
@@ -230,14 +231,17 @@ def test_remote_connection_string_host(docker_client, create_and_pull, service, 
     container = create_and_pull(
         docker_client,
         "python:latest",
-        'sh -c "pip install sqlalchemy==1.4.46 psycopg2 && python ./main.py"',
+        f"sh -c \"pip install sqlalchemy=={sqlalchemy_version} 'psycopg[binary]' && python ./main.py\"",
         detach=True,
     )
     upload_file(
         container,
         "./main.py",
         bytes(
-            f"import sqlalchemy as sa;e = sa.create_engine('{conn_string}');e.execute('DELETE FROM foo WHERE x < 3');",
+            f"import sqlalchemy as sa\n"
+            f"e = sa.create_engine('{conn_string}')\n"
+            f"with e.begin() as conn:\n"
+            f"    conn.execute(sa.text('DELETE FROM foo WHERE x < 3'))\n",
             "ascii",
         ),
     )
