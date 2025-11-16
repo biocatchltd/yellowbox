@@ -1,21 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable, Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime
 from traceback import print_exc
-from typing import (
-    TYPE_CHECKING,
-    Awaitable,
-    Callable,
-    ContextManager,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Tuple,
-    Union,
-    overload,
-)
+from typing import TYPE_CHECKING, ContextManager, Optional, Union, overload
 
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
@@ -29,9 +18,9 @@ from yellowbox.extras.webserver.ws_request_capture import RecordedWSTranscripts,
 
 BASE_HTTP_SIDE_EFFECT = Union[Response, Callable[[Request], Awaitable[Response]]]
 BASE_WS_SIDE_EFFECT = Callable[[WebSocket], Awaitable[Optional[int]]]
-
 HTTP_SIDE_EFFECT = Union[BASE_HTTP_SIDE_EFFECT, Callable[["MockHTTPEndpoint"], BASE_HTTP_SIDE_EFFECT]]
 WS_SIDE_EFFECT = Union[BASE_WS_SIDE_EFFECT, Callable[["MockWSEndpoint"], BASE_WS_SIDE_EFFECT]]
+
 METHODS = Union[str, Iterable[str]]
 
 if TYPE_CHECKING:
@@ -40,10 +29,10 @@ if TYPE_CHECKING:
 
 class EndpointPatch(ContextManager):
     """
-    A the return value of endpoint side effect patches, restores the original side effect if ever exited
+    A return value of endpoint side effect patches, restores the original side effect if ever exited
     """
 
-    def __init__(self, endpoint: Union[MockHTTPEndpoint, MockWSEndpoint], restore_side_effect):
+    def __init__(self, endpoint: MockHTTPEndpoint | MockWSEndpoint, restore_side_effect):
         self.endpoint = endpoint
         self.restore_side_effect = restore_side_effect
 
@@ -95,13 +84,13 @@ class MockHTTPEndpoint:
              GET method also accessible through the HEAD method. If this parameter is set to true (the default),
              this behaviour is disabled and HEAD must be added explicitly if required.
         """
-        self._request_captures: List[RecordedHTTPRequests] = []
-        self.owner: Optional[WebServer] = None
+        self._request_captures: list[RecordedHTTPRequests] = []
+        self.owner: WebServer | None = None
 
         if isinstance(methods, str):
             methods = (methods,)
 
-        self.methods: Tuple[str, ...] = tuple(m.upper() for m in methods)
+        self.methods: tuple[str, ...] = tuple(m.upper() for m in methods)
         self.rule_string = rule_string
         self.__name__ = name
         self.auto_read_body = auto_read_body
@@ -192,7 +181,7 @@ def http_endpoint(
     *,
     auto_read_body: bool = True,
     forbid_head_verb: bool = True,
-    name: Optional[str] = None,
+    name: str | None = None,
 ) -> Callable[[HTTP_SIDE_EFFECT], MockHTTPEndpoint]: ...
 
 
@@ -204,16 +193,16 @@ def http_endpoint(
     *,
     auto_read_body: bool = True,
     forbid_implicit_head_verb: bool = True,
-    name: Optional[str] = None,
+    name: str | None = None,
 ) -> MockHTTPEndpoint: ...
 
 
 def http_endpoint(
     methods: METHODS,
     rule_string: str,
-    side_effect: Optional[HTTP_SIDE_EFFECT] = None,
+    side_effect: HTTP_SIDE_EFFECT | None = None,
     *,
-    name: Optional[str] = None,
+    name: str | None = None,
     **kwargs,
 ):
     """
@@ -270,8 +259,8 @@ class MockWSEndpoint:
              websocket and optionally returns an int to close the connection with that code.
             allow_abrupt_disconnect: whether to consider the client abruptly hanging up on the endpoint an error
         """
-        self._request_captures: List[RecordedWSTranscripts] = []
-        self.owner: Optional[WebServer] = None
+        self._request_captures: list[RecordedWSTranscripts] = []
+        self.owner: WebServer | None = None
 
         self.rule_string = rule_string
         self.__name__ = name
@@ -334,21 +323,19 @@ class MockWSEndpoint:
 
 @overload
 def ws_endpoint(
-    rule_string: str, *, name: Optional[str] = None, allow_abrupt_disconnect: bool = True
+    rule_string: str, *, name: str | None = None, allow_abrupt_disconnect: bool = True
 ) -> Callable[[WS_SIDE_EFFECT], MockWSEndpoint]:
     pass
 
 
 @overload
 def ws_endpoint(
-    rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: Optional[str] = None, allow_abrupt_disconnect: bool = True
+    rule_string: str, side_effect: WS_SIDE_EFFECT, *, name: str | None = None, allow_abrupt_disconnect: bool = True
 ) -> MockWSEndpoint:
     pass
 
 
-def ws_endpoint(
-    rule_string: str, side_effect: Optional[WS_SIDE_EFFECT] = None, *, name: Optional[str] = None, **kwargs
-):
+def ws_endpoint(rule_string: str, side_effect: WS_SIDE_EFFECT | None = None, *, name: str | None = None, **kwargs):
     """
     Create a mock websocket endpoint.
     Args:

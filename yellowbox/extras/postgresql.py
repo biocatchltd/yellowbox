@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 from deprecated import deprecated
 from docker import DockerClient
@@ -33,8 +33,8 @@ class PostgreSQLService(SQLService, SingleContainerService):
         *,
         user="postgres",
         password="guest",
-        default_db: Optional[str] = None,
-        container_create_kwargs: Optional[Dict[str, Any]] = None,
+        default_db: str | None = None,
+        container_create_kwargs: dict[str, Any] | None = None,
         **kwargs,
     ):
         """
@@ -67,10 +67,10 @@ class PostgreSQLService(SQLService, SingleContainerService):
 
     def local_connection_string(
         self,
-        dialect: Union[str, AsDefault] = as_default,
-        driver: Union[str, AsDefault, None] = as_default,
-        database: Optional[str] = None,
-        options: Union[ConnectionOptions, AsDefault] = as_default,
+        dialect: str | AsDefault = as_default,
+        driver: str | AsDefault | None = as_default,
+        database: str | None = None,
+        options: ConnectionOptions | AsDefault = as_default,
     ):
         database = database or self.default_db
         return super().local_connection_string(dialect, driver, database=database, options=options)
@@ -78,9 +78,9 @@ class PostgreSQLService(SQLService, SingleContainerService):
     def container_connection_string(
         self,
         hostname: str,
-        dialect: Union[str, AsDefault] = as_default,
-        driver: Optional[str] = None,
-        database: Optional[str] = None,
+        dialect: str | AsDefault = as_default,
+        driver: str | None = None,
+        database: str | None = None,
         options: ConnectionOptions = None,
     ):
         database = database or self.default_db
@@ -88,9 +88,9 @@ class PostgreSQLService(SQLService, SingleContainerService):
 
     def host_connection_string(
         self,
-        dialect: Union[str, AsDefault] = as_default,
-        driver: Optional[str] = None,
-        database: Optional[str] = None,
+        dialect: str | AsDefault = as_default,
+        driver: str | None = None,
+        database: str | None = None,
         options: ConnectionOptions = None,
     ):
         database = database or self.default_db

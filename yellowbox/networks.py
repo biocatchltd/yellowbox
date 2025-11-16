@@ -1,5 +1,6 @@
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator, TypeVar, Union
+from typing import TypeVar
 from uuid import uuid1
 
 from docker import DockerClient
@@ -49,7 +50,7 @@ def temp_network(client: DockerClient, name=None, *args, **kwargs):
 
 
 @contextmanager
-def connect(network: Network, obj: Union[Container, ContainerService], **kwargs):
+def connect(network: Network, obj: Container | ContainerService, **kwargs):
     """Temporarily connect a container or yellow service into a network.
 
     Args:
