@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Collection, Mapping, Sequence
@@ -197,7 +199,7 @@ class ExpectedHTTPRequest(ScopeExpectation):
         else:
             self.body_validator = None
 
-    def matches(self, recorded: "RecordedHTTPRequest") -> bool | MismatchReason:
+    def matches(self, recorded: RecordedHTTPRequest) -> bool | MismatchReason:
         """
         Test if an http request meets the expectations of self
         Args:

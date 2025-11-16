@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from collections.abc import Mapping
 from enum import Enum, auto
-from typing import ContextManager, Union
+from typing import TYPE_CHECKING, ContextManager, Union
 
 from sqlalchemy import create_engine
 from sqlalchemy.exc import InterfaceError, OperationalError
@@ -12,19 +14,21 @@ from yellowbox.containers import get_ports
 from yellowbox.subclasses import AsyncRunMixin, RunMixin, SingleEndpointService
 from yellowbox.utils import DOCKER_EXPOSE_HOST, docker_host_name
 
+if TYPE_CHECKING:  # pragma: no cover
 
-class AsDefault(Enum):
-    as_default = auto()
+    class AsDefault(Enum):
+        as_default = auto()
 
-
-as_default = AsDefault.as_default
+    as_default = AsDefault.as_default  # make mypy pleased with this sentinel
+else:
+    as_default = object()  # in runtime an object() is sufficient.
 
 ConnectionOptions = Union[str, Mapping[str, str]]
 
 
 class Database(ContextManager["Database"]):
     # represents a database that is ensured to exist
-    def __init__(self, name: str, owner: "SQLService"):
+    def __init__(self, name: str, owner: SQLService):
         self.name = name
         self.owner = owner
 

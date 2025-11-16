@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from threading import Lock, Thread
@@ -297,7 +299,7 @@ class WebServer(YellowService):
             return f"{docker_host_name}:{self.port}"
         return f"{schema}://{docker_host_name}:{self.port}"
 
-    def start(self, retry_spec: RetrySpec | None = None) -> "WebServer":
+    def start(self, retry_spec: RetrySpec | None = None) -> WebServer:
         if self._serve_thread.is_alive():
             raise RuntimeError("thread cannot be started twice")
         self._serve_thread.start()

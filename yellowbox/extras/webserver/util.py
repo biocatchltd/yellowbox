@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import sys
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from datetime import datetime
@@ -61,7 +63,7 @@ def iter_side_effects(side_effects: Iterable[Callable[..., Awaitable[T]] | T]) -
     return ret
 
 
-def _default_verbose_message_factory(endpoint: "MockHTTPEndpoint", request: Request, response: Response) -> str:
+def _default_verbose_message_factory(endpoint: MockHTTPEndpoint, request: Request, response: Response) -> str:
     client = f"{request.client.host}:{request.client.port}"
     relative_path = request.url.path
     if request.url.query:
@@ -73,15 +75,15 @@ def _default_verbose_message_factory(endpoint: "MockHTTPEndpoint", request: Requ
 
 
 def verbose_http_side_effect(
-    side_effect: "BASE_HTTP_SIDE_EFFECT",
-    format_function: Callable[["MockHTTPEndpoint", Request, Response], str] = _default_verbose_message_factory,
+    side_effect: BASE_HTTP_SIDE_EFFECT,
+    format_function: Callable[[MockHTTPEndpoint, Request, Response], str] = _default_verbose_message_factory,
     file=sys.stdout,
-) -> "HTTP_SIDE_EFFECT":
+) -> HTTP_SIDE_EFFECT:
     """
     Wrap a side effect so that it prints the arguments and return value on each call.
     """
 
-    def side_effect_factory(endpoint: "MockHTTPEndpoint"):
+    def side_effect_factory(endpoint: MockHTTPEndpoint):
         async def side_effect_wrapper(request: Request):
             if isinstance(side_effect, Response):
                 response = side_effect

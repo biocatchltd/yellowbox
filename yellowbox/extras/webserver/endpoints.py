@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections.abc import Awaitable, Callable, Iterable, Iterator
 from contextlib import contextmanager
 from datetime import datetime
@@ -30,7 +32,7 @@ class EndpointPatch(ContextManager):
     A return value of endpoint side effect patches, restores the original side effect if ever exited
     """
 
-    def __init__(self, endpoint: "MockHTTPEndpoint | MockWSEndpoint", restore_side_effect):
+    def __init__(self, endpoint: MockHTTPEndpoint | MockWSEndpoint, restore_side_effect):
         self.endpoint = endpoint
         self.restore_side_effect = restore_side_effect
 
@@ -40,12 +42,12 @@ class EndpointPatch(ContextManager):
 
 
 @overload
-def bind_side_effect(endpoint: "MockHTTPEndpoint", side_effect: HTTP_SIDE_EFFECT) -> BASE_HTTP_SIDE_EFFECT:
+def bind_side_effect(endpoint: MockHTTPEndpoint, side_effect: HTTP_SIDE_EFFECT) -> BASE_HTTP_SIDE_EFFECT:
     pass
 
 
 @overload
-def bind_side_effect(endpoint: "MockWSEndpoint", side_effect: WS_SIDE_EFFECT) -> BASE_WS_SIDE_EFFECT:
+def bind_side_effect(endpoint: MockWSEndpoint, side_effect: WS_SIDE_EFFECT) -> BASE_WS_SIDE_EFFECT:
     pass
 
 
