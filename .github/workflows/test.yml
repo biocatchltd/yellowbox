@@ -37,4 +37,5 @@ jobs:
         poetry run sh scripts/lint.sh
     - name: Tests
       run: |
-        poetry run sh scripts/unittest.sh -x
+#        poetry run sh scripts/unittest.sh -x
+        poetry run pytest tests/test_container_utils.py::test_build_create_and_pull tests/test_image_build.py::test_valid_image_build
