@@ -18,6 +18,18 @@ def test_make_azure_storage(docker_client, spinner):
         pass
 
 
+@mark.parametrize("skip_api_version_check", [True, False])
+def test_skip_api_version_check(docker_client, skip_api_version_check):
+    with AzuriteService.run(docker_client, skip_api_version_check=skip_api_version_check) as service:
+        port = service.client_port()
+        with BlobServiceClient(
+            f"http://{DOCKER_EXPOSE_HOST}:{port}/{DEFAULT_ACCOUNT_NAME}", DEFAULT_ACCOUNT_KEY
+        ) as client, client.create_container("test") as container:
+            container.upload_blob("file_1", b"data")
+            downloader = container.download_blob("file_1")
+            assert downloader.readall() == b"data"
+
+
 def test_sanity(docker_client):
     with AzuriteService.run(docker_client) as service:
         port = service.client_port()

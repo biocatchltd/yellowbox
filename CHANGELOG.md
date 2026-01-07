@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## 0.12.0
+### Added
+* add skipApiVersionCheck param to AzuriteService
 ## 0.11.0
 ### Changed
 * psycopg: upgrade from psycopg2 to psycopg (v3)
