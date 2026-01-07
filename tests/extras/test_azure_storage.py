@@ -17,6 +17,7 @@ def test_make_azure_storage(docker_client, spinner):
     with AzuriteService.run(docker_client, spinner=spinner):
         pass
 
+
 def test_sanity(docker_client):
     with AzuriteService.run(docker_client) as service:
         port = service.client_port()
