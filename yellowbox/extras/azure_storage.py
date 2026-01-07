@@ -40,13 +40,18 @@ class AzuriteService(SingleContainerService, RunMixin, AsyncRunMixin):
         docker_client: DockerClient,
         image: str = "mcr.microsoft.com/azure-storage/azurite:latest",
         *,
+        skip_api_version_check: bool = True,
         container_create_kwargs: dict[str, Any] | None = None,
         **kwargs,
     ):
+        command = "azurite-blob --blobHost 0.0.0.0"
+        if skip_api_version_check:
+            command += " --skipApiVersionCheck"
+
         container = create_and_pull_with_defaults(
             docker_client,
             image,
-            "azurite-blob --blobHost 0.0.0.0",
+            command,
             _kwargs=container_create_kwargs,
             publish_all_ports=True,
         )
