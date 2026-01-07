@@ -1,5 +1,5 @@
 # Yellowbox Changelog
-## 0.12.0
+## 0.11.1
 ### Added
 * add skipApiVersionCheck param to AzuriteService
 ## 0.11.0
