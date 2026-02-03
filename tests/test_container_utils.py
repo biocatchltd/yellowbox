@@ -73,7 +73,11 @@ def test_create_and_pull(docker_client, create_and_pull):
 def test_build_create_and_pull(docker_client, create_and_pull, image_name, make_unique_image_name, image_arg):
     image_name = make_unique_image_name(image_name)
     with build_image(
-        docker_client, image_name, path=".", dockerfile="tests/resources/valid_dockerfile/Dockerfile", buildargs={"FOO": image_arg}
+        docker_client,
+        image_name,
+        path=".",
+        dockerfile="tests/resources/valid_dockerfile/Dockerfile",
+        buildargs={"FOO": image_arg},
     ) as image:
         # sometimes we need to wait for the image to be acknowledged by docker
         sleep(1)

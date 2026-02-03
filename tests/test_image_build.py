@@ -1,6 +1,4 @@
 from asyncio import gather
-import random
-import string
 from time import sleep
 
 from docker.errors import BuildError, DockerException, ImageNotFound
@@ -8,11 +6,16 @@ from pytest import mark, raises
 
 from yellowbox import async_build_image, build_image
 
+
 @mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])
 def test_valid_image_build(docker_client, image_name, make_unique_image_name, image_arg):
     image_name = make_unique_image_name(image_name)
     with build_image(
-        docker_client, image_name, path=".", dockerfile="tests/resources/valid_dockerfile/Dockerfile", buildargs={"FOO": image_arg}    
+        docker_client,
+        image_name,
+        path=".",
+        dockerfile="tests/resources/valid_dockerfile/Dockerfile",
+        buildargs={"FOO": image_arg},
     ) as image:
         # sometimes we need to wait for the image to be acknowledged by docker
         sleep(1)
@@ -37,14 +40,14 @@ async def test_valid_image_build_async(docker_client, image1_name, image2_name, 
             image_name=image1_name,
             path=".",
             dockerfile="tests/resources/valid_dockerfile/Dockerfile",
-            buildargs={"FOO": image_arg + "1"}
+            buildargs={"FOO": image_arg + "1"},
         ),
         async_build_image(
             docker_client,
             image_name=image2_name,
             path=".",
             dockerfile="tests/resources/valid_dockerfile/Dockerfile",
-            buildargs={"FOO": image_arg + "2"}
+            buildargs={"FOO": image_arg + "2"},
         ),
     ]
     image0, image1 = await gather(*(s.__aenter__() for s in building_tasks))
@@ -72,6 +75,7 @@ async def test_valid_image_build_async(docker_client, image1_name, image2_name, 
 @mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])
 async def test_invalid_image_build_async(docker_client, capsys, image_name, make_unique_image_name):
     image_name = make_unique_image_name(image_name)
+
     async def build():
         async with async_build_image(
             docker_client,

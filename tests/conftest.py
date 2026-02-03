@@ -36,7 +36,9 @@ def create_and_pull():
             continue
         c.remove(force=True, v=True)
 
-image_suffix  = unique_name_generator()
+
+image_suffix = unique_name_generator()
+
 
 @fixture
 def make_unique_image_name():
@@ -44,6 +46,7 @@ def make_unique_image_name():
         if prefix is None:
             return None
         return f"{prefix}{image_suffix()}"
+
     return ret
 
 
