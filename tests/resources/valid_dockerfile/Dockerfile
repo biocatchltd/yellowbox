@@ -1,3 +1,4 @@
 FROM alpine:3
 
-RUN apk update
+ARG FOO
+RUN echo "Hello, World! $FOO"

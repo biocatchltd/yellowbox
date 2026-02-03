@@ -1,4 +1,6 @@
 from asyncio import gather
+import random
+import string
 from time import sleep
 
 from docker.errors import BuildError, DockerException, ImageNotFound
@@ -6,12 +8,11 @@ from pytest import mark, raises
 
 from yellowbox import async_build_image, build_image
 
-
-@mark.xfail(reason="I really don't know why it succeeds locally for me but fails on Github.")
 @mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])
-def test_valid_image_build(docker_client, image_name):
+def test_valid_image_build(docker_client, image_name, make_unique_image_name, image_arg):
+    image_name = make_unique_image_name(image_name)
     with build_image(
-        docker_client, image_name, path=".", dockerfile="tests/resources/valid_dockerfile/Dockerfile"
+        docker_client, image_name, path=".", dockerfile="tests/resources/valid_dockerfile/Dockerfile", buildargs={"FOO": image_arg}    
     ) as image:
         # sometimes we need to wait for the image to be acknowledged by docker
         sleep(1)
@@ -27,19 +28,23 @@ def test_valid_image_build(docker_client, image_name):
 @mark.asyncio
 @mark.parametrize("image1_name", ["yellowbox:test1", None])
 @mark.parametrize("image2_name", ["yellowbox:test2", None])
-async def test_valid_image_build_async(docker_client, image1_name, image2_name):
+async def test_valid_image_build_async(docker_client, image1_name, image2_name, make_unique_image_name, image_arg):
+    image1_name = make_unique_image_name(image1_name)
+    image2_name = make_unique_image_name(image2_name)
     building_tasks = [
         async_build_image(
             docker_client,
             image_name=image1_name,
             path=".",
             dockerfile="tests/resources/valid_dockerfile/Dockerfile",
+            buildargs={"FOO": image_arg + "1"}
         ),
         async_build_image(
             docker_client,
             image_name=image2_name,
             path=".",
             dockerfile="tests/resources/valid_dockerfile/Dockerfile",
+            buildargs={"FOO": image_arg + "2"}
         ),
     ]
     image0, image1 = await gather(*(s.__aenter__() for s in building_tasks))
@@ -65,7 +70,8 @@ async def test_valid_image_build_async(docker_client, image1_name, image2_name):
 
 @mark.asyncio
 @mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])
-async def test_invalid_image_build_async(docker_client, capsys, image_name):
+async def test_invalid_image_build_async(docker_client, capsys, image_name, make_unique_image_name):
+    image_name = make_unique_image_name(image_name)
     async def build():
         async with async_build_image(
             docker_client,
@@ -86,7 +92,8 @@ async def test_invalid_image_build_async(docker_client, capsys, image_name):
 
 
 @mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])
-def test_invalid_parse_image_build(docker_client, image_name):
+def test_invalid_parse_image_build(docker_client, image_name, make_unique_image_name):
+    image_name = make_unique_image_name(image_name)
     with raises(DockerException), build_image(
         docker_client, image_name, path=".", dockerfile="tests/resources/invalid_parse_dockerfile/Dockerfile"
     ):
@@ -94,7 +101,8 @@ def test_invalid_parse_image_build(docker_client, image_name):
 
 
 @mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])
-def test_invalid_run_image_build(docker_client, image_name):
+def test_invalid_run_image_build(docker_client, image_name, make_unique_image_name):
+    image_name = make_unique_image_name(image_name)
     with raises(DockerException), build_image(
         docker_client, image_name, path=".", dockerfile="tests/resources/invalid_run_dockerfile/Dockerfile"
     ):
