@@ -4,6 +4,7 @@ from typing import List, Tuple
 from docker.models.containers import Container
 from pytest import fixture
 
+from tests.util import unique_name_generator
 from yellowbox.containers import create_and_pull as _create_and_pull, is_removed
 
 
@@ -34,3 +35,21 @@ def create_and_pull():
         if not force and c.status not in ("created", "removing", "paused") and c.wait(timeout=1)["StatusCode"] != 0:
             continue
         c.remove(force=True, v=True)
+
+
+image_suffix = unique_name_generator()
+
+
+@fixture
+def make_unique_image_name():
+    def ret(prefix: str | None) -> str | None:
+        if prefix is None:
+            return None
+        return f"{prefix}{image_suffix()}"
+
+    return ret
+
+
+# we use this to pass a unique argument to the image build test to ensure that each image we build has a unique sha,
+#  ensuring that even anonymous images are uniquely identifiable.
+image_arg = fixture(unique_name_generator(), scope="session")

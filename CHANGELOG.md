@@ -1,4 +1,7 @@
 # Yellowbox Changelog
+## NEXT
+### Internal
+* remove flakeyness around image building by building images with unique names
 ## 0.11.2
 ### Fixed
 * change setup-python version to 3.11

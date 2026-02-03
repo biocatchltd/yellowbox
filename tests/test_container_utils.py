@@ -69,17 +69,25 @@ def test_create_and_pull(docker_client, create_and_pull):
     assert "alpine:latest" in container.image.tags
 
 
-@mark.xfail(reason="I really don't know why it succeeds locally for me but fails on Github.")
 @mark.parametrize("image_name", ["yellowbox", "yellowbox:test", None])
-def test_build_create_and_pull(docker_client, create_and_pull, image_name):
-    # we create an anonymous image to test this
+def test_build_create_and_pull(docker_client, create_and_pull, image_name, make_unique_image_name, image_arg):
+    image_name = make_unique_image_name(image_name)
     with build_image(
-        docker_client, image_name, path=".", dockerfile="tests/resources/valid_dockerfile/Dockerfile"
+        docker_client,
+        image_name,
+        path=".",
+        dockerfile="tests/resources/valid_dockerfile/Dockerfile",
+        buildargs={"FOO": image_arg},
     ) as image:
         # sometimes we need to wait for the image to be acknowledged by docker
         sleep(1)
         container = create_and_pull(docker_client, image, "sh -c exit 0")
-        expected_tags = [] if image_name is None else ["yellowbox:test"]
+        if image_name is None:
+            expected_tags = []
+        elif ":" in image_name:
+            expected_tags = [image_name]
+        else:
+            expected_tags = [f"{image_name}:test"]
         assert container.image.tags == expected_tags
         with removing(container):
             container.start()
