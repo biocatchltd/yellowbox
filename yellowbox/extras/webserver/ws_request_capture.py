@@ -234,7 +234,6 @@ class ExpectedWSTranscript(ScopeExpectation):
         headers_submap: Mapping[str, Collection[str]] | None = None,
         path: str | Pattern[str] | None = None,
         path_params: Mapping[str, Any] | None = None,
-        *,
         path_params_submap: Mapping[str, Any] | None = None,
         query_params: Mapping[str, Collection[str]] | None = None,
         query_params_submap: Mapping[str, Collection[str]] | None = None,
@@ -261,13 +260,7 @@ class ExpectedWSTranscript(ScopeExpectation):
              connections (if False)
         """
         super().__init__(
-            headers,
-            headers_submap,
-            path,
-            path_params,
-            path_params_submap,
-            query_params=query_params,
-            query_params_submap=query_params_submap,
+            headers, headers_submap, path, path_params, path_params_submap, query_params, query_params_submap
         )
         if messages and messages[0] is ...:
             messages = messages[1:]

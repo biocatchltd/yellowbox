@@ -68,7 +68,6 @@ class MockHTTPEndpoint:
         methods: METHODS,
         rule_string: str,
         side_effect: HTTP_SIDE_EFFECT,
-        *,
         auto_read_body: bool = True,
         forbid_implicit_head_verb: bool = True,
     ):

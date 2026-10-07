@@ -113,11 +113,7 @@ class FakeLogstashService(YellowService):
 
         # Avoiding a cyclic reference.
         _background = WeakMethod(self._background_thread)
-
-        def run_background() -> None:
-            _background()()
-
-        self._thread = threading.Thread(target=run_background, daemon=True)
+        self._thread = threading.Thread(target=lambda: _background()(), daemon=True)
 
         self._selector = selectors.DefaultSelector()
 

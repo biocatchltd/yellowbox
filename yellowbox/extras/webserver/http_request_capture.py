@@ -128,7 +128,6 @@ class ExpectedHTTPRequest(ScopeExpectation):
         path: str | Pattern[str] | None = None,
         path_params: Mapping[str, Any] | None = None,
         path_params_submap: Mapping[str, Any] | None = None,
-        *,
         query_params: Mapping[str, Collection[str]] | None = None,
         query_params_submap: Mapping[str, Collection[str]] | None = None,
         method: str | None = None,
@@ -136,7 +135,7 @@ class ExpectedHTTPRequest(ScopeExpectation):
         text: str | None = None,
         json: Any = _missing,
         json_submap: Mapping[str, Any] | None = None,
-        content_predicate: Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator | None = None,
+        content_predicate: None | (Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator) = None,
     ):
         """
         Args:
@@ -165,13 +164,7 @@ class ExpectedHTTPRequest(ScopeExpectation):
              provided. Cannot be used alongside other content-testing parameters
         """
         super().__init__(
-            headers,
-            headers_submap,
-            path,
-            path_params,
-            path_params_submap,
-            query_params=query_params,
-            query_params_submap=query_params_submap,
+            headers, headers_submap, path, path_params, path_params_submap, query_params, query_params_submap
         )
 
         if method is None:
@@ -345,7 +338,7 @@ class RecordedHTTPRequests(list[RecordedHTTPRequest]):
         text: str | None = None,
         json: Any = _missing,
         json_submap: Mapping[str, Any] | None = None,
-        content_predicate: Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator | None = None,
+        content_predicate: None | (Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator) = None,
     ): ...
 
     def assert_requested_with(self, expected: ExpectedHTTPRequest | None = None, **kwargs):
@@ -433,7 +426,7 @@ class RecordedHTTPRequests(list[RecordedHTTPRequest]):
         text: str | None = None,
         json: Any = _missing,
         json_submap: Mapping[str, Any] | None = None,
-        content_predicate: Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator | None = None,
+        content_predicate: None | (Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator) = None,
     ): ...
 
     def assert_any_request(self, expected: ExpectedHTTPRequest | None = None, **kwargs):

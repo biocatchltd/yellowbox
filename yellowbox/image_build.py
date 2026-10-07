@@ -68,7 +68,6 @@ def build_image(
     remove_image: bool = True,
     file: TextIO | None = ...,  # type: ignore[assignment]
     output: TextIO | None = sys.stderr,
-    *,
     spinner: bool = True,
     **kwargs,
 ):
