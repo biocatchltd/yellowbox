@@ -36,7 +36,7 @@ class Database(ContextManager["Database"]):
         self,
         dialect: str | AsDefault = as_default,
         driver: str | AsDefault | None = as_default,
-        options: ConnectionOptions | None | AsDefault = as_default,
+        options: ConnectionOptions | AsDefault | None = as_default,
     ):
         return self.owner.local_connection_string(dialect, driver, database=self.name, options=options)
 

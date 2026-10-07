@@ -170,6 +170,7 @@ class ScopeExpectation:
         path: str | Pattern[str] | None = None,
         path_params: Mapping[str, Any] | None = None,
         path_params_submap: Mapping[str, Any] | None = None,
+        *,
         query_params: Mapping[str, Collection[str]] | None = None,
         query_params_submap: Mapping[str, Collection[str]] | None = None,
     ):

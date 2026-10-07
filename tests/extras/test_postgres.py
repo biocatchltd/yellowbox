@@ -177,7 +177,7 @@ def test_alchemy_usage(docker_client, engine):
     assert vals == [2, 3, 10]
 
 
-def test_remote_connection_string(docker_client, create_and_pull, service, engine, db, sqlalchemy_version: str):
+def test_remote_connection_string(docker_client, create_and_pull, service, engine, db, *, sqlalchemy_version: str):
     with temp_network(docker_client) as network, connect(network, service) as service_alias:
         with engine.begin() as connection:
             connection.execute(
@@ -217,7 +217,7 @@ def test_remote_connection_string(docker_client, create_and_pull, service, engin
         assert vals == ["three", "ten"]
 
 
-def test_remote_connection_string_host(docker_client, create_and_pull, service, engine, db, sqlalchemy_version: str):
+def test_remote_connection_string_host(docker_client, create_and_pull, service, engine, db, *, sqlalchemy_version: str):
     with engine.begin() as connection:
         connection.execute(
             text(
