@@ -78,7 +78,7 @@ class KafkaService(SingleEndpointService, RunMixin, AsyncRunMixin):
             detach=True,
             environment={
                 "KAFKA_CFG_ADVERTISED_LISTENERS": f"INNER://{self.static_broker_alias}:{self.inner_port},"
-                f"OUTER://localhost:{self.outer_port}",
+                f"OUTER://127.0.0.1:{self.outer_port}",
                 "KAFKA_CFG_ZOOKEEPER_CONNECT": "zk/2181",
                 "ALLOW_PLAINTEXT_LISTENER": "yes",
                 "KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP": "INNER:PLAINTEXT,OUTER:PLAINTEXT",
