@@ -121,6 +121,7 @@ ignore = [
     "COM812",  # trailing comma, handled by black
     "PLR2004",  # Magic value used in comparison
     "PLR0913",  # Too many arguments to function call
+    "PLR0917",  # Too many positional arguments; existing public and test signatures
     "PLR0912",  # too many branches
     "PLR0911",  # Too many return statements
     "PLR0915",  # too many statements
@@ -137,6 +138,8 @@ ignore = [
     "PT013",  # Found incorrect import of pytest, use simple `import pytest` instead
     "B905", # `zip()` without an explicit `strict=` parameter
     "SIM115", # Use a context manager for file operations, TODO: figure out if the warnings are justified
+    "PLW0108",  # Lambda may be unnecessary; the suggested rewrite can change runtime behavior
+    "RUF036",  # None not at the end of a type union; existing annotations
 ]
 exclude = [
     "yellowbox/extras/websocket.py",
