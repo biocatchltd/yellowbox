@@ -1,4 +1,7 @@
-from pytest import fixture, mark
+from pytest import fixture, importorskip, mark
+
+# the aerospike client is not installable on python 3.15 yet
+importorskip("aerospike")
 
 from yellowbox.extras.aerospike import AerospikeService
 

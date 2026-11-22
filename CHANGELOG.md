@@ -1,6 +1,10 @@
 # Yellowbox Changelog
 ## NEXT
+### Added
+* added tests for python 3.15 (the `aerospike` extra is not installed on 3.15 until a compatible client is released)
 ### Internal
+* upgraded pytest-xdist to v3
+* fixed lint errors from newer ruff versions
 * remove flakeyness around image building by building images with unique names
 ## 0.11.2
 ### Fixed
