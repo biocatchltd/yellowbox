@@ -51,7 +51,7 @@ def test_connection_works(docker_client, rabbit, q_name):
     connection: BlockingConnection
     with rabbit.connection() as connection:
         channel = connection.channel()
-        channel.queue_declare(q_name)
+        channel.queue_declare(q_name, durable=True)
 
         channel.basic_publish("", q_name, body=b"hi there")
         sleep(1)
@@ -99,7 +99,7 @@ def assert_no_queues(rabbit: RabbitMQService):
 def test_reset_state(docker_client, rabbit, q_name):
     with rabbit.connection() as connection:
         channel = connection.channel()
-        channel.queue_declare(q_name)
+        channel.queue_declare(q_name, durable=True)
         channel.basic_consume(q_name, lambda: 1 / 0)  # no-op
     rabbit.reset_state()
     assert_no_queues(rabbit)
@@ -108,7 +108,7 @@ def test_reset_state(docker_client, rabbit, q_name):
 def test_reset_state_bad(docker_client, rabbit, q_name):
     with rabbit.connection() as connection:
         channel = connection.channel()
-        channel.queue_declare(q_name)
+        channel.queue_declare(q_name, durable=True)
         channel.basic_consume(q_name, lambda: 1 / 0)  # no-op
         with raises(requests.HTTPError):
             rabbit.reset_state()
@@ -117,7 +117,7 @@ def test_reset_state_bad(docker_client, rabbit, q_name):
 def test_reset_state_force(docker_client, rabbit, q_name):
     with rabbit.connection() as connection:
         channel = connection.channel()
-        channel.queue_declare(q_name)
+        channel.queue_declare(q_name, durable=True)
         channel.basic_consume(q_name, lambda: 1 / 0)  # no-op
         rabbit.reset_state(force_queue_deletion=True)
         assert_no_queues(rabbit)
