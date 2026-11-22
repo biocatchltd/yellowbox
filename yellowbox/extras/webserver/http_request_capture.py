@@ -135,7 +135,7 @@ class ExpectedHTTPRequest(ScopeExpectation):
         text: str | None = None,
         json: Any = _missing,
         json_submap: Mapping[str, Any] | None = None,
-        content_predicate: None | (Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator) = None,
+        content_predicate: (Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator) | None = None,
     ):
         """
         Args:
@@ -338,7 +338,7 @@ class RecordedHTTPRequests(list[RecordedHTTPRequest]):
         text: str | None = None,
         json: Any = _missing,
         json_submap: Mapping[str, Any] | None = None,
-        content_predicate: None | (Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator) = None,
+        content_predicate: (Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator) | None = None,
     ): ...
 
     def assert_requested_with(self, expected: ExpectedHTTPRequest | None = None, **kwargs):
@@ -426,7 +426,7 @@ class RecordedHTTPRequests(list[RecordedHTTPRequest]):
         text: str | None = None,
         json: Any = _missing,
         json_submap: Mapping[str, Any] | None = None,
-        content_predicate: None | (Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator) = None,
+        content_predicate: (Callable[[bytes], bool] | tuple[Callable[[bytes], Any], Any] | BodyValidator) | None = None,
     ): ...
 
     def assert_any_request(self, expected: ExpectedHTTPRequest | None = None, **kwargs):

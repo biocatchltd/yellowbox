@@ -121,6 +121,7 @@ ignore = [
     "COM812",  # trailing comma, handled by black
     "PLR2004",  # Magic value used in comparison
     "PLR0913",  # Too many arguments to function call
+    "PLR0917",  # Too many positional arguments (public signatures, same rationale as PLR0913)
     "PLR0912",  # too many branches
     "PLR0911",  # Too many return statements
     "PLR0915",  # too many statements

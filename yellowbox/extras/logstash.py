@@ -113,7 +113,8 @@ class FakeLogstashService(YellowService):
 
         # Avoiding a cyclic reference.
         _background = WeakMethod(self._background_thread)
-        self._thread = threading.Thread(target=lambda: _background()(), daemon=True)
+        # the lambda defers dereferencing the weakref until the thread runs
+        self._thread = threading.Thread(target=lambda: _background()(), daemon=True)  # noqa: PLW0108
 
         self._selector = selectors.DefaultSelector()
 
