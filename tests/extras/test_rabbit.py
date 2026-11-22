@@ -24,7 +24,8 @@ async def test_connection_works_async(docker_client):
         connection: BlockingConnection
         with rabbit.connection() as connection:
             channel = connection.channel()
-            channel.queue_declare("routing")
+            # recent RabbitMQ versions reject transient non-exclusive queues, so the queue must be durable
+            channel.queue_declare("routing", durable=True)
 
             channel.basic_publish("", "routing", body=b"hi there")
             sleep(1)
